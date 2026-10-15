@@ -1,1405 +1,704 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>고덕중 개인별 학사 진도 관리 시스템</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com/"></script>
-    <!-- React & ReactDOM -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- [수정] Babel 제거됨.
-         예전에는 브라우저가 JSX(인라인 변환)를 실시간 처리하느라 외부 babel CDN이 필요했는데,
-         그 CDN URL이 GitHub Pages 이메일 보호 기능에 깨지거나 네트워크에서 차단되어 화면이 안 뜨는 문제가 반복됨.
-         → JSX를 빌드 시점에 순수 자바스크립트(React.createElement)로 미리 변환해 넣었으므로
-            이제 babel CDN이 전혀 필요 없음. 아래 앱 스크립트는 모듈(type=module)로 브라우저가 바로 실행함. -->
-    <!-- SheetJS (XLSX) -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
-        body { font-family: 'Pretendard', sans-serif; overflow-x: hidden; }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 2px solid #f8fafc; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        .dragging-cell { opacity: 0.2; transform: scale(0.92); filter: grayscale(1); transition: all 0.2s ease; }
-        .drop-target-active { background-color: #f0f9ff !important; border-color: #0ea5e9 !important; border-style: dashed !important; box-shadow: inset 0 0 15px rgba(14, 165, 233, 0.1) !important; transform: scale(1.02); z-index: 20; }
-        
-        .sidebar-dragging { opacity: 0.5; background-color: #f1f5f9; border: 2px dashed #cbd5e1; }
-        
-        /* 1~7교시 한 화면 보기 최적화 및 강제 스무스 스크롤 제거 (세밀한 조절을 위함) */
-        .timetable-scroll-area { 
-            position: relative; 
-            max-height: calc(100vh - 240px); 
-            overflow-x: auto;
-            /* [개선] 화면이 매우 작아 7교시가 다 안 들어갈 때만 세로 터치 스크롤 허용 */
-            overflow-y: auto;
-            border-radius: 24px; 
-            background: #ffffff; 
-            /* scroll-behavior: smooth; 를 제거하여 휠 움직임에 즉각 반응하게 함 */
-        }
-        /* [개선] 교시(행) 높이를 화면 높이에 맞춰 자동 축소 → 어떤 모니터·노트북에서도 1~7교시가 한눈에 들어오도록 함.
-           큰 화면에서는 기존과 동일한 80px를 유지하고, 화면이 낮아질수록 최소 40px까지 줄어듦. */
-        .timetable-scroll-area .h-20 {
-            height: clamp(40px, calc((100vh - 300px) / 7), 80px) !important;
-        }
-        .sticky-top { position: sticky; top: 0; z-index: 40; background: #ffffff; }
-        .sticky-left-col { position: sticky; left: 0; z-index: 45; background: #ffffff; box-shadow: 4px 0 10px rgba(0,0,0,0.05); }
-        .sticky-corner { position: sticky; top: 0; left: 0; z-index: 55; background: #f8fafc; border-right: 1px solid #e2e8f0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f6f5f1">
+<title>고덕중 진도표</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root {
+  --bg: #f6f5f1; --surface: #ffffff; --surface-2: #faf9f6; --ink: #1d2433; --muted: #6b7180; --faint: #a3a7b1;
+  --line: #e8e5dd; --accent: #2f5bea; --accent-ink: #ffffff; --accent-soft: #e8eefe;
+  --ok: #17803d; --ok-soft: #e5f5ea; --warn: #b45309; --warn-soft: #fff3df; --danger: #c2410c;
+  --event: #6d28d9; --event-soft: #f1ebfd;
+  --chip-l: 92%; --chip-s: 70%; --chip-ink-l: 30%;
+  --shadow: 0 1px 2px rgba(29,36,51,.05), 0 4px 16px rgba(29,36,51,.05);
+  --radius: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121418; --surface: #1b1e24; --surface-2: #20242b; --ink: #e9ebf0; --muted: #9aa0ac; --faint: #646a76;
+    --line: #2b3039; --accent: #7c9cff; --accent-ink: #0d1020; --accent-soft: #232c4a;
+    --ok: #4ade80; --ok-soft: #173023; --warn: #fbbf24; --warn-soft: #33270f; --danger: #fb923c;
+    --event: #c4b5fd; --event-soft: #2a2340;
+    --chip-l: 24%; --chip-s: 35%; --chip-ink-l: 82%;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif; font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+svg { width: 18px; height: 18px; flex: none; }
 
-        .timetable-column { min-width: 170px; flex-shrink: 0; }
-        .selected-cell { outline: 3px solid #0ea5e9; outline-offset: -3px; z-index: 10; }
-        .today-column { background-color: #f0f9ff/50 !important; }
-        .today-header { background-color: #0ea5e9 !important; color: white !important; }
+.app { max-width: 1120px; margin: 0 auto; padding: 0 16px calc(88px + env(safe-area-inset-bottom)); }
+header.top { display: flex; align-items: center; gap: 12px; padding: 18px 0 14px; }
+.brand { font-weight: 800; font-size: 19px; letter-spacing: -.02em; }
+.brand small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.sync { margin-left: auto; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; text-align: right; }
+.sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+.sync i.old { background: var(--warn); }
 
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-    </style>
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: space-around;
+  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+nav.tabs button { flex: 1; border: 0; background: none; padding: 6px 0; font-size: 12px; font-weight: 600; color: var(--faint); display: flex; flex-direction: column; align-items: center; gap: 2px; border-radius: 10px; }
+nav.tabs button svg { width: 22px; height: 22px; }
+nav.tabs button.on { color: var(--accent); }
+@media (min-width: 900px) {
+  .app { padding-bottom: 40px; }
+  nav.tabs { position: static; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 2px; backdrop-filter: none; margin-left: 12px; }
+  nav.tabs button { flex-direction: row; font-size: 14px; padding: 7px 14px; gap: 6px; }
+  nav.tabs button svg { width: 17px; height: 17px; }
+  nav.tabs button.on { background: var(--accent-soft); }
+  header.top { padding: 22px 0 18px; }
+}
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.section-title { font-size: 13px; font-weight: 700; color: var(--muted); margin: 22px 2px 10px; display: flex; align-items: center; gap: 8px; }
+.section-title:first-child { margin-top: 4px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 9px 14px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { border-color: transparent; background: none; }
+.btn.sm { padding: 5px 10px; font-size: 13px; border-radius: 10px; }
+.btn:disabled { opacity: .45; cursor: default; }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; }
+.icon-btn svg { width: 18px; height: 18px; }
+
+.chip { --h: 210; display: inline-flex; align-items: center; justify-content: center; min-width: 46px; padding: 3px 9px; border-radius: 9px;
+  font-weight: 750; font-size: 14px; letter-spacing: -.01em; font-variant-numeric: tabular-nums;
+  background: hsl(var(--h) var(--chip-s) var(--chip-l)); color: hsl(var(--h) 60% var(--chip-ink-l)); }
+.chip.lg { font-size: 16px; padding: 5px 11px; min-width: 56px; }
+.tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
+.tag.changed { background: var(--warn-soft); color: var(--warn); }
+.tag.event { background: var(--event-soft); color: var(--event); }
+.tag.ok { background: var(--ok-soft); color: var(--ok); }
+
+/* 오늘 */
+.today-layout { display: grid; gap: 18px; }
+@media (min-width: 900px) { .today-layout { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }
+.daybar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.daybar h2 { margin: 0; font-size: 22px; letter-spacing: -.03em; font-weight: 800; }
+.daybar h2 span { color: var(--muted); font-weight: 600; font-size: 15px; margin-left: 6px; }
+.daybar .spacer { flex: 1; }
+.backlog { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 12px; background: var(--warn-soft); color: var(--warn); border-radius: 14px; font-weight: 650; font-size: 14px; border: 0; width: 100%; text-align: left; }
+.backlog b { font-size: 17px; }
+
+.periods { display: flex; flex-direction: column; gap: 8px; }
+.period { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 12px 14px; align-items: center; text-align: left; width: 100%; color: inherit; }
+button.period:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.period .no { font-size: 20px; font-weight: 800; color: var(--faint); line-height: 1; text-align: center; font-variant-numeric: tabular-nums; }
+.period .no small { display: block; font-size: 10.5px; font-weight: 600; margin-top: 4px; letter-spacing: -.02em; }
+.period .main { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.period .row1 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.period .what { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.period .what b { color: var(--ink); font-weight: 650; }
+.period.free { background: transparent; border-style: dashed; box-shadow: none; padding: 8px 14px; }
+.period.free .no { font-size: 15px; }
+.period.free .what { font-size: 13px; color: var(--faint); }
+.period.now { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.period.now .no { color: var(--accent); }
+.period.todo { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+.period.done .no { color: var(--ok); }
+.status { margin-left: auto; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+.status.todo { color: var(--warn); }
+.status.done { color: var(--ok); }
+.status.now { color: var(--accent); }
+.status svg { width: 15px; height: 15px; }
+
+/* 학급 카드 */
+.class-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.class-card { padding: 14px; display: flex; flex-direction: column; gap: 9px; }
+.class-card .head { display: flex; align-items: center; gap: 8px; }
+.class-card .head .exam { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 600; }
+.class-card .head .exam b { color: var(--ink); font-size: 15px; }
+.bar { height: 6px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: hsl(var(--h) 65% 55%); border-radius: 9px; }
+.kv { font-size: 13.5px; display: grid; grid-template-columns: 40px 1fr; gap: 3px 8px; }
+.kv dt { color: var(--faint); font-weight: 600; }
+.kv dd { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.class-card textarea { width: 100%; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 13px; resize: vertical; min-height: 38px; }
+.mini-list { font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.mini-list div { display: flex; gap: 8px; }
+.mini-list span:first-child { color: var(--faint); width: 80px; flex: none; font-variant-numeric: tabular-nums; }
+.mini-list span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 주간 */
+.week-wrap { overflow-x: auto; }
+.week { display: grid; grid-template-columns: 34px repeat(5, minmax(108px, 1fr)); min-width: 590px; }
+.week > div { padding: 5px; border-bottom: 1px solid var(--line); }
+.week .h { font-size: 13px; font-weight: 700; color: var(--muted); text-align: center; padding: 10px 4px; }
+.week .h.today { color: var(--accent); }
+.week .h small { display: block; font-weight: 500; font-size: 11.5px; color: var(--faint); }
+.week .p { font-weight: 800; color: var(--faint); display: grid; place-items: center; font-size: 15px; }
+.cell { width: 100%; min-height: 64px; border: 1px solid transparent; border-radius: 11px; padding: 6px 7px; background: none; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; }
+.cell.has { background: var(--surface-2); border-color: var(--line); }
+.cell.has:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.cell.changed { border-style: dashed; border-color: var(--warn); }
+.cell.todo { background: var(--warn-soft); }
+.cell.blocked { background: var(--event-soft); }
+.cell .chip { font-size: 13px; min-width: 40px; padding: 2px 7px; }
+.cell .t { font-size: 11.5px; color: var(--muted); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cell .t.done { color: var(--ok); font-weight: 600; }
+.cell .t.todo { color: var(--warn); font-weight: 700; }
+.cell .t.ev { color: var(--event); font-weight: 600; }
+.cell .t.gone { color: var(--faint); text-decoration: line-through; }
+.week-col-today { background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* 설정 */
+.settings { display: grid; gap: 14px; }
+@media (min-width: 900px) { .settings { grid-template-columns: 1fr 1fr; align-items: start; } }
+.panel { padding: 16px; }
+.panel h3 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.02em; }
+.panel p.desc { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.panel textarea.plan { width: 100%; min-height: 260px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.7; resize: vertical; }
+.grade-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.code { display: flex; gap: 8px; }
+.code input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-family: ui-monospace, monospace; font-size: 12px; }
+ol.steps { margin: 8px 0 0; padding-left: 20px; font-size: 13px; color: var(--muted); }
+ol.steps li { margin: 3px 0; }
+ol.steps code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; font-size: 12px; color: var(--ink); }
+
+/* 기록 시트 */
+dialog.sheet { border: 0; padding: 0; background: var(--surface); color: var(--ink); width: min(100%, 460px); max-height: 92dvh; border-radius: 22px 22px 0 0; margin: auto auto 0; box-shadow: 0 -8px 40px rgba(0,0,0,.18); }
+@media (min-width: 600px) { dialog.sheet { border-radius: 22px; margin: auto; } }
+dialog.sheet::backdrop { background: rgba(15, 18, 26, .38); backdrop-filter: blur(2px); }
+.sheet-in { padding: 20px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+.sheet-head { display: flex; align-items: center; gap: 10px; }
+.sheet-head .meta { font-size: 13px; color: var(--muted); font-weight: 600; }
+.sheet-head .x { margin-left: auto; }
+.plan-box { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.plan-box .lbl { font-size: 12px; color: var(--faint); font-weight: 700; }
+.plan-box .val { font-size: 16px; font-weight: 700; margin-top: 2px; letter-spacing: -.01em; }
+.plan-box .prev { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.quick { display: grid; gap: 8px; }
+.quick .btn { justify-content: flex-start; padding: 12px 14px; text-align: left; }
+.quick .btn small { margin-left: auto; font-weight: 500; opacity: .75; font-size: 12.5px; }
+.manual { display: grid; grid-template-columns: 1fr; gap: 8px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.manual label { font-size: 12px; font-weight: 700; color: var(--faint); }
+.manual select, .manual textarea { width: 100%; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+.manual .acts { display: flex; gap: 8px; }
+.manual .acts .btn.primary { margin-left: auto; }
+
+.empty { padding: 28px 18px; text-align: center; color: var(--muted); font-size: 14px; }
+.empty b { color: var(--ink); display: block; font-size: 16px; margin-bottom: 4px; }
+.login { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
+.login .card { padding: 32px 26px; max-width: 380px; width: 100%; text-align: center; }
+.login h1 { font-size: 24px; margin: 14px 0 6px; letter-spacing: -.03em; }
+.login p { color: var(--muted); font-size: 14px; margin: 0 0 22px; }
+.logo { width: 52px; height: 52px; border-radius: 16px; background: var(--accent); color: var(--accent-ink); display: inline-grid; place-items: center; }
+.logo svg { width: 28px; height: 28px; }
+.toast { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; z-index: 50; box-shadow: 0 6px 24px rgba(0,0,0,.2); }
+@media (min-width: 900px) { .toast { bottom: 28px; } }
+</style>
 </head>
-<body class="bg-slate-50/50">
-    <div id="root"></div>
-
-    <script type="module">
+<body>
+<div id="root"></div>
+<script type="module">
+import { html, render, useState, useEffect, useMemo, useRef } from "https://unpkg.com/htm@3.1.1/preact/standalone.module.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-const {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback
-} = React;
-const firebaseConfig = {
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// 기존 앱과 같은 Firebase 프로젝트/경로 → 기존 로그인·학사일정(events) 그대로 사용
+const fbApp = initializeApp({
   apiKey: "AIzaSyC74vmNOFabZ0qd2iPjDL7pWFg3W13h6rE",
   authDomain: "moon-pixel.firebaseapp.com",
   projectId: "moon-pixel",
   storageBucket: "moon-pixel.firebasestorage.app",
   messagingSenderId: "690517363714",
   appId: "1:690517363714:web:a5204517fcc83982942b1b",
-  measurementId: "G-V5C04W4EG3"
-};
-const appId = 'godeok-ms-final-v3';
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache()
 });
-const WEEKDAYS_MAP = ["월", "화", "수", "목", "금"];
-const PERIODS = Array.from({
-  length: 7
-}, (_, i) => `${i + 1}교시`);
-const WEEKDAY_BY_DAY = ["일", "월", "화", "수", "목", "금", "토"];
-const EMPTY_SLOT = "__EMPTY__";
-const Icon = ({
-  name,
-  size = 20,
-  className = ""
-}) => /*#__PURE__*/React.createElement("i", {
-  "data-lucide": name,
-  style: {
-    width: size,
-    height: size
-  },
-  className: className
-});
-const Card = ({
-  children,
-  className = ""
-}) => /*#__PURE__*/React.createElement("div", {
-  className: `bg-white rounded-[30px] shadow-sm border border-slate-100 ${className}`
-}, children);
-const Button = ({
-  children,
-  onClick,
-  variant = "primary",
-  size = "md",
-  className = "",
-  disabled = false
-}) => {
-  const base = "inline-flex items-center justify-center font-semibold transition-all active:scale-95 disabled:opacity-50";
-  const variants = {
-    primary: "bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-md hover:shadow-lg",
-    outline: "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
-    ghost: "text-slate-500 hover:bg-slate-100",
-    fuchsia: "bg-gradient-to-r from-fuchsia-500 to-sky-500 text-white shadow-md hover:shadow-lg",
-    google: "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm",
-    rose: "bg-rose-500 text-white shadow-md hover:bg-rose-600",
-    amber: "bg-amber-500 text-white shadow-md hover:bg-amber-600"
-  };
-  const sizes = {
-    md: "px-4 py-2.5 rounded-2xl text-sm",
-    sm: "px-3 py-1.5 rounded-xl text-xs",
-    icon: "p-2 rounded-xl"
-  };
-  return /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    onClick: onClick,
-    disabled: disabled,
-    className: `${base} ${variants[variant]} ${sizes[size]} ${className}`
-  }, children);
-};
-const MessageBox = ({
-  message,
-  onClose
-}) => /*#__PURE__*/React.createElement("div", {
-  className: "fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm p-4 text-center focus:outline-none",
-  onKeyDown: e => {
-    if (e.key === 'Enter') onClose();
-  },
-  tabIndex: "0"
-}, /*#__PURE__*/React.createElement(Card, {
-  className: "max-w-md w-full p-6 animate-in zoom-in-95 duration-200 shadow-2xl"
-}, /*#__PURE__*/React.createElement("div", {
-  className: "mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 mb-4"
-}, /*#__PURE__*/React.createElement(Icon, {
-  name: "info",
-  className: "text-sky-500"
-})), /*#__PURE__*/React.createElement("p", {
-  className: "text-slate-600 font-bold mb-6 whitespace-pre-wrap text-sm leading-relaxed"
-}, message), /*#__PURE__*/React.createElement(Button, {
-  onClick: onClose,
-  className: "w-full"
-}, "확인")));
-const ConfirmModal = ({
-  title,
-  message,
-  onConfirm,
-  onCancel
-}) => /*#__PURE__*/React.createElement("div", {
-  className: "fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 text-center focus:outline-none",
-  onKeyDown: e => {
-    if (e.key === 'Enter') onConfirm();else if (e.key === 'Escape') onCancel();
-  },
-  tabIndex: "0"
-}, /*#__PURE__*/React.createElement(Card, {
-  className: "max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 shadow-2xl border-rose-100"
-}, /*#__PURE__*/React.createElement("div", {
-  className: "mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 mb-4"
-}, /*#__PURE__*/React.createElement(Icon, {
-  name: "alert-triangle",
-  className: "text-rose-500"
-})), /*#__PURE__*/React.createElement("h3", {
-  className: "text-lg font-black text-slate-800 mb-2"
-}, title), /*#__PURE__*/React.createElement("p", {
-  className: "text-slate-500 font-bold mb-6 text-xs leading-relaxed whitespace-pre-wrap"
-}, message), /*#__PURE__*/React.createElement("div", {
-  className: "flex gap-2"
-}, /*#__PURE__*/React.createElement(Button, {
-  onClick: onCancel,
-  variant: "outline",
-  className: "flex-1 text-xs"
-}, "취소"), /*#__PURE__*/React.createElement(Button, {
-  onClick: onConfirm,
-  variant: "rose",
-  className: "flex-1 text-xs"
-}, "진행하기"))));
-const makeId = p => `${p}-${Math.random().toString(36).slice(2, 8)}`;
-const shortClass = s => s && s !== EMPTY_SLOT ? s.replace(/학년\s+/g, '-').replace(/반/g, '') : "-";
-const getGrade = name => {
-  const match = name?.match(/(\d)/);
-  return match ? parseInt(match[1]) : 0;
-};
-const getSafeDate = dateStr => new Date(dateStr + "T00:00:00");
-const getLocalIsoString = d => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-const toKoreanDate = dateStr => {
-  if (!dateStr) return "";
-  const parts = dateStr.split('-');
-  return parts.length === 3 ? `${parts[0]}.${parts[1]}.${parts[2]}` : dateStr;
-};
-// [개선] 시험 등 일정의 "대상 학년"을 괄호 표기에서 안전하게 추출.
-//  - 괄호 안에 '학년'이 있으면, 그 앞의 숫자(1~3)만 학년으로 인식한다.
-//  - 쉼표/마침표/가운뎃점/공백/물결 등 어떤 구분자나 오타가 섞여도 정확히 인식.
-//    예) (2,3학년) (2,.3학년) (2.3학년) (2·3학년) (2 3학년) → 모두 [2,3]
-//  - 범위 표기 (1~3학년)/(1-3학년) → [1,2,3], '전학년' → [1,2,3]
-//  - 괄호 학년 표기가 없으면(휴일·행사 등) 전 학년 대상으로 간주.
-const parseTargetGrades = title => {
-  if (!title) return [1, 2, 3];
-  const m = title.match(/\(([^)]*?)\s*학년/);
-  if (m) {
-    const inner = m[1];
-    const range = inner.match(/([1-3])\s*[-~∼–—]\s*([1-3])/);
-    if (range) {
-      const lo = Math.min(+range[1], +range[2]);
-      const hi = Math.max(+range[1], +range[2]);
-      const arr = [];
-      for (let g = lo; g <= hi; g++) arr.push(g);
-      return arr;
-    }
-    const grades = [...new Set((inner.match(/[1-3]/g) || []).map(Number))].sort();
-    if (grades.length > 0) return grades;
-    return [1, 2, 3]; // '전학년' 등 숫자 미표기 → 전 학년 대상
-  }
-  return [1, 2, 3];
-};
-const getColorForText = text => {
-  if (!text || text === "미설정" || text.trim() === "") return "bg-white border-slate-100 text-slate-700";
-  const bgPalettes = ["bg-blue-100 border-blue-300 text-blue-900", "bg-amber-100 border-amber-400 text-amber-900", "bg-emerald-100 border-emerald-400 text-emerald-900", "bg-rose-100 border-rose-300 text-rose-900", "bg-violet-100 border-violet-300 text-violet-900", "bg-cyan-100 border-cyan-400 text-cyan-900", "bg-orange-100 border-orange-400 text-orange-900", "bg-lime-100 border-lime-400 text-lime-900", "bg-fuchsia-100 border-fuchsia-400 text-fuchsia-900", "bg-teal-100 border-teal-400 text-teal-900", "bg-sky-100 border-sky-300 text-sky-900", "bg-pink-100 border-pink-300 text-pink-900", "bg-indigo-200 border-indigo-400 text-indigo-950", "bg-yellow-200 border-yellow-500 text-yellow-950", "bg-green-200 border-green-500 text-green-950", "bg-red-200 border-red-400 text-red-950", "bg-stone-200 border-stone-400 text-stone-900", "bg-zinc-200 border-zinc-400 text-zinc-900"];
-  let hash = 5381;
-  for (let i = 0; i < text.length; i++) hash = (hash << 5) + hash + text.charCodeAt(i);
-  const index = Math.abs(hash) % bgPalettes.length;
-  return bgPalettes[index] + " shadow-sm";
-};
-function App() {
-  const [user, setUser] = useState(null);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [classes, setClasses] = useState([]);
-  const [weekly, setWeekly] = useState([]);
-  const [events, setEvents] = useState([]);
-  const [overrides, setOverrides] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState(null);
-  const [weekBaseDate, setWeekBaseDate] = useState(new Date());
-  const [selectedCells, setSelectedCells] = useState([]);
-  const [editingCell, setEditingCell] = useState(null);
-  const [cellDraftClass, setCellDraftClass] = useState("");
-  const [cellDraftLabel, setCellDraftLabel] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [modalMsg, setModalMsg] = useState("");
-  const [dragSource, setDragSource] = useState(null);
-  const [dragOverCell, setDragOverCell] = useState(null);
-  const [manualDate, setManualDate] = useState(getLocalIsoString(new Date()));
-  const [manualType, setManualType] = useState("휴업");
-  const [manualPeriods, setManualPeriods] = useState(["전교시"]);
-  const [manualTitle, setManualTitle] = useState("");
-  const [confirmModal, setConfirmModal] = useState(null);
-  const scheduleFileRef = useRef(null);
-  const eventFileRef = useRef(null);
-  const scrollContainerRef = useRef(null);
-  const academicYearDays = useMemo(() => {
-    const days = [];
-    let current = new Date("2026-03-02");
-    const end = new Date("2027-02-28");
-    while (current <= end) {
-      const day = current.getDay();
-      if (day !== 0 && day !== 6) {
-        days.push(new Date(current));
-      }
-      current.setDate(current.getDate() + 1);
-    }
-    return days;
-  }, []);
+const APP_ID = "godeok-ms-final-v3";
+const auth = getAuth(fbApp);
+const db = initializeFirestore(fbApp, { localCache: persistentLocalCache() });
 
-  // [개선: 스마트 휠 스크롤 감도 최적화]
+// ponytail: 일반적인 중학교 종 시간(45분 수업·10분 휴식). 학교 시정과 다르면 여기만 고치면 됨.
+const BELL = [null, ["09:00", "09:45"], ["09:55", "10:40"], ["10:50", "11:35"], ["11:45", "12:30"], ["13:20", "14:05"], ["14:15", "15:00"], ["15:10", "15:55"]];
+const PERIODS = [1, 2, 3, 4, 5, 6, 7];
+const WD = ["일", "월", "화", "수", "목", "금", "토"];
+
+// ---------- 날짜 ----------
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const fromIso = s => new Date(s + "T00:00:00");
+const addDays = (s, n) => { const d = fromIso(s); d.setDate(d.getDate() + n); return iso(d); };
+const mondayOf = s => { const d = fromIso(s); const w = d.getDay(); return addDays(s, w === 0 ? 1 : w === 6 ? 2 : 1 - w); };
+const md = s => { const d = fromIso(s); return `${d.getMonth() + 1}/${d.getDate()}`; };
+const mdw = s => `${md(s)}(${WD[fromIso(s).getDay()]})`;
+const atTime = (s, hhmm) => new Date(`${s}T${hhmm}:00`);
+const gradeOf = c => +c.split("-")[0];
+const slotKey = (date, p) => `${date}_${p}`;
+
+// 학사일정(기존 앱 규칙 그대로): 제목 괄호의 'n학년' → 대상 학년, 없으면 전 학년
+const targetGrades = title => {
+  const m = title?.match(/\(([^)]*?)\s*학년/);
+  if (!m) return [1, 2, 3];
+  const r = m[1].match(/([1-3])\s*[-~∼–—]\s*([1-3])/);
+  if (r) { const a = []; for (let g = Math.min(+r[1], +r[2]); g <= Math.max(+r[1], +r[2]); g++) a.push(g); return a; }
+  const gs = [...new Set((m[1].match(/[1-3]/g) || []).map(Number))];
+  return gs.length ? gs : [1, 2, 3];
+};
+const isExam = e => e.type === "시험" || e.title?.includes("고사");
+const blocks = e => !e.title?.includes("창체") && (e.type === "시험" || e.type === "휴업" || e.type === "행사(수업제외)");
+
+// ---------- 데이터 ----------
+function useUserData(user) {
+  const [data, setData] = useState({ meta: {}, lessons: {}, events: [], ready: false });
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const handleWheel = e => {
-      if (e.deltaY !== 0) {
-        e.preventDefault();
-        // [개선] 방향 반전: 위로 굴리면 과거(이전 날짜), 아래로 굴리면 미래(먼 날짜)로 이동
-        const scrollAmount = e.deltaY * 2.2;
-        container.scrollLeft += scrollAmount;
-      }
-    };
-    container.addEventListener('wheel', handleWheel, {
-      passive: false
-    });
-    return () => container.removeEventListener('wheel', handleWheel);
-  }, [isInitialLoading]);
-  useEffect(() => {
-    if (!isInitialLoading && scrollContainerRef.current) {
-      const todayStr = getLocalIsoString(new Date());
-      setTimeout(() => {
-        const todayElement = document.getElementById(`col-${todayStr}`);
-        if (todayElement && scrollContainerRef.current) {
-          const container = scrollContainerRef.current;
-          const leftPos = todayElement.offsetLeft - container.clientWidth / 2 + todayElement.clientWidth / 2;
-          container.scrollTo({
-            left: leftPos,
-            behavior: 'auto'
-          });
-        }
-      }, 500);
-    }
-  }, [isInitialLoading]);
-  useEffect(() => {
-    setIsAuthChecking(true);
-    let unsubscribes = [];
-    const authUnsubscribe = onAuthStateChanged(auth, currentUser => {
-      setUser(currentUser);
-      setIsAuthChecking(false);
-      unsubscribes.forEach(un => un());
-      unsubscribes = [];
-      if (currentUser) {
-        setIsInitialLoading(true);
-        let loadedCount = 0;
-        const colNames = ['classes', 'weekly', 'events', 'overrides'];
-        colNames.forEach(name => {
-          const un = onSnapshot(query(collection(db, 'artifacts', appId, 'users', currentUser.uid, name)), snapshot => {
-            const data = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
-            if (name === 'classes') {
-              const sorted = data.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
-              setClasses(sorted);
-              setSelectedClassId(prev => (!prev || !sorted.find(c => c.id === prev)) && sorted.length ? sorted[0].id : prev);
-            } else if (name === 'weekly') setWeekly(data);else if (name === 'events') setEvents(data);else if (name === 'overrides') setOverrides(data);
-            loadedCount++;
-            if (loadedCount >= colNames.length) setIsInitialLoading(false);
-          }, err => {
-            console.error(`데이터 에러 (${name}):`, err);
-            loadedCount++;
-            if (loadedCount >= colNames.length) setIsInitialLoading(false);
-          });
-          unsubscribes.push(un);
-        });
-      } else {
-        setIsInitialLoading(false);
-      }
-    });
-    return () => {
-      authUnsubscribe();
-      unsubscribes.forEach(un => un());
-    };
-  }, []);
-  const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      if (result.user) setModalMsg(`${result.user.displayName} 선생님, 반갑습니다!`);
-    } catch (err) {
-      console.error("Login error:", err);
-      setModalMsg(`로그인 중 오류가 발생했습니다: ${err.message}`);
-    }
-  };
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-    } catch (err) {
-      console.error("로그아웃 에러:", err);
-    }
-  };
-  useEffect(() => {
-    if (window.lucide) window.lucide.createIcons();
-  }, [isInitialLoading, isSidebarOpen, editingCell, events, weekly, classes, user, selectedCells, overrides]);
-  const countRemaining = useCallback(targetClassName => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const myGrade = getGrade(targetClassName);
-    const upcomingExams = events.filter(e => (e.type === "시험" || e.title?.includes("고사")) && parseTargetGrades(e.title).includes(myGrade)).map(e => ({
-      ...e,
-      dateObj: getSafeDate(e.date)
-    })).filter(e => e.dateObj >= today).sort((a, b) => a.dateObj - b.dateObj);
-    const targetExam = upcomingExams[0];
-    if (!targetExam) return 0;
-    const end = targetExam.dateObj;
-    let count = 0;
-    const d = new Date(today);
-    while (d < end) {
-      const iso = getLocalIsoString(d);
-      const dayName = WEEKDAY_BY_DAY[d.getDay()];
-      if (WEEKDAYS_MAP.includes(dayName)) {
-        const dailyOverrides = overrides.filter(o => o.date === iso);
-        const overrideMap = new Map();
-        dailyOverrides.forEach(o => overrideMap.set(o.newPeriod, o));
-        const periodsForClassInBase = weekly.filter(w => w.className === targetClassName && w.weekday === dayName).map(w => w.period);
-        let dailyCount = 0;
-        periodsForClassInBase.forEach(p => {
-          const hasEventAtPeriod = events.some(e => e.date === iso && (e.period === p || e.period === "전교시" || !e.period) && parseTargetGrades(e.title).includes(myGrade));
-          if (hasEventAtPeriod) return;
-          const override = overrideMap.get(p);
-          if (override) {
-            if (override.newClassName === targetClassName) dailyCount++;
-          } else {
-            dailyCount++;
-          }
-        });
-        const trulyAddedCount = Array.from(overrideMap.values()).filter(o => o.newClassName === targetClassName && !periodsForClassInBase.includes(o.newPeriod)).filter(o => {
-          const hasEventAtOverridePeriod = events.some(e => e.date === iso && (e.period === o.newPeriod || e.period === "전교시" || !e.period) && parseTargetGrades(e.title).includes(myGrade));
-          return !hasEventAtOverridePeriod;
-        }).length;
-        count += dailyCount + trulyAddedCount;
-      }
-      d.setDate(d.getDate() + 1);
-    }
-    return count;
-  }, [events, overrides, weekly]);
-  const refreshRemaining = useCallback(async () => {
-    if (!user || !db) return;
-    const batch = writeBatch(db);
-    classes.forEach(c => {
-      batch.update(doc(db, 'artifacts', appId, 'users', user.uid, 'classes', c.id), {
-        remainingBeforeExam: countRemaining(c.name)
-      });
-    });
-    await batch.commit();
-    setModalMsg("시수 동기화가 완료되었습니다.");
-  }, [user, db, classes, countRemaining]);
-  const handleFullReset = async () => {
-    if (!user || !db) return;
-    try {
-      setConfirmModal(null);
-      const batch = writeBatch(db);
-      const targets = ['weekly', 'events', 'overrides'];
-      for (const name of targets) {
-        const snap = await getDocs(collection(db, 'artifacts', appId, 'users', user.uid, name));
-        snap.docs.forEach(d => batch.delete(d.ref));
-      }
-      const classSnap = await getDocs(collection(db, 'artifacts', appId, 'users', user.uid, 'classes'));
-      classSnap.docs.forEach(d => batch.delete(d.ref));
-      await batch.commit();
-      setModalMsg("학기 데이터가 완전히 초기화되었습니다.");
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  const handleLessonReset = async () => {
-    if (!user || !db) return;
-    try {
-      setConfirmModal(null);
-      const batch = writeBatch(db);
-      const overrideSnap = await getDocs(collection(db, 'artifacts', appId, 'users', user.uid, 'overrides'));
-      overrideSnap.docs.forEach(d => batch.delete(d.ref));
-      classes.forEach(c => {
-        batch.update(doc(db, 'artifacts', appId, 'users', user.uid, 'classes', c.id), {
-          lessonTitle: "미설정",
-          memo: ""
-        });
-      });
-      await batch.commit();
-      setModalMsg("시간표 배치와 학급별 진도가 원본 상태로 복구되었습니다.");
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  const pushHistory = useCallback(() => {
-    setHistory(prev => [...prev, {
-      overrides: JSON.parse(JSON.stringify(overrides)),
-      events: JSON.parse(JSON.stringify(events))
-    }].slice(-30));
-  }, [overrides, events]);
-  const undo = useCallback(async () => {
-    if (history.length === 0 || !user || !db) return;
-    const lastState = history[history.length - 1];
-    setHistory(prevHistory => prevHistory.slice(0, -1));
-    try {
-      const batch = writeBatch(db);
-      const currentOverridesSnap = await getDocs(collection(db, 'artifacts', appId, 'users', user.uid, 'overrides'));
-      currentOverridesSnap.docs.forEach(d => batch.delete(d.ref));
-      lastState.overrides.forEach(o => {
-        batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'overrides', o.id), o);
-      });
-      const currentEventsSnap = await getDocs(collection(db, 'artifacts', appId, 'users', user.uid, 'events'));
-      currentEventsSnap.docs.forEach(d => batch.delete(d.ref));
-      lastState.events.forEach(e => {
-        batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'events', e.id), e);
-      });
-      await batch.commit();
-    } catch (err) {
-      console.error(err);
-    }
-  }, [history, user, db]);
-  const getScheduleForDate = useCallback(date => {
-    const iso = getLocalIsoString(date);
-    const dayName = WEEKDAY_BY_DAY[date.getDay()];
-    if (!WEEKDAYS_MAP.includes(dayName)) return [];
-    const dayEvents = events.filter(e => e.date === iso);
-    const dailyOverrides = overrides.filter(o => o.date === iso);
-    const overrideMap = new Map();
-    dailyOverrides.forEach(o => overrideMap.set(o.newPeriod, o));
-    const baseWeek = weekly.filter(w => w.weekday === dayName);
-    return PERIODS.map(period => {
-      const override = overrideMap.get(period);
-      const base = baseWeek.find(w => w.period === period);
-      let className = EMPTY_SLOT;
-      let source = "none";
-      let customLabel = "";
-      let isClassChanged = false;
-      if (override) {
-        className = override.newClassName;
-        customLabel = override.customLabel;
-        source = "override";
-        isClassChanged = override.newClassName !== (base?.className || EMPTY_SLOT);
-      } else if (base) {
-        className = base.className;
-        source = "base";
-      }
-      const grade = getGrade(className);
-      const relevantEvent = dayEvents.find(e => (e.period === "전교시" || e.period === period || !e.period) && (className === EMPTY_SLOT ? true : parseTargetGrades(e.title).includes(grade)));
-      const isChangche = relevantEvent?.title?.includes("창체");
-      const isBlocking = relevantEvent && (relevantEvent.type === '시험' || relevantEvent.type === '휴업' || relevantEvent.type === '행사(수업제외)');
-      return {
-        period,
-        className,
-        source,
-        customLabel,
-        isClassChanged,
-        isChangche,
-        eventId: relevantEvent?.id,
-        eventTitle: relevantEvent?.title,
-        eventType: relevantEvent?.type,
-        isEventMode: isBlocking && !isChangche,
-        hasAnyEvent: !!relevantEvent
-      };
-    });
-  }, [events, overrides, weekly]);
-  const handleDeleteSelected = useCallback(async () => {
-    if (!user || selectedCells.length === 0 || !db) return;
-    pushHistory();
-    try {
-      const batch = writeBatch(db);
-      selectedCells.forEach(cell => {
-        const {
-          date,
-          period
-        } = cell;
-        const dObj = getSafeDate(date);
-        const currentDataList = getScheduleForDate(dObj);
-        const item = currentDataList.find(d => d.period === period);
-        if (item?.eventId) {
-          batch.delete(doc(db, 'artifacts', appId, 'users', user.uid, 'events', item.eventId));
-        }
-        const existingOverrides = overrides.filter(o => o.date === date && o.newPeriod === period);
-        if (existingOverrides.length > 0) {
-          existingOverrides.forEach(o => batch.delete(doc(db, 'artifacts', appId, 'users', user.uid, 'overrides', o.id)));
-        }
-        const id = makeId("o");
-        batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'overrides', id), {
-          id,
-          date,
-          newClassName: EMPTY_SLOT,
-          newPeriod: period,
-          customLabel: ""
-        });
-      });
-      await batch.commit();
-      setSelectedCells([]);
-    } catch (err) {
-      console.error(err);
-    }
-  }, [user, db, selectedCells, overrides, pushHistory, getScheduleForDate]);
-  useEffect(() => {
-    const handleGlobalKeyDown = e => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        undo();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'x') {
-        e.preventDefault();
-        refreshRemaining();
-      }
-      if (e.key === 'Delete') {
-        handleDeleteSelected();
-      }
-    };
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [undo, refreshRemaining, handleDeleteSelected]);
-  const handleScheduleUpload = async e => {
-    if (!user || !user.uid || !db) return setModalMsg("로그인이 필요합니다.");
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async evt => {
-      try {
-        const workbook = XLSX.read(evt.target.result, {
-          type: 'binary'
-        });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(sheet, {
-          header: 1
-        });
-        const newWeekly = [];
-        const foundClasses = new Set();
-        const daysInExcel = rows[0] ? rows[0].slice(1) : [];
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i];
-          const periodName = String(row[0] || "").trim();
-          if (!periodName.includes("교시")) continue;
-          for (let j = 1; j < row.length; j++) {
-            let className = String(row[j] || "").trim();
-            if (!className || className === "-") continue;
-            const dayName = daysInExcel[j - 1];
-            if (!WEEKDAYS_MAP.includes(dayName)) continue;
-            if (className.includes("-") && !className.includes("학년")) {
-              const pts = className.split("-");
-              className = `${pts[0]}학년 ${pts[1]}반`;
-            }
-            foundClasses.add(className);
-            newWeekly.push({
-              className,
-              weekday: dayName,
-              period: periodName
-            });
-          }
-        }
-        const batch = writeBatch(db);
-        const oldWeekly = await getDocs(collection(db, 'artifacts', appId, 'users', user.uid, 'weekly'));
-        oldWeekly.docs.forEach(d => batch.delete(d.ref));
-        const oldClasses = await getDocs(collection(db, 'artifacts', appId, 'users', user.uid, 'classes'));
-        oldClasses.docs.forEach(d => batch.delete(d.ref));
-        const oldOverrides = await getDocs(collection(db, 'artifacts', appId, 'users', user.uid, 'overrides'));
-        oldOverrides.docs.forEach(d => batch.delete(d.ref));
-        newWeekly.forEach(w => {
-          const id = makeId("w");
-          batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'weekly', id), w);
-        });
-        Array.from(foundClasses).sort().forEach((name, i) => {
-          const id = `c-${i}`;
-          batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'classes', id), {
-            name,
-            lessonTitle: "미설정",
-            memo: "",
-            remainingBeforeExam: 0,
-            orderIndex: i
-          });
-        });
-        await batch.commit();
-        setModalMsg("시간표 업로드 완료!");
-      } catch (err) {
-        setModalMsg("파일 형식이 맞지 않습니다.");
-      }
-    };
-    reader.readAsBinaryString(file);
-    e.target.value = "";
-  };
-  const handleEventUpload = async e => {
-    if (!user || !user.uid || !db) return setModalMsg("로그인이 필요합니다.");
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async evt => {
-      try {
-        const workbook = XLSX.read(evt.target.result, {
-          type: 'binary'
-        });
-        const newEvents = [];
-        workbook.SheetNames.forEach(sheetName => {
-          const sheet = workbook.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(sheet, {
-            header: 1
-          });
-          let year = 2026,
-            month = 1,
-            found = false;
-          for (let i = 0; i < Math.min(15, rows.length); i++) {
-            for (let j = 0; j < (rows[i]?.length || 0); j++) {
-              const cellStr = String(rows[i][j] || "").trim();
-              const match = cellStr.match(/(\d+)월\s+(\d{4})/) || cellStr.match(/(\d{4})\s+(\d+)월/);
-              if (match) {
-                year = match[1].length === 4 ? parseInt(match[1]) : parseInt(match[2]);
-                month = match[1].length === 4 ? parseInt(match[2]) : parseInt(match[1]);
-                found = true;
-                break;
-              }
-            }
-            if (found) break;
-          }
-          if (!found) return;
-          for (let r = 0; r < rows.length; r++) {
-            const row = rows[r];
-            for (let c = 0; c < row.length; c++) {
-              const val = row[c];
-              if (val && !isNaN(val) && parseInt(val) >= 1 && parseInt(val) <= 31) {
-                const day = parseInt(val);
-                let content = String(rows[r + 1]?.[c] || "").trim();
-                if (!content || !isNaN(content)) continue;
-                const dateStr = getLocalIsoString(getSafeDate(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`));
-                let type = "행사";
-                if (content.includes("고사") || content.includes("시험")) type = "시험";else if (content.includes("휴일") || content.includes("방학") || content.includes("휴업")) type = "휴업";
-                newEvents.push({
-                  date: dateStr,
-                  type,
-                  title: content
-                });
-              }
-            }
-          }
-        });
-        const batch = writeBatch(db);
-        const oldEvents = await getDocs(collection(db, 'artifacts', appId, 'users', user.uid, 'events'));
-        oldEvents.docs.forEach(d => batch.delete(d.ref));
-        newEvents.forEach(e => {
-          const id = makeId("e");
-          batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'events', id), e);
-        });
-        await batch.commit();
-        setModalMsg("학사일정 동기화 완료!");
-      } catch (err) {
-        setModalMsg("파일 읽기 오류!");
-      }
-    };
-    reader.readAsBinaryString(file);
-    e.target.value = "";
-  };
-  const handleAddManualEvent = async () => {
-    if (!user || !user.uid || !db) return setModalMsg("로그인이 필요합니다.");
-    if (!manualDate || !manualTitle.trim()) return;
-    pushHistory();
-    const batch = writeBatch(db);
-    manualPeriods.forEach(p => {
-      const id = makeId("e");
-      batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'events', id), {
-        date: manualDate,
-        type: manualType,
-        title: manualTitle.trim(),
-        period: p
-      });
-    });
-    await batch.commit();
-    setManualTitle("");
-  };
-  const handleDeleteEvent = async id => {
-    if (!user || !user.uid || !db || !id) return;
-    pushHistory();
-    try {
-      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'events', id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-  const handleCellClick = (e, date, period, currentClass, currentLabel) => {
-    const iso = getLocalIsoString(date);
-    const clickedCell = {
-      date: iso,
-      period
-    };
-    let newSelection = [];
-    if (e.ctrlKey || e.metaKey) {
-      const isSelected = selectedCells.some(c => c.date === iso && c.period === period);
-      if (isSelected) {
-        newSelection = selectedCells.filter(c => !(c.date === iso && c.period === period));
-      } else {
-        newSelection = [...selectedCells, clickedCell];
-      }
-    } else if (e.shiftKey && selectedCells.length > 0) {
-      const lastSelected = selectedCells[selectedCells.length - 1];
-      const allCells = [];
-      academicYearDays.forEach(d => {
-        const dIso = getLocalIsoString(d);
-        PERIODS.forEach(p => allCells.push({
-          date: dIso,
-          period: p
-        }));
-      });
-      const startIdx = allCells.findIndex(c => c.date === lastSelected.date && c.period === lastSelected.period);
-      const endIdx = allCells.findIndex(c => c.date === iso && c.period === period);
-      if (startIdx !== -1 && endIdx !== -1) {
-        const low = Math.min(startIdx, endIdx);
-        const high = Math.max(startIdx, endIdx);
-        const range = allCells.slice(low, high + 1);
-        const selectionMap = new Map();
-        selectedCells.forEach(c => selectionMap.set(`${c.date}-${c.period}`, c));
-        range.forEach(c => selectionMap.set(`${c.date}-${c.period}`, c));
-        newSelection = Array.from(selectionMap.values());
-      }
-    } else {
-      newSelection = [clickedCell];
-    }
-    setSelectedCells(newSelection);
-    setEditingCell(clickedCell);
-    setCellDraftClass(currentClass || EMPTY_SLOT);
-    setCellDraftLabel(currentLabel || "");
-  };
-  const saveCellEdit = async () => {
-    if (!user || !user.uid || selectedCells.length === 0 || !db) return;
-    pushHistory();
-    const currentSelected = [...selectedCells];
-    const classToSave = cellDraftClass;
-    const labelToSave = cellDraftLabel;
-    setEditingCell(null);
-    setSelectedCells([]);
-    try {
-      const batch = writeBatch(db);
-      currentSelected.forEach(cell => {
-        const {
-          date,
-          period
-        } = cell;
-        const existingOverrides = overrides.filter(o => o.date === date && o.newPeriod === period);
-        existingOverrides.forEach(o => batch.delete(doc(db, 'artifacts', appId, 'users', user.uid, 'overrides', o.id)));
-        const currentItem = getScheduleForDate(getSafeDate(date)).find(d => d.period === period);
-        const preservedClass = currentItem?.className || EMPTY_SLOT;
-        const finalClass = currentSelected.length > 1 ? preservedClass : classToSave || EMPTY_SLOT;
-        const id = makeId("o");
-        batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'overrides', id), {
-          id,
-          date,
-          newClassName: finalClass,
-          newPeriod: period,
-          customLabel: (labelToSave || "").trim()
-        });
-      });
-      await batch.commit();
-    } catch (err) {
-      console.error("저장 실패:", err);
-      setModalMsg("데이터 저장 중 오류가 발생했습니다.");
-    }
-  };
-  const handleDrop = async (e, targetDate, targetPeriod) => {
-    e.preventDefault();
-    setDragOverCell(null);
-    if (!user || !user.uid || !dragSource || !db) return;
-    if (dragSource.date === targetDate && dragSource.period === targetPeriod) return;
-    pushHistory();
-    const batch = writeBatch(db);
-    const existingTargets = overrides.filter(o => o.date === targetDate && o.newPeriod === targetPeriod);
-    existingTargets.forEach(o => batch.delete(doc(db, 'artifacts', appId, 'users', user.uid, 'overrides', o.id)));
-    const targetId = makeId("o");
-    batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'overrides', targetId), {
-      id: targetId,
-      date: targetDate,
-      newClassName: dragSource.className,
-      newPeriod: targetPeriod,
-      customLabel: dragSource.label
-    });
-    const existingSources = overrides.filter(o => o.date === dragSource.date && o.newPeriod === dragSource.period);
-    existingSources.forEach(o => batch.delete(doc(db, 'artifacts', appId, 'users', user.uid, 'overrides', o.id)));
-    const sourceId = makeId("o");
-    batch.set(doc(db, 'artifacts', appId, 'users', user.uid, 'overrides', sourceId), {
-      id: sourceId,
-      date: dragSource.date,
-      newClassName: EMPTY_SLOT,
-      newPeriod: dragSource.period,
-      customLabel: ""
-    });
-    await batch.commit();
-    setDragSource(null);
-  };
-  const updateClassOnServer = async () => {
-    if (!user || !user.uid || !db || !selectedClassId) return;
-    const c = classes.find(cl => cl.id === selectedClassId);
-    if (!c) return;
-    await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'classes', c.id), {
-      lessonTitle: c.lessonTitle,
-      memo: c.memo
-    });
-    setModalMsg("클라우드 저장 완료!");
-  };
-  const selectedClass = classes.find(c => c.id === selectedClassId);
-  const todayStr = getLocalIsoString(new Date());
-  if (isInitialLoading) {
-    return /*#__PURE__*/React.createElement("div", {
-      className: "flex h-screen flex-col items-center justify-center bg-slate-50 gap-4"
-    }, " ", /*#__PURE__*/React.createElement("div", {
-      className: "loader"
-    }), " ", /*#__PURE__*/React.createElement("p", {
-      className: "text-sm font-bold text-slate-500 italic"
-    }, "보안 인증 및 정보 복구 중..."), " ");
-  }
-  return /*#__PURE__*/React.createElement("div", {
-    className: "flex h-screen w-full overflow-hidden bg-slate-50/30"
-  }, modalMsg && /*#__PURE__*/React.createElement(MessageBox, {
-    message: modalMsg,
-    onClose: () => setModalMsg("")
-  }), confirmModal && /*#__PURE__*/React.createElement(ConfirmModal, confirmModal), /*#__PURE__*/React.createElement("div", {
-    className: `${isSidebarOpen ? "w-80" : "w-0"} flex h-full flex-col border-r border-slate-200 bg-white transition-all duration-300 overflow-hidden shadow-sm z-20`
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "p-8 flex items-center gap-4"
-  }, " ", /*#__PURE__*/React.createElement("div", {
-    className: "h-12 w-12 flex items-center justify-center rounded-[18px] bg-sky-500 text-white shadow-lg"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "graduation-cap",
-    size: 24
-  })), " ", /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
-    className: "text-xl font-black text-slate-800 tracking-tight"
-  }, "개인 진도 관리"), /*#__PURE__*/React.createElement("p", {
-    className: "text-[11px] font-bold text-slate-400"
-  }, "Godeok MS 2026")), " "), /*#__PURE__*/React.createElement("div", {
-    className: "px-6 pb-6"
-  }, " ", user && !user.isAnonymous ? /*#__PURE__*/React.createElement("div", {
-    className: "p-4 bg-sky-50 rounded-2xl flex items-center gap-3 border border-sky-100 shadow-sm"
-  }, " ", /*#__PURE__*/React.createElement("div", {
-    className: "h-10 w-10 rounded-full overflow-hidden border-2 border-white shadow-sm flex-shrink-0"
-  }, " ", /*#__PURE__*/React.createElement("img", {
-    src: user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName}`,
-    alt: "profile"
-  }), " "), " ", /*#__PURE__*/React.createElement("div", {
-    className: "flex-1 min-w-0"
-  }, " ", /*#__PURE__*/React.createElement("p", {
-    className: "text-xs font-black text-slate-800 truncate"
-  }, user.displayName, " 선생님"), " ", /*#__PURE__*/React.createElement("p", {
-    className: "text-[9px] font-bold text-slate-400 truncate"
-  }, user.email), " "), " ", /*#__PURE__*/React.createElement("button", {
-    onClick: handleLogout,
-    title: "로그아웃",
-    className: "p-2 text-slate-400 hover:text-rose-500 transition-colors"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "log-out",
-    size: 16
-  })), " ") : /*#__PURE__*/React.createElement(Button, {
-    variant: "google",
-    className: "w-full py-3",
-    onClick: handleGoogleLogin
-  }, " 구글 로그인 "), " "), /*#__PURE__*/React.createElement("div", {
-    className: "flex-1 overflow-y-auto px-4 custom-scrollbar"
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "text-[10px] font-black uppercase text-slate-400 px-4 mb-3 tracking-widest"
-  }, "학급 목록"), classes.length > 0 ? classes.map(c => /*#__PURE__*/React.createElement("div", {
-    key: c.id,
-    className: `group flex w-full items-center rounded-2xl mb-2 transition-all p-4 text-sm font-bold border-2 ${selectedClassId === c.id ? "bg-sky-500 text-white border-transparent shadow-lg" : "text-slate-500 bg-white border-transparent hover:bg-slate-50"}`
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setSelectedClassId(c.id),
-    className: "flex-1 flex items-center justify-between text-left"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex flex-col"
-  }, /*#__PURE__*/React.createElement("span", null, shortClass(c.name)), /*#__PURE__*/React.createElement("span", {
-    className: `text-[10px] font-medium truncate max-w-[120px] ${selectedClassId === c.id ? "text-white/70" : "text-slate-400"}`
-  }, c.lessonTitle === "미설정" ? "진도 미정" : c.lessonTitle)), /*#__PURE__*/React.createElement("span", {
-    className: `ml-auto px-3 py-1 rounded-full text-[10px] font-black ${selectedClassId === c.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400"}`
-  }, c.remainingBeforeExam, "회")))) : /*#__PURE__*/React.createElement("div", {
-    className: "px-4 py-8 text-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 mx-4"
-  }, " ", /*#__PURE__*/React.createElement("p", {
-    className: "text-[10px] font-bold text-slate-400 leading-relaxed italic text-center"
-  }, "로그인 후 파일을 업로드하세요."), " ")), user && !user.isAnonymous && /*#__PURE__*/React.createElement("div", {
-    className: "p-6 border-t border-slate-100 space-y-3"
-  }, /*#__PURE__*/React.createElement("input", {
-    ref: scheduleFileRef,
-    type: "file",
-    className: "hidden",
-    accept: ".xlsx,.xls,.csv",
-    onChange: handleScheduleUpload
-  }), /*#__PURE__*/React.createElement("input", {
-    ref: eventFileRef,
-    type: "file",
-    className: "hidden",
-    accept: ".xlsx,.xls,.csv",
-    onChange: handleEventUpload
-  }), /*#__PURE__*/React.createElement(Button, {
-    variant: "outline",
-    onClick: () => scheduleFileRef.current.click(),
-    className: "w-full text-xs py-3 rounded-2xl border-dashed"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "upload",
-    size: 14,
-    className: "mr-2 text-sky-500"
-  }), "시간표 업로드"), /*#__PURE__*/React.createElement(Button, {
-    variant: "outline",
-    onClick: () => eventFileRef.current.click(),
-    className: "w-full text-xs py-3 rounded-2xl border-dashed"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "calendar",
-    size: 14,
-    className: "mr-2 text-indigo-500"
-  }), "학사일정 동기화"))), /*#__PURE__*/React.createElement("div", {
-    className: "flex-1 flex flex-col overflow-hidden"
-  }, /*#__PURE__*/React.createElement("header", {
-    className: "h-16 flex items-center justify-between px-8 border-b border-slate-100 bg-white z-30 shadow-sm"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-4"
-  }, " ", /*#__PURE__*/React.createElement("button", {
-    onClick: () => setIsSidebarOpen(!isSidebarOpen),
-    className: "p-2 text-slate-400 hover:bg-slate-50 rounded-xl transition-all"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "menu"
-  })), " ", /*#__PURE__*/React.createElement("div", {
-    className: "h-6 w-px bg-slate-100 mx-2"
-  }), " ", /*#__PURE__*/React.createElement("button", {
-    onClick: undo,
-    disabled: history.length === 0 || !user,
-    className: "p-2 text-slate-400 hover:bg-slate-50 disabled:opacity-20 rounded-xl flex items-center gap-1 text-[10px] font-bold"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "undo-2",
-    size: 14
-  }), " 취소 (Ctrl+Z)"), " "), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 text-xs font-bold text-slate-400"
-  }, " ", /*#__PURE__*/React.createElement("div", {
-    className: `px-4 py-1.5 rounded-full text-[10px] font-black flex items-center gap-2 ${user ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`
-  }, " ", /*#__PURE__*/React.createElement("div", {
-    className: `w-1.5 h-1.5 rounded-full ${user ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`
-  }), " ", user ? '서버 연결됨' : '인증 대기', " "), " ", /*#__PURE__*/React.createElement(Button, {
-    variant: "outline",
-    size: "sm",
-    onClick: refreshRemaining,
-    disabled: !user,
-    className: "rounded-xl ml-4"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "refresh-cw",
-    size: 14,
-    className: "mr-2 text-sky-500"
-  }), "시수 동기화 (Ctrl+X)"), " ")), /*#__PURE__*/React.createElement("main", {
-    className: "flex-1 overflow-y-auto p-6 lg:p-8 custom-scrollbar"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "max-w-full mx-auto space-y-6"
-  }, /*#__PURE__*/React.createElement(Card, {
-    className: "p-0 overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/50"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "p-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-4"
-  }, " ", /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
-    className: "text-xl font-black text-slate-800 tracking-tight"
-  }, "2026학년도 전체 진도표 (연간 스크롤)"), /*#__PURE__*/React.createElement("p", {
-    className: "text-xs font-bold text-slate-400 mt-1"
-  }, "시간표 위에서 휠을 돌리면 가로로 이동합니다. (위: 과거 / 아래: 미래)")), " ", /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center bg-slate-50 p-1.5 rounded-2xl border border-slate-100 shadow-sm"
-  }, " ", /*#__PURE__*/React.createElement(Button, {
-    variant: "ghost",
-    size: "sm",
-    onClick: () => {
-      const todayEl = document.getElementById(`col-${todayStr}`);
-      if (todayEl && scrollContainerRef.current) {
-        const container = scrollContainerRef.current;
-        const leftPos = todayEl.offsetLeft - container.clientWidth / 2 + todayEl.clientWidth / 2;
-        container.scrollTo({
-          left: leftPos,
-          behavior: 'smooth'
-        });
-      }
-    },
-    className: "text-[10px] font-black text-sky-600"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "navigation",
-    size: 12,
-    className: "mr-1"
-  }), " 오늘 위치로 이동"), " "), " "), /*#__PURE__*/React.createElement("div", {
-    ref: scrollContainerRef,
-    className: "timetable-scroll-area custom-scrollbar mx-6 mb-6 border border-slate-100 shadow-inner rounded-[24px]"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex min-w-max"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "w-14 flex-shrink-0 sticky-left-col"
-  }, " ", /*#__PURE__*/React.createElement("div", {
-    className: "h-[60px] sticky-corner border-b border-slate-100 flex items-center justify-center text-[9px] font-black text-slate-400 uppercase bg-slate-50"
-  }, "교시"), " ", PERIODS.map(p => /*#__PURE__*/React.createElement("div", {
-    key: p,
-    className: "h-20 border-b border-r border-slate-50 flex items-center justify-center font-black text-slate-300 text-base"
-  }, p.replace("교시", ""))), " "), academicYearDays.map((day, dIdx) => {
-    const data = getScheduleForDate(day);
-    const dIso = getLocalIsoString(day);
-    const isToday = dIso === todayStr;
-    return /*#__PURE__*/React.createElement("div", {
-      key: day.toString(),
-      id: `col-${dIso}`,
-      className: `timetable-column border-r border-slate-50 ${isToday ? "today-column shadow-[inset_0_0_20px_rgba(14,165,233,0.05)]" : ""}`
-    }, /*#__PURE__*/React.createElement("div", {
-      className: `h-[60px] sticky-top border-b border-slate-100 text-center flex flex-col justify-center shadow-sm ${isToday ? "today-header" : "bg-white/90 backdrop-blur-md"}`
-    }, /*#__PURE__*/React.createElement("span", {
-      className: `block text-base font-black leading-none ${isToday ? "text-white" : day.getDay() === 1 ? "text-sky-600" : "text-slate-700"}`
-    }, WEEKDAY_BY_DAY[day.getDay()]), /*#__PURE__*/React.createElement("span", {
-      className: `text-[10px] font-bold mt-1 block ${isToday ? "text-white/80" : "text-slate-400"}`
-    }, day.getMonth() + 1, "/", day.getDate())), PERIODS.map(period => {
-      const item = data.find(d => d.period === period);
-      const isEditing = editingCell?.date === dIso && editingCell?.period === period;
-      const isSelected = selectedCells.some(c => c.date === dIso && c.period === period);
-      const isDragOver = dragOverCell?.date === dIso && dragOverCell?.period === period;
-      let colorClass = "";
-      if (item?.hasAnyEvent) {
-        if (item.eventType === '시험') {
-          colorClass = "bg-indigo-100 border-indigo-400 text-indigo-900";
-        } else if (item.eventType === '휴업') {
-          colorClass = "bg-rose-100 border-rose-400 text-rose-900";
-        } else {
-          colorClass = "bg-emerald-100 border-emerald-400 text-emerald-900";
-        }
-      } else {
-        colorClass = getColorForText(item?.customLabel || item?.lessonTitle);
-      }
-      return /*#__PURE__*/React.createElement("div", {
-        key: period,
-        className: `h-20 p-1 border-b border-slate-50 transition-all duration-200 ${isDragOver ? "drop-target-active" : ""}`,
-        onDragOver: e => {
-          e.preventDefault();
-          if (dragOverCell?.date !== dIso || dragOverCell?.period !== period) {
-            setDragOverCell({
-              date: dIso,
-              period
-            });
-          }
-        },
-        onDragLeave: () => setDragOverCell(null),
-        onDrop: e => handleDrop(e, dIso, period)
-      }, " ", /*#__PURE__*/React.createElement("div", {
-        draggable: !!item && item.className !== EMPTY_SLOT && !isEditing,
-        onDragStart: e => {
-          if (!item || item.className === EMPTY_SLOT) return;
-          setDragSource({
-            date: dIso,
-            period,
-            className: item.className,
-            label: item.customLabel || ""
-          });
-          e.dataTransfer.setData("application/json", "{}");
-          e.currentTarget.classList.add("dragging-cell");
-        },
-        onDragEnd: e => {
-          e.currentTarget.classList.remove("dragging-cell");
-          setDragOverCell(null);
-        },
-        onClick: e => handleCellClick(e, day, period, item?.className, item?.customLabel),
-        className: `relative h-full group w-full flex flex-col items-center justify-center rounded-2xl border-2 transition-all ${colorClass} ${(!item || item.className === EMPTY_SLOT) && !item?.hasAnyEvent ? "bg-transparent border-slate-100 border-dashed opacity-40 hover:opacity-100" : "hover:scale-[1.01] hover:shadow-sm cursor-pointer"} ${isSelected ? "selected-cell" : ""}`
-      }, item?.isEventMode ? /*#__PURE__*/React.createElement("div", {
-        className: "text-center px-1 relative w-full h-full flex flex-col items-center justify-center"
-      }, " ", /*#__PURE__*/React.createElement("button", {
-        type: "button",
-        onClick: e => {
-          e.stopPropagation();
-          e.preventDefault();
-          handleDeleteEvent(item.eventId);
-        },
-        className: "absolute top-1 right-1 p-1 opacity-0 group-hover:opacity-100 hover:bg-black/10 rounded-full transition-all z-[999] cursor-pointer pointer-events-auto"
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "x",
-        size: 12
-      })), " ", /*#__PURE__*/React.createElement("div", {
-        className: "pointer-events-none"
-      }, " ", /*#__PURE__*/React.createElement("p", {
-        className: "text-[8px] font-black uppercase opacity-60 mb-0.5 leading-none"
-      }, item.eventType), " ", /*#__PURE__*/React.createElement("p", {
-        className: "text-[9px] font-black leading-tight break-all line-clamp-2"
-      }, item.eventTitle), " "), " ") : isEditing ? /*#__PURE__*/React.createElement("div", {
-        className: "absolute inset-0 z-40 bg-white p-2 rounded-2xl shadow-xl border border-sky-400 flex flex-col gap-1.5",
-        onClick: e => e.stopPropagation()
-      }, /*#__PURE__*/React.createElement("select", {
-        value: cellDraftClass,
-        onChange: e => setCellDraftClass(e.target.value),
-        className: `w-full text-[9px] p-1 bg-slate-50 rounded-lg border border-slate-100 font-bold outline-none shadow-inner ${selectedCells.length > 1 ? "opacity-50 pointer-events-none" : ""}`
-      }, selectedCells.length > 1 ? /*#__PURE__*/React.createElement("option", {
-        value: ""
-      }, "학급 유지됨") : /*#__PURE__*/React.createElement("option", {
-        value: EMPTY_SLOT
-      }, "수업 없음"), classes.map(c => /*#__PURE__*/React.createElement("option", {
-        key: c.id,
-        value: c.name
-      }, shortClass(c.name)))), /*#__PURE__*/React.createElement("input", {
-        autoFocus: true,
-        value: cellDraftLabel,
-        onChange: e => setCellDraftLabel(e.target.value),
-        onKeyDown: e => {
-          if (e.key === 'Enter') saveCellEdit();
-          if (e.key === 'Escape') {
-            setEditingCell(null);
-            setSelectedCells([]);
-          }
-        },
-        className: "w-full text-[9px] p-1 bg-slate-50 border border-slate-100 rounded-lg outline-none shadow-inner",
-        placeholder: "활동명 입력 (Enter 저장)"
-      }), /*#__PURE__*/React.createElement("div", {
-        className: "mt-auto flex gap-1"
-      }, /*#__PURE__*/React.createElement("button", {
-        type: "button",
-        onClick: saveCellEdit,
-        className: "flex-1 bg-sky-500 text-white rounded-lg text-[9px] font-black py-1 shadow-sm"
-      }, "저장"), /*#__PURE__*/React.createElement("button", {
-        type: "button",
-        onClick: () => {
-          setEditingCell(null);
-          setSelectedCells([]);
-        },
-        className: "flex-1 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black py-1"
-      }, "취소"))) : /*#__PURE__*/React.createElement("div", {
-        className: "w-full h-full flex flex-col items-center justify-center px-2 overflow-hidden relative"
-      }, " ", item?.hasAnyEvent && /*#__PURE__*/React.createElement("button", {
-        type: "button",
-        onClick: e => {
-          e.stopPropagation();
-          e.preventDefault();
-          handleDeleteEvent(item.eventId);
-        },
-        className: "absolute top-1 right-1 p-1 opacity-0 group-hover:opacity-100 hover:bg-black/10 rounded-full transition-all z-[999] cursor-pointer pointer-events-auto"
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "x",
-        size: 12
-      })), " ", item?.className !== EMPTY_SLOT && /*#__PURE__*/React.createElement("span", {
-        className: "font-black text-[13px] tracking-tighter leading-none pointer-events-none"
-      }, " ", shortClass(item?.className), " ", item?.isClassChanged && /*#__PURE__*/React.createElement("span", {
-        className: "text-[7px] text-amber-600 ml-0.5 font-bold"
-      }, "(수)"), " "), " ", item?.className === EMPTY_SLOT && item?.hasAnyEvent && /*#__PURE__*/React.createElement("p", {
-        className: "text-[9px] font-black leading-tight break-all line-clamp-2 text-center pointer-events-none"
-      }, item.eventTitle), " ", item?.className !== EMPTY_SLOT && item?.hasAnyEvent && /*#__PURE__*/React.createElement("span", {
-        className: `text-[8px] font-black mt-0.5 pointer-events-none ${item.isChangche ? 'text-emerald-700' : 'opacity-70'}`
-      }, " ", item.isChangche ? '창체' : item.eventTitle.length > 4 ? item.eventTitle.slice(0, 4) + '..' : item.eventTitle, " "), " ", item?.customLabel && /*#__PURE__*/React.createElement("span", {
-        className: "text-[8px] font-bold mt-0.5 leading-tight break-all line-clamp-2 px-1 text-center pointer-events-none"
-      }, item.customLabel), " ", (!item || item.className === EMPTY_SLOT) && !item?.hasAnyEvent && /*#__PURE__*/React.createElement("span", {
-        className: "text-slate-200 pointer-events-none"
-      }, "-"), " ")));
-    }));
-  })))), selectedClass && /*#__PURE__*/React.createElement(Card, {
-    className: "p-8 shadow-xl shadow-slate-200/40 animate-in fade-in duration-300"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 mb-8"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "edit-3",
-    className: "text-sky-500",
-    size: 20
-  }), /*#__PURE__*/React.createElement("h2", {
-    className: "text-xl font-black text-slate-800 tracking-tight"
-  }, "학급별 상세 진도 기록")), /*#__PURE__*/React.createElement("div", {
-    className: "grid lg:grid-cols-2 gap-10"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "space-y-5"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "bg-slate-50 p-5 rounded-[24px] border border-slate-100 shadow-inner"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center justify-between"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex flex-col"
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "text-[9px] font-black text-slate-400 mb-1 uppercase"
-  }, "선택 학급"), /*#__PURE__*/React.createElement("span", {
-    className: "text-2xl font-black text-slate-800"
-  }, shortClass(selectedClass.name))), /*#__PURE__*/React.createElement("div", {
-    className: "flex flex-col items-end"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "text-[10px] font-bold text-slate-400 mb-1"
-  }, "시험까지 남은 수업"), /*#__PURE__*/React.createElement("span", {
-    className: "bg-sky-500 px-3 py-1 rounded-full text-[11px] font-black text-white shadow-lg"
-  }, selectedClass.remainingBeforeExam, "회")))), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "text-[10px] font-black text-slate-400 uppercase ml-2"
-  }, "현재 진행 단원"), /*#__PURE__*/React.createElement("input", {
-    value: selectedClass.lessonTitle || "",
-    onChange: e => {
-      const val = e.target.value;
-      setClasses(prev => prev.map(c => c.id === selectedClass.id ? {
-        ...c,
-        lessonTitle: val
-      } : c));
-    },
-    onKeyDown: e => e.key === 'Enter' && updateClassOnServer(),
-    className: "w-full px-5 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none font-bold text-sm shadow-sm",
-    placeholder: "단원명을 기록하세요"
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2 flex flex-col"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "text-[10px] font-black text-slate-400 uppercase ml-2"
-  }, "수업 특이사항 메모"), /*#__PURE__*/React.createElement("textarea", {
-    value: selectedClass.memo || "",
-    onChange: e => {
-      const val = e.target.value;
-      setClasses(prev => prev.map(c => c.id === selectedClass.id ? {
-        ...c,
-        memo: val
-      } : c));
-    },
-    className: "flex-1 w-full p-6 bg-slate-50 border border-slate-100 rounded-[32px] outline-none text-sm font-medium custom-scrollbar shadow-inner",
-    placeholder: "반별 특이사항을 기록하세요..."
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "mt-8 flex justify-end"
-  }, /*#__PURE__*/React.createElement(Button, {
-    variant: "fuchsia",
-    className: "px-10 py-5 rounded-2xl shadow-lg shadow-fuchsia-100",
-    onClick: updateClassOnServer
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "save",
-    size: 18,
-    className: "mr-2"
-  }), "진도 저장하기"))), /*#__PURE__*/React.createElement(Card, {
-    className: "p-8 shadow-xl shadow-slate-200/40"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 mb-6"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "calendar-plus",
-    className: "text-indigo-500"
-  }), /*#__PURE__*/React.createElement("h2", {
-    className: "text-xl font-black text-slate-800 tracking-tight"
-  }, "개별 학사 일정 관리")), /*#__PURE__*/React.createElement("div", {
-    className: "grid lg:grid-cols-3 gap-8"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "lg:col-span-2 bg-slate-50 p-8 rounded-[32px] border border-slate-100 shadow-inner"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex flex-col gap-6"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "grid grid-cols-1 md:grid-cols-2 gap-6 items-end"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "text-[10px] font-black text-slate-400 uppercase ml-2"
-  }, "날짜 선택"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    value: manualDate,
-    onChange: e => setManualDate(e.target.value),
-    className: "w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none text-sm font-bold shadow-sm"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "text-[10px] font-black text-slate-400 uppercase ml-2"
-  }, "일정 유형"), /*#__PURE__*/React.createElement("select", {
-    value: manualType,
-    onChange: e => setManualType(e.target.value),
-    className: "w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none text-sm font-bold bg-white shadow-sm"
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "휴업"
-  }, "휴업 (수업제외)"), /*#__PURE__*/React.createElement("option", {
-    value: "시험"
-  }, "시험 (수업제외)"), /*#__PURE__*/React.createElement("option", {
-    value: "행사(수업제외)"
-  }, "행사 (수업제외)"), /*#__PURE__*/React.createElement("option", {
-    value: "행사"
-  }, "행사 (수업포함)")))), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "text-[10px] font-black text-slate-400 uppercase ml-2"
-  }, "교시 선택 (중복 가능)"), /*#__PURE__*/React.createElement("div", {
-    className: "flex flex-wrap gap-2"
-  }, ["전교시", ...PERIODS].map(p => /*#__PURE__*/React.createElement("button", {
-    key: p,
-    type: "button",
-    onClick: () => {
-      if (p === "전교시") {
-        setManualPeriods(["전교시"]);
-      } else {
-        const next = manualPeriods.includes("전교시") ? [] : [...manualPeriods];
-        if (next.includes(p)) {
-          const filtered = next.filter(x => x !== p);
-          setManualPeriods(filtered.length === 0 ? ["전교시"] : filtered);
-        } else {
-          setManualPeriods([...next, p]);
-        }
-      }
-    },
-    className: `px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all ${manualPeriods.includes(p) ? "bg-sky-500 text-white border-transparent shadow-md" : "bg-white text-slate-500 border-slate-200"}`
-  }, " ", p === "전교시" ? "하루종일" : p.replace("교시", ""), " ")))), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "text-[10px] font-black text-slate-400 uppercase ml-2"
-  }, "일정 내용"), /*#__PURE__*/React.createElement("input", {
-    value: manualTitle,
-    onChange: e => setManualTitle(e.target.value),
-    onKeyDown: e => e.key === 'Enter' && handleAddManualEvent(),
-    placeholder: "예: 기말고사(2학년) 혹은 재량휴업",
-    className: "w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none text-sm font-bold shadow-sm"
-  })), /*#__PURE__*/React.createElement(Button, {
-    onClick: handleAddManualEvent,
-    className: "w-full py-4 shadow-lg text-base"
-  }, "일정 추가하기"))), /*#__PURE__*/React.createElement("div", {
-    className: "lg:col-span-1 flex flex-col h-full bg-white border border-slate-100 rounded-[32px] shadow-sm p-6 overflow-hidden"
-  }, /*#__PURE__*/React.createElement("p", {
-    className: "text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest flex items-center gap-1"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "list",
-    size: 12
-  }), " 전체 학사 일정 리스트"), /*#__PURE__*/React.createElement("div", {
-    className: "flex-1 overflow-y-auto custom-scrollbar"
-  }, events.length > 0 ? events.sort((a, b) => a.date.localeCompare(b.date)).map(e => /*#__PURE__*/React.createElement("div", {
-    key: e.id,
-    className: "flex items-center justify-between p-3 mb-2 hover:bg-slate-50 rounded-2xl transition-colors border border-slate-50"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex flex-col gap-1"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "text-[10px] font-black text-slate-400"
-  }, e.date.slice(5)), /*#__PURE__*/React.createElement("span", {
-    className: "text-xs font-bold text-slate-700"
-  }, e.title, " ", e.period && e.period !== '전교시' && `(${e.period.replace('교시', '')})`)), /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    onClick: ev => {
-      ev.stopPropagation();
-      handleDeleteEvent(e.id);
-    },
-    className: "p-2 text-slate-300 hover:text-rose-500 transition-colors"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trash-2",
-    size: 14
-  })))) : /*#__PURE__*/React.createElement("div", {
-    className: "h-full flex items-center justify-center text-[10px] font-bold text-slate-300 py-10 italic"
-  }, "등록된 일정이 없습니다.")))))))));
+    if (!user) return;
+    const base = ["artifacts", APP_ID, "users", user.uid];
+    let got = 0;
+    const done = () => { if (++got >= 3) setData(d => ({ ...d, ready: true })); };
+    const subs = [
+      onSnapshot(collection(db, ...base, "meta"), s => { const m = {}; s.forEach(x => m[x.id] = x.data()); setData(d => ({ ...d, meta: m })); done(); }, done),
+      onSnapshot(collection(db, ...base, "lessons"), s => { const m = {}; s.forEach(x => m[x.id] = x.data()); setData(d => ({ ...d, lessons: m })); done(); }, done),
+      onSnapshot(collection(db, ...base, "events"), s => { setData(d => ({ ...d, events: s.docs.map(x => ({ id: x.id, ...x.data() })) })); done(); }, done),
+    ];
+    return () => subs.forEach(u => u());
+  }, [user]);
+  return data;
 }
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(/*#__PURE__*/React.createElement(App, null));
-    </script>
+const ref = (user, col, id) => doc(db, "artifacts", APP_ID, "users", user.uid, col, id);
+
+// 시간표·진도 계산을 한곳에
+function useModel({ meta, lessons, events }) {
+  return useMemo(() => {
+    let tt = null;
+    try { tt = meta.timetable?.json ? JSON.parse(meta.timetable.json) : null; } catch { }
+    const syncedAt = meta.timetable?.syncedAt?.toDate?.() || null;
+    const plans = meta.plans || {};
+    const notes = meta.notes || {};
+
+    const classes = [...new Set(Object.values(tt?.base || {}).flatMap(d => Object.values(d).map(x => x.c)))]
+      .sort((a, b) => gradeOf(a) - gradeOf(b) || +a.split("-")[1] - +b.split("-")[1]);
+    const hue = Object.fromEntries(classes.map((c, i) => [c, Math.round(i * 360 / Math.max(classes.length, 1) + 205) % 360]));
+
+    const eventsOn = date => events.filter(e => e.date === date);
+    const blockingEvent = (date, p, grade) => eventsOn(date).find(e => blocks(e) && (!e.period || e.period === "전교시" || e.period === `${p}교시`) && targetGrades(e.title).includes(grade));
+
+    // 그날의 교시별 수업. 알림이 주간 데이터가 있으면 그것(변경 반영), 없으면 기본 시간표.
+    const slotsFor = date => {
+      const wd = fromIso(date).getDay();
+      if (!tt || wd === 0 || wd === 6) return [];
+      const base = tt.base[wd] || {};
+      const live = tt.days[date];
+      const day = live || base;
+      return PERIODS.map(p => {
+        const cur = day[p], orig = base[p];
+        const c = cur?.c || null;
+        return {
+          date, p, c, s: cur?.s,
+          changed: !!live && (cur?.c || null) !== (orig?.c || null),
+          removed: !!live && !c && orig ? orig.c : null,
+          event: c ? blockingEvent(date, p, gradeOf(c)) : null,
+        };
+      });
+    };
+
+    // 수업 기록: lessons/{date_p} = { date, p, c, step, note, skip }
+    const byClass = {};
+    for (const [k, l] of Object.entries(lessons)) (byClass[l.c] ||= []).push({ ...l, k });
+    for (const c in byClass) byClass[c].sort((a, b) => a.k < b.k ? -1 : 1);
+    const stepBefore = (c, k) => { let s = 0; for (const l of byClass[c] || []) { if (l.k >= k) break; if (l.step) s = Math.max(s, l.step); } return s; };
+    const progress = c => Math.max(0, ...(byClass[c] || []).map(l => l.step || 0));
+    const lastLesson = c => [...(byClass[c] || [])].reverse().find(l => !l.skip);
+    const planOf = c => plans[gradeOf(c)] || [];
+    const stepTitle = (c, step) => step ? `${step}. ${planOf(c)[step - 1] || `${step}차시`}` : "";
+
+    const nextExam = (grade, from) => events.filter(e => isExam(e) && e.date >= from && targetGrades(e.title).includes(grade)).sort((a, b) => a.date < b.date ? -1 : 1)[0];
+    const lessonsUntil = (c, from, until) => {
+      let n = 0;
+      for (let d = from; d < until; d = addDays(d, 1)) n += slotsFor(d).filter(s => s.c === c && !s.event).length;
+      return n;
+    };
+
+    // 끝났는데 기록 안 한 수업: 처음 기록을 남긴 날 이후, 최근 2주까지만 (쓰기 전 수업까지 밀린 걸로 치지 않음)
+    const firstLesson = Object.keys(lessons).sort()[0]?.slice(0, 10);
+    const pending = now => {
+      const today = iso(now), out = [];
+      const start = [addDays(today, -14), firstLesson || today].sort()[1];
+      for (let d = start; d <= today; d = addDays(d, 1))
+        for (const s of slotsFor(d))
+          if (s.c && !s.event && !lessons[slotKey(d, s.p)] && atTime(d, BELL[s.p][1]) <= now) out.push(s);
+      return out;
+    };
+
+    return { tt, syncedAt, plans, notes, classes, hue, slotsFor, byClass, stepBefore, progress, lastLesson, planOf, stepTitle, nextExam, lessonsUntil, pending, lessons };
+  }, [meta, lessons, events]);
+}
+
+// ---------- 아이콘 ----------
+const ICONS = {
+  today: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9 16l2 2 4-4",
+  week: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
+  classes: "M4 19.5V5a2 2 0 0 1 2-2h13v16H6.5A2.5 2.5 0 0 0 4 21.5 2.5 2.5 0 0 0 6.5 24M8 7h7M8 11h5",
+  settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
+  left: "M15 18l-6-6 6-6", right: "M9 18l6-6-6-6", x: "M18 6L6 18M6 6l12 12",
+  check: "M20 6L9 17l-5-5", pen: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
+  alert: "M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z",
+  dot: "M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0-8 0",
+  book: "M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z",
+};
+const Icon = ({ n }) => html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${ICONS[n]} /></svg>`;
+const Chip = ({ c, m, lg }) => html`<span class=${"chip" + (lg ? " lg" : "")} style=${`--h:${m.hue[c] ?? 210}`}>${c}</span>`;
+
+// ---------- 앱 ----------
+function App() {
+  const [user, setUser] = useState(undefined);
+  useEffect(() => onAuthStateChanged(auth, setUser), []);
+  if (user === undefined) return null;
+  if (!user) return html`<${Login} />`;
+  return html`<${Main} user=${user} />`;
+}
+
+function Login() {
+  const [err, setErr] = useState("");
+  const go = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => setErr(e.message));
+  return html`<div class="login"><div class="card">
+    <div class="logo"><${Icon} n="book" /></div>
+    <h1>고덕중 진도표</h1>
+    <p>컴시간 시간표가 자동으로 들어오고,<br />수업이 끝나면 한 번 눌러 진도를 남겨요.</p>
+    <button class="btn primary" style="width:100%;padding:12px" onClick=${go}>Google 계정으로 시작</button>
+    ${err && html`<p style="color:var(--danger);margin:12px 0 0;font-size:13px">${err}</p>`}
+  </div></div>`;
+}
+
+function Main({ user }) {
+  const data = useUserData(user);
+  const m = useModel(data);
+  const [tab, setTab] = useState(() => { try { return localStorage.getItem("tab") || "today"; } catch { return "today"; } });
+  const [now, setNow] = useState(new Date());
+  const [sheet, setSheet] = useState(null);
+  const [toast, setToast] = useState("");
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t); }, []);
+  useEffect(() => { try { localStorage.setItem("tab", tab); } catch { } }, [tab]);
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(""), 2200); return () => clearTimeout(t); } }, [toast]);
+
+  const saveLesson = async (slot, rec) => {
+    const k = slotKey(slot.date, slot.p);
+    if (rec === null) await deleteDoc(ref(user, "lessons", k));
+    else await setDoc(ref(user, "lessons", k), { date: slot.date, p: slot.p, c: slot.c, step: rec.step || 0, note: rec.note || "", skip: !!rec.skip, at: Date.now() });
+    setSheet(null);
+    setToast(rec === null ? "기록을 지웠어요" : `${slot.c} 기록 완료`);
+  };
+  const saveMeta = (id, val) => setDoc(ref(user, "meta", id), val, { merge: true });
+
+  const stale = m.syncedAt && (now - m.syncedAt) > 3 * 86400000;
+  const tabs = [["today", "오늘"], ["week", "주간"], ["classes", "학급"], ["settings", "설정"]];
+  const ctx = { m, now, open: setSheet, user, saveMeta, setToast, setTab };
+
+  return html`<div class="app">
+    <header class="top">
+      <div class="brand">진도표<small>${m.tt ? `${m.tt.teacher} 선생님 · ${m.tt.subject}` : "고덕중학교"}</small></div>
+      <div class="sync" title="알림이(컴시간)에서 받은 시간표 기준">
+        ${m.tt ? html`<i class=${stale ? "old" : ""}></i>컴시간 ${m.tt.savedAt.slice(5, 16).replace("-", "/")} 기준` : html`<i class="old"></i>시간표 연동 전`}
+      </div>
+      <nav class="tabs">${tabs.map(([k, label]) => html`<button class=${tab === k ? "on" : ""} onClick=${() => setTab(k)}><${Icon} n=${k} />${label}</button>`)}</nav>
+    </header>
+    ${!data.ready ? html`<div class="empty">불러오는 중…</div>`
+      : !m.tt && tab !== "settings" ? html`<div class="card empty"><b>아직 시간표가 없어요</b>설정 탭의 'PC 연동' 안내대로 알림이 PC에서 한 번만 연결하면 자동으로 들어옵니다.<br /><br /><button class="btn primary" onClick=${() => setTab("settings")}>연동하러 가기</button></div>`
+      : tab === "today" ? html`<${Today} ...${ctx} />`
+      : tab === "week" ? html`<${Week} ...${ctx} />`
+      : tab === "classes" ? html`<${Classes} ...${ctx} />`
+      : html`<${Settings} ...${ctx} />`}
+    ${sheet && html`<${RecordSheet} slot=${sheet} m=${m} onSave=${saveLesson} onClose=${() => setSheet(null)} />`}
+    ${toast && html`<div class="toast" role="status">${toast}</div>`}
+  </div>`;
+}
+
+// 교시 상태: done / todo(끝났는데 기록 없음) / now / later / blocked
+function slotState(m, s, now) {
+  if (s.event) return "blocked";
+  if (m.lessons[slotKey(s.date, s.p)]) return "done";
+  if (atTime(s.date, BELL[s.p][1]) <= now) return "todo";
+  if (atTime(s.date, BELL[s.p][0]) <= now) return "now";
+  return "later";
+}
+function slotText(m, s) {
+  const l = m.lessons[slotKey(s.date, s.p)];
+  if (l) return l.skip ? `수업 못함${l.note ? " · " + l.note : ""}` : `${m.stepTitle(s.c, l.step) || "기록됨"}${l.note ? " · " + l.note : ""}`;
+  return m.stepTitle(s.c, m.stepBefore(s.c, slotKey(s.date, s.p)) + 1);
+}
+
+function Today({ m, now, open, setTab }) {
+  const todayIso = iso(now);
+  const [date, setDate] = useState(todayIso);
+  const shift = n => { let d = addDays(date, n); while ([0, 6].includes(fromIso(d).getDay())) d = addDays(d, n); setDate(d); };
+  const slots = m.slotsFor(date);
+  const pending = m.pending(now);
+  const lastP = Math.max(0, ...slots.filter(s => s.c || s.removed).map(s => s.p));
+  const isToday = date === todayIso;
+
+  return html`<div class="today-layout">
+    <section>
+      ${pending.length > 0 && html`<button class="backlog" onClick=${() => open(pending[0])}>
+        <${Icon} n="alert" /><span>기록 안 한 수업 <b>${pending.length}</b>개 · ${mdw(pending[0].date)} ${pending[0].p}교시 ${pending[0].c}부터</span></button>`}
+      <div class="daybar">
+        <h2>${isToday ? "오늘" : mdw(date)}<span>${isToday ? mdw(date) : ""}</span></h2>
+        <div class="spacer"></div>
+        ${!isToday && html`<button class="btn sm" onClick=${() => setDate(todayIso)}>오늘로</button>`}
+        <button class="icon-btn" aria-label="이전 날" onClick=${() => shift(-1)}><${Icon} n="left" /></button>
+        <button class="icon-btn" aria-label="다음 날" onClick=${() => shift(1)}><${Icon} n="right" /></button>
+      </div>
+      ${slots.length === 0 ? html`<div class="card empty"><b>주말이에요</b>쉬는 날엔 진도 걱정 접어두세요.</div>` : html`<div class="periods">
+        ${slots.filter(s => s.p <= Math.max(lastP, 0)).map(s => {
+          if (!s.c) return html`<div class="period card free"><div class="no">${s.p}</div><div class="what">${s.removed ? html`<s>${s.removed}</s> 수업 빠짐 (시간표 변경)` : "공강"}</div></div>`;
+          const st = slotState(m, s, now);
+          return html`<button class=${`period card ${st}`} onClick=${() => open(s)}>
+            <div class="no">${s.p}<small>${BELL[s.p][0]}</small></div>
+            <div class="main">
+              <div class="row1"><${Chip} c=${s.c} m=${m} />
+                ${s.changed && html`<span class="tag changed">시간표 변경</span>`}
+                ${s.event && html`<span class="tag event">${s.event.title}</span>`}
+                ${st === "done" && html`<span class="status done"><${Icon} n="check" />기록함</span>`}
+                ${st === "todo" && html`<span class="status todo"><${Icon} n="pen" />기록하기</span>`}
+                ${st === "now" && html`<span class="status now"><${Icon} n="dot" />수업 중</span>`}
+              </div>
+              <div class="what">${st === "done" ? html`<b>${slotText(m, s)}</b>` : s.event ? "수업 없음" : html`다음 차시 <b>${slotText(m, s)}</b>`}</div>
+            </div>
+          </button>`;
+        })}
+        ${lastP === 0 && html`<div class="card empty"><b>수업 없는 날</b></div>`}
+      </div>`}
+    </section>
+    <section>
+      <div class="section-title">학급별 진도<button class="btn sm ghost" style="margin-left:auto" onClick=${() => setTab("classes")}>자세히</button></div>
+      <div class="card" style="padding:6px 14px">
+        ${m.classes.map(c => {
+          const total = m.planOf(c).length, p = m.progress(c);
+          return html`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+            <${Chip} c=${c} m=${m} />
+            <div style="flex:1;min-width:0;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p ? m.stepTitle(c, p) : html`<span style="color:var(--faint)">아직 기록 없음</span>`}</div>
+            ${total > 0 && html`<span style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums">${p}/${total}</span>`}
+          </div>`;
+        })}
+      </div>
+    </section>
+  </div>`;
+}
+
+function Week({ m, now, open }) {
+  const todayIso = iso(now);
+  const [mon, setMon] = useState(mondayOf(todayIso));
+  const days = [0, 1, 2, 3, 4].map(i => addDays(mon, i));
+  const grid = days.map(d => m.slotsFor(d));
+  return html`<div>
+    <div class="daybar">
+      <h2>${md(days[0])} – ${md(days[4])}</h2>
+      <div class="spacer"></div>
+      ${mon !== mondayOf(todayIso) && html`<button class="btn sm" onClick=${() => setMon(mondayOf(todayIso))}>이번 주</button>`}
+      <button class="icon-btn" aria-label="이전 주" onClick=${() => setMon(addDays(mon, -7))}><${Icon} n="left" /></button>
+      <button class="icon-btn" aria-label="다음 주" onClick=${() => setMon(addDays(mon, 7))}><${Icon} n="right" /></button>
+    </div>
+    <div class="card week-wrap"><div class="week">
+      <div></div>
+      ${days.map(d => html`<div class=${"h" + (d === todayIso ? " today week-col-today" : "")}>${WD[fromIso(d).getDay()]}<small>${md(d)}</small></div>`)}
+      ${PERIODS.map(p => html`
+        <div class="p">${p}</div>
+        ${grid.map((slots, i) => {
+          const s = slots[p - 1], col = days[i] === todayIso ? "week-col-today" : "";
+          if (!s.c) return html`<div class=${col}><div class=${"cell" + (s.removed ? " changed" : "")}>${s.removed && html`<span class="t gone">${s.removed}</span>`}</div></div>`;
+          const st = slotState(m, s, now);
+          const cls = `cell has ${s.changed ? "changed" : ""} ${st === "todo" ? "todo" : ""} ${st === "blocked" ? "blocked" : ""}`;
+          return html`<div class=${col}><button class=${cls} onClick=${() => open(s)}>
+            <${Chip} c=${s.c} m=${m} />
+            <span class=${"t " + (st === "done" ? "done" : st === "todo" ? "todo" : st === "blocked" ? "ev" : "")}>
+              ${st === "blocked" ? s.event.title : st === "todo" ? "기록 필요" : slotText(m, s)}
+            </span>
+          </button></div>`;
+        })}`)}
+    </div></div>
+    <div class="legend">
+      <span><i style="border:1.5px dashed var(--warn)"></i>컴시간 변경</span>
+      <span><i style="background:var(--warn-soft)"></i>기록 필요</span>
+      <span><i style="background:var(--event-soft)"></i>학사일정(수업 없음)</span>
+    </div>
+  </div>`;
+}
+
+function Classes({ m, now, saveMeta }) {
+  const today = iso(now);
+  return html`<div>
+    <div class="section-title">학급 ${m.classes.length}개</div>
+    <div class="class-grid">${m.classes.map(c => {
+      const total = m.planOf(c).length, p = m.progress(c), last = m.lastLesson(c);
+      const exam = m.nextExam(gradeOf(c), today);
+      const left = exam ? m.lessonsUntil(c, today, exam.date) : null;
+      const recent = [...(m.byClass[c] || [])].reverse().slice(0, 4);
+      return html`<div class="card class-card" style=${`--h:${m.hue[c]}`}>
+        <div class="head"><${Chip} c=${c} m=${m} lg />
+          <span style="font-size:13px;color:var(--muted);font-weight:600">${p}${total ? ` / ${total}차시` : "차시"}</span>
+          ${exam && html`<span class="exam" title=${exam.title}>시험까지 <b>${left}</b>회</span>`}
+        </div>
+        ${total > 0 && html`<div class="bar"><i style=${`width:${Math.min(100, p / total * 100)}%`}></i></div>`}
+        <dl class="kv">
+          <dt>지난</dt><dd>${last ? `${md(last.date)} · ${m.stepTitle(c, last.step) || "-"}` : "-"}</dd>
+          <dt>다음</dt><dd><b>${m.stepTitle(c, p + 1)}</b></dd>
+        </dl>
+        <textarea placeholder="학급 메모 (예: 실험 보고서 미제출 3명)" value=${m.notes[c] || ""}
+          onBlur=${e => e.target.value !== (m.notes[c] || "") && saveMeta("notes", { [c]: e.target.value })}></textarea>
+        ${recent.length > 0 && html`<div class="mini-list">${recent.map(l => html`<div><span>${md(l.date)} ${l.p}교시</span><span>${l.skip ? "수업 못함" : m.stepTitle(c, l.step)}${l.note ? " · " + l.note : ""}</span></div>`)}</div>`}
+      </div>`;
+    })}</div>
+  </div>`;
+}
+
+function RecordSheet({ slot, m, onSave, onClose }) {
+  const dlg = useRef();
+  useEffect(() => { dlg.current.showModal(); }, []);
+  const k = slotKey(slot.date, slot.p);
+  const existing = m.lessons[k];
+  const prev = m.stepBefore(slot.c, k);
+  const plan = m.planOf(slot.c);
+  const [step, setStep] = useState(existing ? existing.step : prev + 1);
+  const [note, setNote] = useState(existing?.note || "");
+  const maxStep = Math.max(plan.length, prev + 1, step) + 3;
+
+  return html`<dialog class="sheet" ref=${dlg} onClose=${onClose} onClick=${e => e.target === dlg.current && dlg.current.close()}>
+    <div class="sheet-in">
+      <div class="sheet-head"><${Chip} c=${slot.c} m=${m} lg />
+        <div><div style="font-weight:700">${mdw(slot.date)} ${slot.p}교시</div><div class="meta">${slot.s}${slot.changed ? " · 시간표 변경됨" : ""}</div></div>
+        <button class="icon-btn x" aria-label="닫기" onClick=${() => dlg.current.close()}><${Icon} n="x" /></button>
+      </div>
+      ${slot.event && html`<div class="tag event" style="align-self:flex-start;font-size:13px;padding:5px 10px">${slot.event.title} — 학사일정상 수업 없음</div>`}
+      <div class="plan-box">
+        <div class="lbl">${existing ? "기록된 진도" : "이번 시간 계획"}</div>
+        <div class="val">${existing ? (existing.skip ? "수업 못함" : m.stepTitle(slot.c, existing.step)) : m.stepTitle(slot.c, prev + 1)}</div>
+        <div class="prev">지난 시간: ${prev ? m.stepTitle(slot.c, prev) : "기록 없음"}</div>
+      </div>
+      <div class="quick">
+        <button class="btn primary" onClick=${() => onSave(slot, { step: prev + 1, note })}><${Icon} n="check" />계획대로 했어요<small>${prev + 1}차시</small></button>
+        ${prev > 0 && html`<button class="btn" onClick=${() => onSave(slot, { step: prev, note })}>진도 못 나감 · 이어서 했어요<small>${prev}차시 계속</small></button>`}
+        <button class="btn" onClick=${() => onSave(slot, { skip: true, step: 0, note })}>수업 못함<small>행사·자습 등</small></button>
+      </div>
+      <div class="manual">
+        <label for="step">차시 직접 고르기</label>
+        <select id="step" value=${step} onChange=${e => setStep(+e.target.value)}>
+          ${Array.from({ length: maxStep }, (_, i) => i + 1).map(n => html`<option value=${n}>${m.stepTitle(slot.c, n)}</option>`)}
+        </select>
+        <label for="note">메모</label>
+        <textarea id="note" rows="2" placeholder="예: 실험 못 끝냄, 다음 시간 마무리" value=${note} onInput=${e => setNote(e.target.value)}></textarea>
+        <div class="acts">
+          ${existing && html`<button class="btn ghost" style="color:var(--danger)" onClick=${() => onSave(slot, null)}>기록 지우기</button>`}
+          <button class="btn primary" onClick=${() => onSave(slot, { step, note })}>저장</button>
+        </div>
+      </div>
+    </div>
+  </dialog>`;
+}
+
+function Settings({ m, user, saveMeta, setToast }) {
+  const grades = [...new Set(m.classes.map(gradeOf))];
+  const [g, setG] = useState(grades[grades.length - 1] || 1);
+  const [draft, setDraft] = useState(null);
+  const text = draft ?? (m.plans[g] || []).join("\n");
+  const savePlan = async () => {
+    await saveMeta("plans", { [g]: text.split("\n").map(s => s.trim()).filter(Boolean) });
+    setDraft(null);
+    setToast(`${g}학년 차시 계획 저장`);
+  };
+  const [showCode, setShowCode] = useState(false);
+  const copy = async () => { await navigator.clipboard.writeText(user.refreshToken); setToast("연동 코드를 복사했어요"); };
+
+  return html`<div class="settings">
+    <div class="card panel">
+      <h3>차시 계획</h3>
+      <p class="desc">한 줄에 한 차시씩 적어 주세요. 학년 내 모든 반이 같은 계획을 따라가며, 각 반이 어디까지 했는지는 자동으로 계산돼요.</p>
+      ${grades.length > 1 && html`<div class="grade-tabs">${grades.map(x => html`<button class=${"btn sm" + (x === g ? " primary" : "")} onClick=${() => { setG(x); setDraft(null); }}>${x}학년</button>`)}</div>`}
+      <textarea class="plan" value=${text} onInput=${e => setDraft(e.target.value)}
+        placeholder=${"예)\nⅠ-1. 물질의 구성 – 원소\nⅠ-2. 원소 기호 익히기\nⅠ-3. 원자와 분자 모형 만들기 (실험)\n…"}></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <span style="font-size:12.5px;color:var(--muted)">${text.split("\n").filter(s => s.trim()).length}차시</span>
+        <button class="btn primary" style="margin-left:auto" disabled=${draft === null} onClick=${savePlan}>저장</button>
+      </div>
+    </div>
+    <div style="display:grid;gap:14px">
+      <div class="card panel">
+        <h3>PC 연동 (알림이 → 진도표)</h3>
+        <p class="desc">${m.tt ? html`마지막 동기화 ${m.syncedAt ? m.syncedAt.toLocaleString("ko-KR") : "-"} · ${m.tt.source}` : "알림이가 깔린 학교 PC에서 한 번만 연결하면, 컴시간 시간표가 바뀔 때마다 자동으로 반영돼요."}</p>
+        <ol class="steps">
+          <li>아래 <b>연동 코드 복사</b></li>
+          <li>알림이 PC의 진도표 폴더에서 <code>PC연동.bat</code> 더블클릭 → 붙여넣기</li>
+          <li>이후엔 PC가 켜져 있는 동안 20분마다 자동 동기화</li>
+        </ol>
+        <div class="code" style="margin-top:12px">
+          <input readonly type=${showCode ? "text" : "password"} value=${user.refreshToken} aria-label="연동 코드" />
+          <button class="btn sm" onClick=${() => setShowCode(!showCode)}>${showCode ? "숨기기" : "보기"}</button>
+          <button class="btn sm primary" onClick=${copy}>복사</button>
+        </div>
+        <p class="desc" style="margin:10px 0 0;font-size:12px">이 코드는 비밀번호처럼 다뤄 주세요. 다른 사람에게 공유하지 마세요.</p>
+      </div>
+      <${EventsPanel} user=${user} setToast=${setToast} />
+      <div class="card panel" style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;font-size:13.5px"><b>${user.displayName}</b><div style="color:var(--muted);font-size:12.5px">${user.email}</div></div>
+        <button class="btn sm" onClick=${() => signOut(auth)}>로그아웃</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// 학사일정 엑셀(월별 달력 시트) 업로드 — 기존 앱의 파서 그대로
+function EventsPanel({ user, setToast }) {
+  const input = useRef();
+  const loadXlsx = () => window.XLSX ? Promise.resolve() : new Promise((ok, no) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js";
+    s.onload = ok; s.onerror = no; document.head.appendChild(s);
+  });
+  const upload = async e => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      await loadXlsx();
+      const wb = XLSX.read(await file.arrayBuffer());
+      const list = [];
+      for (const name of wb.SheetNames) {
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1 });
+        let ym = null;
+        for (const row of rows.slice(0, 15)) for (const cell of row || []) {
+          const s = String(cell ?? "").trim();
+          const a = s.match(/(\d+)월\s+(\d{4})/), b = s.match(/(\d{4})\s+(\d+)월/);
+          if (!ym && (a || b)) ym = a ? [+a[2], +a[1]] : [+b[1], +b[2]];
+        }
+        if (!ym) continue;
+        rows.forEach((row, r) => (row || []).forEach((v, c) => {
+          const day = parseInt(v);
+          if (!v || isNaN(v) || day < 1 || day > 31) return;
+          const title = String(rows[r + 1]?.[c] ?? "").trim();
+          if (!title || !isNaN(title)) return;
+          const type = /고사|시험/.test(title) ? "시험" : /휴일|방학|휴업/.test(title) ? "휴업" : "행사";
+          list.push({ date: `${ym[0]}-${String(ym[1]).padStart(2, "0")}-${String(day).padStart(2, "0")}`, type, title });
+        }));
+      }
+      if (!list.length) throw new Error("일정을 찾지 못함");
+      const col = collection(db, "artifacts", APP_ID, "users", user.uid, "events");
+      const batch = writeBatch(db);
+      (await getDocs(col)).forEach(d => batch.delete(d.ref));
+      list.forEach((ev, i) => batch.set(doc(col, `e-${i}`), ev));
+      await batch.commit();
+      setToast(`학사일정 ${list.length}건 반영`);
+    } catch (err) {
+      setToast("학사일정 파일을 읽지 못했어요");
+      console.error(err);
+    }
+  };
+  return html`<div class="card panel">
+    <h3>학사일정</h3>
+    <p class="desc">시험·휴업일은 수업에서 빠지고, '시험까지 남은 수업' 계산에 쓰여요. 기존에 올린 일정은 그대로 이어서 사용합니다.</p>
+    <input type="file" accept=".xlsx,.xls" hidden ref=${input} onChange=${upload} />
+    <button class="btn" onClick=${() => input.current.click()}>학사일정 엑셀 다시 올리기</button>
+  </div>`;
+}
+
+render(html`<${App} />`, document.getElementById("root"));
+</script>
 </body>
 </html>
