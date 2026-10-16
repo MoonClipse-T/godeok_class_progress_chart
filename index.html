@@ -8,149 +8,193 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root {
-  --bg: #f6f5f1; --surface: #ffffff; --surface-2: #faf9f6; --ink: #1d2433; --muted: #6b7180; --faint: #a3a7b1;
-  --line: #e8e5dd; --accent: #2f5bea; --accent-ink: #ffffff; --accent-soft: #e8eefe;
-  --ok: #17803d; --ok-soft: #e5f5ea; --warn: #b45309; --warn-soft: #fff3df; --danger: #c2410c;
-  --event: #6d28d9; --event-soft: #f1ebfd;
-  --chip-l: 92%; --chip-s: 70%; --chip-ink-l: 30%;
-  --shadow: 0 1px 2px rgba(29,36,51,.05), 0 4px 16px rgba(29,36,51,.05);
-  --radius: 16px;
+  --bg: #f4f3ef; --surface: #ffffff; --surface-2: #f8f7f4; --ink: #1b2130; --muted: #646b7a; --faint: #a0a5b0;
+  --line: #e6e3db; --line-2: #d6d2c8; --accent: #2f5bea; --accent-ink: #ffffff; --accent-soft: #e6ecfe;
+  --ok: #15803d; --ok-soft: #e3f4e8; --warn: #b45309; --warn-soft: #fff1d6;
+  --chg: #e11d48; --chg-soft: #ffe4ea; --event: #6d28d9; --event-soft: #efe9fc;
+  --tint: 13%; --shadow: 0 1px 2px rgba(27,33,48,.05), 0 4px 14px rgba(27,33,48,.05);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121418; --surface: #1b1e24; --surface-2: #20242b; --ink: #e9ebf0; --muted: #9aa0ac; --faint: #646a76;
-    --line: #2b3039; --accent: #7c9cff; --accent-ink: #0d1020; --accent-soft: #232c4a;
-    --ok: #4ade80; --ok-soft: #173023; --warn: #fbbf24; --warn-soft: #33270f; --danger: #fb923c;
-    --event: #c4b5fd; --event-soft: #2a2340;
-    --chip-l: 24%; --chip-s: 35%; --chip-ink-l: 82%;
-    --shadow: none;
+    --bg: #111317; --surface: #1a1d23; --surface-2: #1f232a; --ink: #e8eaef; --muted: #9aa0ab; --faint: #636974;
+    --line: #2a2f38; --line-2: #3a404b; --accent: #7c9cff; --accent-ink: #0c1020; --accent-soft: #222b47;
+    --ok: #4ade80; --ok-soft: #15301f; --warn: #fbbf24; --warn-soft: #33270e;
+    --chg: #fb7185; --chg-soft: #3a1820; --event: #c4b5fd; --event-soft: #29223e;
+    --tint: 24%; --shadow: none;
   }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); }
 body { font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif; font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
 button, input, textarea, select { font: inherit; color: inherit; }
-button { cursor: pointer; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 svg { width: 18px; height: 18px; flex: none; }
 
-.app { max-width: 1120px; margin: 0 auto; padding: 0 16px calc(88px + env(safe-area-inset-bottom)); }
-header.top { display: flex; align-items: center; gap: 12px; padding: 18px 0 14px; }
-.brand { font-weight: 800; font-size: 19px; letter-spacing: -.02em; }
+.app { max-width: 1280px; margin: 0 auto; padding: 0 16px calc(84px + env(safe-area-inset-bottom)); }
+header.top { display: flex; align-items: center; gap: 12px; padding: 16px 0 12px; }
+.brand { font-weight: 800; font-size: 19px; letter-spacing: -.02em; line-height: 1.2; }
 .brand small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
-.sync { margin-left: auto; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; text-align: right; }
+.sync { margin-left: auto; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; text-align: right; line-height: 1.3; }
 .sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
 .sync i.old { background: var(--warn); }
 
-nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: space-around;
-  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(12px);
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex;
+  background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(12px);
   border-top: 1px solid var(--line); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
-nav.tabs button { flex: 1; border: 0; background: none; padding: 6px 0; font-size: 12px; font-weight: 600; color: var(--faint); display: flex; flex-direction: column; align-items: center; gap: 2px; border-radius: 10px; }
-nav.tabs button svg { width: 22px; height: 22px; }
+nav.tabs button { flex: 1; border: 0; background: none; padding: 5px 0; font-size: 11.5px; font-weight: 650; color: var(--faint); display: flex; flex-direction: column; align-items: center; gap: 3px; border-radius: 10px; position: relative; }
+nav.tabs button svg { width: 23px; height: 23px; }
 nav.tabs button.on { color: var(--accent); }
+nav.tabs .badge { position: absolute; top: 0; left: calc(50% + 6px); background: var(--warn); color: #fff; font-size: 10px; font-weight: 800; min-width: 17px; height: 17px; border-radius: 9px; display: grid; place-items: center; padding: 0 4px; }
 @media (min-width: 900px) {
-  .app { padding-bottom: 40px; }
+  .app { padding-bottom: 36px; }
   nav.tabs { position: static; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 2px; backdrop-filter: none; margin-left: 12px; }
   nav.tabs button { flex-direction: row; font-size: 14px; padding: 7px 14px; gap: 6px; }
   nav.tabs button svg { width: 17px; height: 17px; }
   nav.tabs button.on { background: var(--accent-soft); }
-  header.top { padding: 22px 0 18px; }
+  nav.tabs .badge { position: static; margin-left: 2px; }
+  header.top { padding: 20px 0 16px; }
 }
 
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-.section-title { font-size: 13px; font-weight: 700; color: var(--muted); margin: 22px 2px 10px; display: flex; align-items: center; gap: 8px; }
-.section-title:first-child { margin-top: 4px; }
-.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 9px 14px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+.section-title { font-size: 13px; font-weight: 750; color: var(--muted); margin: 20px 2px 9px; display: flex; align-items: center; gap: 8px; }
+.section-title:first-child { margin-top: 2px; }
+.section-title .btn { margin-left: auto; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 9px 14px; font-weight: 650; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
 .btn:hover { background: var(--surface-2); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .btn.primary:hover { filter: brightness(1.06); }
 .btn.ghost { border-color: transparent; background: none; }
 .btn.sm { padding: 5px 10px; font-size: 13px; border-radius: 10px; }
 .btn:disabled { opacity: .45; cursor: default; }
-.icon-btn { border: 1px solid var(--line); background: var(--surface); width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; }
-.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex: none; }
 
-.chip { --h: 210; display: inline-flex; align-items: center; justify-content: center; min-width: 46px; padding: 3px 9px; border-radius: 9px;
-  font-weight: 750; font-size: 14px; letter-spacing: -.01em; font-variant-numeric: tabular-nums;
-  background: hsl(var(--h) var(--chip-s) var(--chip-l)); color: hsl(var(--h) 60% var(--chip-ink-l)); }
-.chip.lg { font-size: 16px; padding: 5px 11px; min-width: 56px; }
-.tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
-.tag.changed { background: var(--warn-soft); color: var(--warn); }
+/* 학급 색: --cc 하나로 칩·배경·막대가 모두 같은 색을 씀 */
+.chip { display: inline-flex; align-items: center; justify-content: center; min-width: 46px; padding: 3px 9px; border-radius: 8px;
+  font-weight: 800; font-size: 14px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap;
+  background: var(--cc); color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.15); }
+.chip.lg { font-size: 16px; padding: 5px 11px; min-width: 58px; }
+.chip.ghost { background: transparent; color: var(--cc); box-shadow: inset 0 0 0 1.5px var(--cc); text-shadow: none; }
+.tag { font-size: 11px; font-weight: 750; padding: 2px 7px; border-radius: 99px; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
+.tag.chg { background: var(--chg); color: #fff; }
 .tag.event { background: var(--event-soft); color: var(--event); }
+.tag.todo { background: var(--warn-soft); color: var(--warn); }
 .tag.ok { background: var(--ok-soft); color: var(--ok); }
+.tag svg { width: 12px; height: 12px; }
+.hatch { background-image: repeating-linear-gradient(-45deg, transparent 0 6px, color-mix(in srgb, var(--chg) 14%, transparent) 6px 12px); }
 
 /* 오늘 */
-.today-layout { display: grid; gap: 18px; }
-@media (min-width: 900px) { .today-layout { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }
+.today-layout { display: grid; gap: 16px; }
+@media (min-width: 900px) { .today-layout { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; } }
 .daybar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .daybar h2 { margin: 0; font-size: 22px; letter-spacing: -.03em; font-weight: 800; }
 .daybar h2 span { color: var(--muted); font-weight: 600; font-size: 15px; margin-left: 6px; }
 .daybar .spacer { flex: 1; }
-.backlog { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 12px; background: var(--warn-soft); color: var(--warn); border-radius: 14px; font-weight: 650; font-size: 14px; border: 0; width: 100%; text-align: left; }
-.backlog b { font-size: 17px; }
+.banner { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 12px; border-radius: 14px; font-weight: 650; font-size: 14px; border: 0; width: 100%; text-align: left; }
+.banner b { font-size: 17px; }
+.banner.todo { background: var(--warn-soft); color: var(--warn); }
+.banner .go { margin-left: auto; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
 
 .periods { display: flex; flex-direction: column; gap: 8px; }
-.period { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 12px 14px; align-items: center; text-align: left; width: 100%; color: inherit; }
-button.period:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
-.period .no { font-size: 20px; font-weight: 800; color: var(--faint); line-height: 1; text-align: center; font-variant-numeric: tabular-nums; }
-.period .no small { display: block; font-size: 10.5px; font-weight: 600; margin-top: 4px; letter-spacing: -.02em; }
+.period { display: grid; grid-template-columns: 46px 1fr; gap: 12px; padding: 12px 14px 12px 10px; align-items: center; text-align: left; width: 100%; color: inherit;
+  border-left: 6px solid var(--cc, var(--line)); background: color-mix(in srgb, var(--cc, transparent) var(--tint), var(--surface)); position: relative; overflow: hidden; }
+button.period:hover { filter: brightness(.985); }
+.period .no { font-size: 21px; font-weight: 800; color: var(--muted); line-height: 1; text-align: center; font-variant-numeric: tabular-nums; }
+.period .no small { display: block; font-size: 10.5px; font-weight: 600; margin-top: 4px; color: var(--faint); }
 .period .main { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-.period .row1 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.period .row1 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .period .what { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.period .what b { color: var(--ink); font-weight: 650; }
-.period.free { background: transparent; border-style: dashed; box-shadow: none; padding: 8px 14px; }
-.period.free .no { font-size: 15px; }
+.period .what b { color: var(--ink); font-weight: 700; }
+.period.free { background: transparent; border: 1px dashed var(--line); box-shadow: none; padding: 7px 14px 7px 10px; }
+.period.free .no { font-size: 15px; color: var(--faint); }
 .period.free .what { font-size: 13px; color: var(--faint); }
-.period.now { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.period.removed { border: 2px solid var(--chg); border-left-width: 6px; background-color: var(--chg-soft); }
+.period.removed .what { color: var(--chg); font-weight: 700; }
+.period.chg { box-shadow: 0 0 0 2px var(--chg); }
+.period.now { box-shadow: 0 0 0 3px var(--accent); }
 .period.now .no { color: var(--accent); }
-.period.todo { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
-.period.done .no { color: var(--ok); }
-.status { margin-left: auto; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+.period.blocked { filter: saturate(.35); }
+.status { margin-left: auto; font-size: 12px; font-weight: 750; display: inline-flex; align-items: center; gap: 4px; }
 .status.todo { color: var(--warn); }
 .status.done { color: var(--ok); }
 .status.now { color: var(--accent); }
 .status svg { width: 15px; height: 15px; }
 
+.chg-list { display: flex; flex-direction: column; }
+.chg-list .row { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.chg-list .row:last-child { border-bottom: 0; }
+.chg-list .when { width: 112px; flex: none; white-space: nowrap; color: var(--muted); font-weight: 650; font-variant-numeric: tabular-nums; }
+.chg-list .arrow { color: var(--faint); }
+.chg-list s { color: var(--faint); }
+.mini-prog { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.mini-prog:last-child { border-bottom: 0; }
+.mini-prog .t { flex: 1; min-width: 0; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-prog .n { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* 연간 진도표 */
+.tl-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.tl-bar h2 { margin: 0; font-size: 20px; letter-spacing: -.03em; font-weight: 800; }
+.tl-bar .hint { font-size: 12px; color: var(--faint); }
+.tl-bar .spacer { flex: 1; }
+.filter { display: flex; gap: 5px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none; }
+.filter::-webkit-scrollbar { display: none; }
+.filter button { flex: none; border: 0; padding: 0; background: none; border-radius: 9px; opacity: .35; transition: opacity .15s; }
+.filter button.on { opacity: 1; }
+.filter .all { border: 1px solid var(--line); background: var(--surface); padding: 3px 10px; font-size: 13px; font-weight: 700; opacity: 1; }
+.tl { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; padding: 0; position: relative; }
+.tl-in { display: flex; width: max-content; }
+.tl-col { flex: none; width: var(--colw); border-right: 1px solid var(--line); }
+.tl-col.mon { border-left: 2px solid var(--line-2); }
+.tl-col.today { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.tl-col.collapsed { width: 34px; }
+.tl-head { height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid var(--line); position: relative; }
+.tl-head .m { position: absolute; top: 3px; left: 6px; font-size: 11px; font-weight: 800; color: var(--accent); }
+.tl-head .d { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tl-head .w { font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.tl-col.today .tl-head { background: var(--accent); color: var(--accent-ink); }
+.tl-col.today .tl-head .w, .tl-col.today .tl-head .m { color: var(--accent-ink); }
+.tl-side { position: sticky; left: 0; z-index: 5; width: 36px; background: var(--surface); border-right: 1px solid var(--line); flex: none; }
+.tl-side .tl-head { font-size: 11px; color: var(--faint); font-weight: 700; }
+.tl-p { height: var(--rowh); display: grid; place-items: center; border-bottom: 1px solid var(--line); font-weight: 800; color: var(--faint); font-size: 15px; }
+.tl-cell { height: var(--rowh); border-bottom: 1px solid var(--line); padding: 3px; }
+.tl-cell:last-child { border-bottom: 0; }
+.tl-cell > button, .tl-cell > div { width: 100%; height: 100%; border: 0; border-radius: 9px; padding: 4px 5px 4px 7px; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 2px; text-align: left; position: relative; overflow: hidden; }
+.tl-cell .has { background: color-mix(in srgb, var(--cc) calc(var(--tint) + 4%), var(--surface)); border-left: 4px solid var(--cc); }
+.tl-cell .has:hover { filter: brightness(.97); }
+.tl-cell .chip { font-size: 12.5px; min-width: 0; padding: 1px 6px; border-radius: 6px; }
+.tl-cell .t { font-size: 11px; line-height: 1.28; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
+.tl-cell .t.done { color: var(--ink); font-weight: 650; }
+.tl-cell .t.todo { color: var(--warn); font-weight: 800; }
+.tl-cell .t.ev { color: var(--event); font-weight: 700; }
+.tl-cell .chg { box-shadow: inset 0 0 0 2px var(--chg); }
+.tl-cell .rib { position: absolute; top: 0; right: 0; background: var(--chg); color: #fff; font-size: 9.5px; font-weight: 800; padding: 1px 5px 2px 6px; border-bottom-left-radius: 7px; }
+.tl-cell .gone { background-color: var(--chg-soft); box-shadow: inset 0 0 0 2px var(--chg); align-items: center; justify-content: center; }
+.tl-cell .gone s { font-weight: 800; color: var(--chg); font-size: 13px; }
+.tl-cell .gone span { font-size: 10.5px; font-weight: 800; color: var(--chg); }
+.tl-cell .blocked { filter: saturate(.25); opacity: .8; }
+.tl-cell .dim { opacity: .18; }
+.tl-cell .ok { position: absolute; right: 4px; bottom: 3px; color: var(--ok); }
+.tl-cell .ok svg { width: 14px; height: 14px; }
+.tl-v { writing-mode: vertical-rl; font-size: 12px; font-weight: 700; color: var(--event); padding: 10px 0; margin: 0 auto; letter-spacing: .05em; height: calc(var(--rowh) * 7); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 18px; height: 12px; border-radius: 3px; display: inline-block; }
+
 /* 학급 카드 */
 .class-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
-.class-card { padding: 14px; display: flex; flex-direction: column; gap: 9px; }
+.class-card { padding: 14px; display: flex; flex-direction: column; gap: 9px; border-top: 5px solid var(--cc); }
 .class-card .head { display: flex; align-items: center; gap: 8px; }
-.class-card .head .exam { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 600; }
-.class-card .head .exam b { color: var(--ink); font-size: 15px; }
-.bar { height: 6px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
-.bar > i { display: block; height: 100%; background: hsl(var(--h) 65% 55%); border-radius: 9px; }
-.kv { font-size: 13.5px; display: grid; grid-template-columns: 40px 1fr; gap: 3px 8px; }
-.kv dt { color: var(--faint); font-weight: 600; }
+.class-card .head .exam { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 650; }
+.class-card .head .exam b { color: var(--ink); font-size: 16px; }
+.bar { height: 7px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--cc); border-radius: 9px; }
+.kv { font-size: 13.5px; display: grid; grid-template-columns: 40px 1fr; gap: 3px 8px; margin: 0; }
+.kv dt { color: var(--faint); font-weight: 650; }
 .kv dd { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .class-card textarea { width: 100%; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 13px; resize: vertical; min-height: 38px; }
 .mini-list { font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; border-top: 1px dashed var(--line); padding-top: 8px; }
 .mini-list div { display: flex; gap: 8px; }
 .mini-list span:first-child { color: var(--faint); width: 80px; flex: none; font-variant-numeric: tabular-nums; }
 .mini-list span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-/* 주간 */
-.week-wrap { overflow-x: auto; }
-.week { display: grid; grid-template-columns: 34px repeat(5, minmax(108px, 1fr)); min-width: 590px; }
-.week > div { padding: 5px; border-bottom: 1px solid var(--line); }
-.week .h { font-size: 13px; font-weight: 700; color: var(--muted); text-align: center; padding: 10px 4px; }
-.week .h.today { color: var(--accent); }
-.week .h small { display: block; font-weight: 500; font-size: 11.5px; color: var(--faint); }
-.week .p { font-weight: 800; color: var(--faint); display: grid; place-items: center; font-size: 15px; }
-.cell { width: 100%; min-height: 64px; border: 1px solid transparent; border-radius: 11px; padding: 6px 7px; background: none; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; }
-.cell.has { background: var(--surface-2); border-color: var(--line); }
-.cell.has:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
-.cell.changed { border-style: dashed; border-color: var(--warn); }
-.cell.todo { background: var(--warn-soft); }
-.cell.blocked { background: var(--event-soft); }
-.cell .chip { font-size: 13px; min-width: 40px; padding: 2px 7px; }
-.cell .t { font-size: 11.5px; color: var(--muted); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.cell .t.done { color: var(--ok); font-weight: 600; }
-.cell .t.todo { color: var(--warn); font-weight: 700; }
-.cell .t.ev { color: var(--event); font-weight: 600; }
-.cell .t.gone { color: var(--faint); text-decoration: line-through; }
-.week-col-today { background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
-.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 10px; }
-.legend span { display: inline-flex; align-items: center; gap: 5px; }
-.legend i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; }
 
 /* 설정 */
 .settings { display: grid; gap: 14px; }
@@ -161,31 +205,41 @@ button.period:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--
 .panel textarea.plan { width: 100%; min-height: 260px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.7; resize: vertical; }
 .grade-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
 .code { display: flex; gap: 8px; }
-.code input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-family: ui-monospace, monospace; font-size: 12px; }
+.field { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 14px; min-width: 0; }
+.code .field { flex: 1; font-family: ui-monospace, monospace; font-size: 12px; }
 ol.steps { margin: 8px 0 0; padding-left: 20px; font-size: 13px; color: var(--muted); }
 ol.steps li { margin: 3px 0; }
 ol.steps code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; font-size: 12px; color: var(--ink); }
+.ev-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ev-form .wide { grid-column: 1 / -1; }
+.ev-list { margin-top: 12px; display: flex; flex-direction: column; max-height: 260px; overflow-y: auto; border-top: 1px solid var(--line); }
+.ev-list .row { display: flex; align-items: center; gap: 8px; padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.ev-list .row .d { width: 70px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.ev-list .row .ti { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-list .row button { border: 0; background: none; color: var(--faint); padding: 2px; }
 
 /* 기록 시트 */
-dialog.sheet { border: 0; padding: 0; background: var(--surface); color: var(--ink); width: min(100%, 460px); max-height: 92dvh; border-radius: 22px 22px 0 0; margin: auto auto 0; box-shadow: 0 -8px 40px rgba(0,0,0,.18); }
+dialog.sheet { border: 0; padding: 0; background: var(--surface); color: var(--ink); width: min(100%, 460px); max-width: 100%; max-height: 92dvh; border-radius: 22px 22px 0 0; margin: auto auto 0; box-shadow: 0 -8px 40px rgba(0,0,0,.18); }
 @media (min-width: 600px) { dialog.sheet { border-radius: 22px; margin: auto; } }
-dialog.sheet::backdrop { background: rgba(15, 18, 26, .38); backdrop-filter: blur(2px); }
-.sheet-in { padding: 20px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+dialog.sheet::backdrop { background: rgba(15, 18, 26, .4); }
+.sheet-in { padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 13px; border-top: 6px solid var(--cc); border-radius: inherit; }
 .sheet-head { display: flex; align-items: center; gap: 10px; }
 .sheet-head .meta { font-size: 13px; color: var(--muted); font-weight: 600; }
 .sheet-head .x { margin-left: auto; }
-.plan-box { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
-.plan-box .lbl { font-size: 12px; color: var(--faint); font-weight: 700; }
-.plan-box .val { font-size: 16px; font-weight: 700; margin-top: 2px; letter-spacing: -.01em; }
+.plan-box { background: color-mix(in srgb, var(--cc) var(--tint), var(--surface)); border-radius: 14px; padding: 12px 14px; }
+.plan-box .lbl { font-size: 12px; color: var(--muted); font-weight: 750; }
+.plan-box .val { font-size: 17px; font-weight: 800; margin-top: 2px; letter-spacing: -.01em; }
 .plan-box .prev { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
 .quick { display: grid; gap: 8px; }
-.quick .btn { justify-content: flex-start; padding: 12px 14px; text-align: left; }
-.quick .btn small { margin-left: auto; font-weight: 500; opacity: .75; font-size: 12.5px; }
-.manual { display: grid; grid-template-columns: 1fr; gap: 8px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.quick .btn { justify-content: flex-start; padding: 13px 14px; text-align: left; }
+.quick .btn small { margin-left: auto; font-weight: 500; opacity: .8; font-size: 12.5px; }
+.manual { display: grid; gap: 8px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.manual summary { font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; }
 .manual label { font-size: 12px; font-weight: 700; color: var(--faint); }
-.manual select, .manual textarea { width: 100%; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 14px; }
+.manual select, .manual textarea { width: 100%; }
 .manual .acts { display: flex; gap: 8px; }
 .manual .acts .btn.primary { margin-left: auto; }
+.queue-note { font-size: 12px; color: var(--warn); font-weight: 700; }
 
 .empty { padding: 28px 18px; text-align: center; color: var(--muted); font-size: 14px; }
 .empty b { color: var(--ink); display: block; font-size: 16px; margin-bottom: 4px; }
@@ -195,14 +249,14 @@ dialog.sheet::backdrop { background: rgba(15, 18, 26, .38); backdrop-filter: blu
 .login p { color: var(--muted); font-size: 14px; margin: 0 0 22px; }
 .logo { width: 52px; height: 52px; border-radius: 16px; background: var(--accent); color: var(--accent-ink); display: inline-grid; place-items: center; }
 .logo svg { width: 28px; height: 28px; }
-.toast { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; z-index: 50; box-shadow: 0 6px 24px rgba(0,0,0,.2); }
+.toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 650; z-index: 50; box-shadow: 0 6px 24px rgba(0,0,0,.2); white-space: nowrap; }
 @media (min-width: 900px) { .toast { bottom: 28px; } }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="module">
-import { html, render, useState, useEffect, useMemo, useRef } from "https://unpkg.com/htm@3.1.1/preact/standalone.module.js";
+import { html, render, useState, useEffect, useMemo, useRef, useLayoutEffect } from "https://unpkg.com/htm@3.1.1/preact/standalone.module.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -224,17 +278,21 @@ const db = initializeFirestore(fbApp, { localCache: persistentLocalCache() });
 const BELL = [null, ["09:00", "09:45"], ["09:55", "10:40"], ["10:50", "11:35"], ["11:45", "12:30"], ["13:20", "14:05"], ["14:15", "15:00"], ["15:10", "15:55"]];
 const PERIODS = [1, 2, 3, 4, 5, 6, 7];
 const WD = ["일", "월", "화", "수", "목", "금", "토"];
+const YEAR_END = "2027-02-26";
+// 이웃한 반끼리 확실히 다른 색이 되도록 순서를 섞은 진한 색 (흰 글씨 대비 확보)
+const PALETTE = ["#2563eb", "#ea580c", "#16a34a", "#9333ea", "#dc2626", "#0e7490", "#a16207", "#db2777", "#78350f", "#475569", "#4d7c0f", "#1e3a8a"];
 
 // ---------- 날짜 ----------
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const fromIso = s => new Date(s + "T00:00:00");
 const addDays = (s, n) => { const d = fromIso(s); d.setDate(d.getDate() + n); return iso(d); };
-const mondayOf = s => { const d = fromIso(s); const w = d.getDay(); return addDays(s, w === 0 ? 1 : w === 6 ? 2 : 1 - w); };
+const isWeekend = s => [0, 6].includes(fromIso(s).getDay());
 const md = s => { const d = fromIso(s); return `${d.getMonth() + 1}/${d.getDate()}`; };
 const mdw = s => `${md(s)}(${WD[fromIso(s).getDay()]})`;
 const atTime = (s, hhmm) => new Date(`${s}T${hhmm}:00`);
 const gradeOf = c => +c.split("-")[0];
 const slotKey = (date, p) => `${date}_${p}`;
+const nextSchoolDay = (s, dir = 1) => { let d = addDays(s, dir); while (isWeekend(d)) d = addDays(d, dir); return d; };
 
 // 학사일정(기존 앱 규칙 그대로): 제목 괄호의 'n학년' → 대상 학년, 없으면 전 학년
 const targetGrades = title => {
@@ -247,6 +305,7 @@ const targetGrades = title => {
 };
 const isExam = e => e.type === "시험" || e.title?.includes("고사");
 const blocks = e => !e.title?.includes("창체") && (e.type === "시험" || e.type === "휴업" || e.type === "행사(수업제외)");
+const allDay = e => !e.period || e.period === "전교시";
 
 // ---------- 데이터 ----------
 function useUserData(user) {
@@ -278,10 +337,21 @@ function useModel({ meta, lessons, events }) {
 
     const classes = [...new Set(Object.values(tt?.base || {}).flatMap(d => Object.values(d).map(x => x.c)))]
       .sort((a, b) => gradeOf(a) - gradeOf(b) || +a.split("-")[1] - +b.split("-")[1]);
-    const hue = Object.fromEntries(classes.map((c, i) => [c, Math.round(i * 360 / Math.max(classes.length, 1) + 205) % 360]));
+    const color = Object.fromEntries(classes.map((c, i) => [c, PALETTE[i % PALETTE.length]]));
+    const firstDay = Object.keys(tt?.days || {}).sort()[0];
 
-    const eventsOn = date => events.filter(e => e.date === date);
-    const blockingEvent = (date, p, grade) => eventsOn(date).find(e => blocks(e) && (!e.period || e.period === "전교시" || e.period === `${p}교시`) && targetGrades(e.title).includes(grade));
+    const eventsByDate = {};
+    for (const e of events) (eventsByDate[e.date] ||= []).push(e);
+    const blockingEvent = (date, p, grade) => (eventsByDate[date] || []).find(e => blocks(e) && (allDay(e) || e.period === `${p}교시`) && targetGrades(e.title).includes(grade));
+    const grades = [...new Set(classes.map(gradeOf))];
+    // 내 모든 학년이 하루 종일 수업이 없는 날(방학·휴업·시험) → 연간표에서 접어서 표시
+    const dayOff = date => {
+      const e = (eventsByDate[date] || []).find(e => blocks(e) && allDay(e) && grades.every(g => targetGrades(e.title).includes(g)));
+      if (e) return e;
+      const wd = fromIso(date).getDay(), live = tt?.days[date];
+      // 컴시간에서 그날 내 수업이 전부 빠짐(시험·출장 등)
+      if (live && !Object.keys(live).length && Object.keys(tt.base[wd] || {}).length) return { title: "수업 없음 (컴시간)" };
+    };
 
     // 그날의 교시별 수업. 알림이 주간 데이터가 있으면 그것(변경 반영), 없으면 기본 시간표.
     const slotsFor = date => {
@@ -290,16 +360,23 @@ function useModel({ meta, lessons, events }) {
       const base = tt.base[wd] || {};
       const live = tt.days[date];
       const day = live || base;
-      return PERIODS.map(p => {
+      const slots = PERIODS.map(p => {
         const cur = day[p], orig = base[p];
-        const c = cur?.c || null;
+        const c = cur?.c || null, oc = orig?.c || null;
         return {
           date, p, c, s: cur?.s,
-          changed: !!live && (cur?.c || null) !== (orig?.c || null),
-          removed: !!live && !c && orig ? orig.c : null,
+          changed: !!live && !!c && c !== oc,   // 이 시간에 다른 반(또는 원래 없던 수업)이 들어옴
+          was: !!live && c !== oc ? oc : null,   // 원래 있던 반
+          removed: !!live && !c && oc ? oc : null, // 원래 있던 수업이 빠짐
           event: c ? blockingEvent(date, p, gradeOf(c)) : null,
         };
       });
+      // 같은 날 빠진 반이 다른 교시에 들어왔으면 '이동'으로 짝지음
+      for (const r of slots.filter(s => s.removed)) {
+        const a = slots.find(s => s.changed && s.c === r.removed && !s.from);
+        if (a) { a.from = r.p; r.to = a.p; }
+      }
+      return slots;
     };
 
     // 수업 기록: lessons/{date_p} = { date, p, c, step, note, skip }
@@ -330,24 +407,37 @@ function useModel({ meta, lessons, events }) {
       return out;
     };
 
-    return { tt, syncedAt, plans, notes, classes, hue, slotsFor, byClass, stepBefore, progress, lastLesson, planOf, stepTitle, nextExam, lessonsUntil, pending, lessons };
+    // 오늘부터 n일 안의 시간표 변경 (컴시간 알리미처럼 한눈에)
+    const changesFrom = (from, n) => {
+      const out = [];
+      for (let d = from, i = 0; i < n; d = addDays(d, 1), i++)
+        if (dayOff(d)?.title === "수업 없음 (컴시간)") out.push({ date: d, p: 0, allOff: true });
+        else for (const s of slotsFor(d)) if (s.changed || s.removed) out.push(s);
+      return out;
+    };
+
+    return { tt, syncedAt, plans, notes, classes, color, firstDay, slotsFor, dayOff, byClass, stepBefore, progress, lastLesson, planOf, stepTitle, nextExam, lessonsUntil, pending, changesFrom, lessons, events };
   }, [meta, lessons, events]);
 }
 
 // ---------- 아이콘 ----------
 const ICONS = {
   today: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9 16l2 2 4-4",
-  week: "M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",
-  classes: "M4 19.5V5a2 2 0 0 1 2-2h13v16H6.5A2.5 2.5 0 0 0 4 21.5 2.5 2.5 0 0 0 6.5 24M8 7h7M8 11h5",
+  year: "M3 5h18M3 12h18M3 19h18M8 3v18M14 3v18",
+  classes: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
   settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
   left: "M15 18l-6-6 6-6", right: "M9 18l6-6-6-6", x: "M18 6L6 18M6 6l12 12",
   check: "M20 6L9 17l-5-5", pen: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
   alert: "M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z",
   dot: "M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0-8 0",
+  swap: "M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3",
   book: "M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z",
+  trash: "M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6",
 };
 const Icon = ({ n }) => html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${ICONS[n]} /></svg>`;
-const Chip = ({ c, m, lg }) => html`<span class=${"chip" + (lg ? " lg" : "")} style=${`--h:${m.hue[c] ?? 210}`}>${c}</span>`;
+const chgLabel = s => s.from ? `${s.from}→${s.p}교시 이동` : s.was ? `${s.was} → ${s.c}` : "추가";
+const cc = (m, c) => `--cc:${m.color[c] || "#64748b"}`;
+const Chip = ({ c, m, lg, ghost }) => html`<span class=${"chip" + (lg ? " lg" : "") + (ghost ? " ghost" : "")} style=${cc(m, c)}>${c}</span>`;
 
 // ---------- 앱 ----------
 function App() {
@@ -366,7 +456,7 @@ function Login() {
     <h1>고덕중 진도표</h1>
     <p>컴시간 시간표가 자동으로 들어오고,<br />수업이 끝나면 한 번 눌러 진도를 남겨요.</p>
     <button class="btn primary" style="width:100%;padding:12px" onClick=${go}>Google 계정으로 시작</button>
-    ${err && html`<p style="color:var(--danger);margin:12px 0 0;font-size:13px">${err}</p>`}
+    ${err && html`<p style="color:var(--chg);margin:12px 0 0;font-size:13px">${err}</p>`}
   </div></div>`;
 }
 
@@ -375,40 +465,45 @@ function Main({ user }) {
   const m = useModel(data);
   const [tab, setTab] = useState(() => { try { return localStorage.getItem("tab") || "today"; } catch { return "today"; } });
   const [now, setNow] = useState(new Date());
-  const [sheet, setSheet] = useState(null);
+  const [sheet, setSheet] = useState(null); // { slot, queue }
   const [toast, setToast] = useState("");
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t); }, []);
   useEffect(() => { try { localStorage.setItem("tab", tab); } catch { } }, [tab]);
   useEffect(() => { if (toast) { const t = setTimeout(() => setToast(""), 2200); return () => clearTimeout(t); } }, [toast]);
 
+  const pending = m.tt ? m.pending(now) : [];
+  const open = (slot, queue = false) => setSheet({ slot, queue });
+
   const saveLesson = async (slot, rec) => {
     const k = slotKey(slot.date, slot.p);
     if (rec === null) await deleteDoc(ref(user, "lessons", k));
     else await setDoc(ref(user, "lessons", k), { date: slot.date, p: slot.p, c: slot.c, step: rec.step || 0, note: rec.note || "", skip: !!rec.skip, at: Date.now() });
-    setSheet(null);
-    setToast(rec === null ? "기록을 지웠어요" : `${slot.c} 기록 완료`);
+    // 밀린 기록 모드면 다음 밀린 수업을 바로 띄움
+    const next = sheet?.queue && rec !== null && pending.find(s => slotKey(s.date, s.p) !== k);
+    setSheet(next ? { slot: next, queue: true } : null);
+    setToast(rec === null ? "기록을 지웠어요" : next ? `${slot.c} 완료 · 다음 밀린 수업` : `${slot.c} 기록 완료`);
   };
   const saveMeta = (id, val) => setDoc(ref(user, "meta", id), val, { merge: true });
 
   const stale = m.syncedAt && (now - m.syncedAt) > 3 * 86400000;
-  const tabs = [["today", "오늘"], ["week", "주간"], ["classes", "학급"], ["settings", "설정"]];
-  const ctx = { m, now, open: setSheet, user, saveMeta, setToast, setTab };
+  const tabs = [["today", "오늘", "today"], ["year", "진도표", "year"], ["classes", "학급", "classes"], ["settings", "설정", "settings"]];
+  const ctx = { m, now, open, user, saveMeta, setToast, setTab, pending };
 
   return html`<div class="app">
     <header class="top">
       <div class="brand">진도표<small>${m.tt ? `${m.tt.teacher} 선생님 · ${m.tt.subject}` : "고덕중학교"}</small></div>
-      <div class="sync" title="알림이(컴시간)에서 받은 시간표 기준">
-        ${m.tt ? html`<i class=${stale ? "old" : ""}></i>컴시간 ${m.tt.savedAt.slice(5, 16).replace("-", "/")} 기준` : html`<i class="old"></i>시간표 연동 전`}
+      <div class="sync" title=${m.syncedAt ? `마지막 동기화 ${m.syncedAt.toLocaleString("ko-KR")}` : ""}>
+        ${m.tt ? html`<i class=${stale ? "old" : ""}></i><span>컴시간 ${m.tt.savedAt.slice(5, 16).replace("-", "/")} 기준</span>` : html`<i class="old"></i>시간표 연동 전`}
       </div>
-      <nav class="tabs">${tabs.map(([k, label]) => html`<button class=${tab === k ? "on" : ""} onClick=${() => setTab(k)}><${Icon} n=${k} />${label}</button>`)}</nav>
+      <nav class="tabs">${tabs.map(([k, label, ic]) => html`<button class=${tab === k ? "on" : ""} onClick=${() => setTab(k)}><${Icon} n=${ic} />${label}${k === "today" && pending.length > 0 && html`<span class="badge">${pending.length}</span>`}</button>`)}</nav>
     </header>
     ${!data.ready ? html`<div class="empty">불러오는 중…</div>`
       : !m.tt && tab !== "settings" ? html`<div class="card empty"><b>아직 시간표가 없어요</b>설정 탭의 'PC 연동' 안내대로 알림이 PC에서 한 번만 연결하면 자동으로 들어옵니다.<br /><br /><button class="btn primary" onClick=${() => setTab("settings")}>연동하러 가기</button></div>`
       : tab === "today" ? html`<${Today} ...${ctx} />`
-      : tab === "week" ? html`<${Week} ...${ctx} />`
+      : tab === "year" ? html`<${Year} ...${ctx} />`
       : tab === "classes" ? html`<${Classes} ...${ctx} />`
       : html`<${Settings} ...${ctx} />`}
-    ${sheet && html`<${RecordSheet} slot=${sheet} m=${m} onSave=${saveLesson} onClose=${() => setSheet(null)} />`}
+    ${sheet && html`<${RecordSheet} key=${slotKey(sheet.slot.date, sheet.slot.p)} slot=${sheet.slot} queue=${sheet.queue ? pending.length : 0} m=${m} onSave=${saveLesson} onClose=${() => setSheet(null)} />`}
     ${toast && html`<div class="toast" role="status">${toast}</div>`}
   </div>`;
 }
@@ -427,100 +522,160 @@ function slotText(m, s) {
   return m.stepTitle(s.c, m.stepBefore(s.c, slotKey(s.date, s.p)) + 1);
 }
 
-function Today({ m, now, open, setTab }) {
+function Today({ m, now, open, setTab, pending }) {
   const todayIso = iso(now);
-  const [date, setDate] = useState(todayIso);
-  const shift = n => { let d = addDays(date, n); while ([0, 6].includes(fromIso(d).getDay())) d = addDays(d, n); setDate(d); };
+  const [date, setDate] = useState(isWeekend(todayIso) ? nextSchoolDay(todayIso) : todayIso);
   const slots = m.slotsFor(date);
-  const pending = m.pending(now);
   const lastP = Math.max(0, ...slots.filter(s => s.c || s.removed).map(s => s.p));
   const isToday = date === todayIso;
+  const changes = m.changesFrom(todayIso, 14);
+
+  // 좌우로 밀어서 날짜 이동 (모바일)
+  const touch = useRef(null);
+  const onTouchStart = e => { touch.current = [e.touches[0].clientX, e.touches[0].clientY]; };
+  const onTouchEnd = e => {
+    if (!touch.current) return;
+    const dx = e.changedTouches[0].clientX - touch.current[0], dy = e.changedTouches[0].clientY - touch.current[1];
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) setDate(nextSchoolDay(date, dx < 0 ? 1 : -1));
+    touch.current = null;
+  };
 
   return html`<div class="today-layout">
-    <section>
-      ${pending.length > 0 && html`<button class="backlog" onClick=${() => open(pending[0])}>
-        <${Icon} n="alert" /><span>기록 안 한 수업 <b>${pending.length}</b>개 · ${mdw(pending[0].date)} ${pending[0].p}교시 ${pending[0].c}부터</span></button>`}
+    <section onTouchStart=${onTouchStart} onTouchEnd=${onTouchEnd}>
+      ${pending.length > 0 && html`<button class="banner todo" onClick=${() => open(pending[0], true)}>
+        <${Icon} n="alert" /><span>기록 안 한 수업 <b>${pending.length}</b>개</span><span class="go">차례로 기록하기</span></button>`}
       <div class="daybar">
         <h2>${isToday ? "오늘" : mdw(date)}<span>${isToday ? mdw(date) : ""}</span></h2>
         <div class="spacer"></div>
         ${!isToday && html`<button class="btn sm" onClick=${() => setDate(todayIso)}>오늘로</button>`}
-        <button class="icon-btn" aria-label="이전 날" onClick=${() => shift(-1)}><${Icon} n="left" /></button>
-        <button class="icon-btn" aria-label="다음 날" onClick=${() => shift(1)}><${Icon} n="right" /></button>
+        <button class="icon-btn" aria-label="이전 날" onClick=${() => setDate(nextSchoolDay(date, -1))}><${Icon} n="left" /></button>
+        <button class="icon-btn" aria-label="다음 날" onClick=${() => setDate(nextSchoolDay(date, 1))}><${Icon} n="right" /></button>
       </div>
-      ${slots.length === 0 ? html`<div class="card empty"><b>주말이에요</b>쉬는 날엔 진도 걱정 접어두세요.</div>` : html`<div class="periods">
-        ${slots.filter(s => s.p <= Math.max(lastP, 0)).map(s => {
-          if (!s.c) return html`<div class="period card free"><div class="no">${s.p}</div><div class="what">${s.removed ? html`<s>${s.removed}</s> 수업 빠짐 (시간표 변경)` : "공강"}</div></div>`;
+      ${m.dayOff(date) ? html`<div class="card empty"><b>${m.dayOff(date).title}</b>학사일정상 수업이 없는 날이에요.</div>`
+        : lastP === 0 ? html`<div class="card empty"><b>수업 없는 날</b></div>`
+        : html`<div class="periods">${slots.filter(s => s.p <= lastP).map(s => {
+          if (!s.c && s.removed) return html`<div class="period card removed hatch" style=${cc(m, s.removed)}>
+            <div class="no">${s.p}<small>${BELL[s.p][0]}</small></div>
+            <div class="main"><div class="row1"><${Chip} c=${s.removed} m=${m} ghost /><span class="tag chg">${s.to ? `${s.to}교시로 이동` : "빠짐"}</span></div><div class="what">${s.to ? `이 수업은 ${s.to}교시로 옮겨졌어요` : "컴시간에서 이 수업이 빠졌어요"}</div></div></div>`;
+          if (!s.c) return html`<div class="period card free"><div class="no">${s.p}</div><div class="what">공강</div></div>`;
           const st = slotState(m, s, now);
-          return html`<button class=${`period card ${st}`} onClick=${() => open(s)}>
+          return html`<button class=${`period card ${st} ${s.changed ? "chg" : ""}`} style=${cc(m, s.c)} onClick=${() => open(s)}>
             <div class="no">${s.p}<small>${BELL[s.p][0]}</small></div>
             <div class="main">
               <div class="row1"><${Chip} c=${s.c} m=${m} />
-                ${s.changed && html`<span class="tag changed">시간표 변경</span>`}
+                ${s.changed && html`<span class="tag chg"><${Icon} n="swap" />${chgLabel(s)}</span>`}
                 ${s.event && html`<span class="tag event">${s.event.title}</span>`}
                 ${st === "done" && html`<span class="status done"><${Icon} n="check" />기록함</span>`}
                 ${st === "todo" && html`<span class="status todo"><${Icon} n="pen" />기록하기</span>`}
                 ${st === "now" && html`<span class="status now"><${Icon} n="dot" />수업 중</span>`}
               </div>
-              <div class="what">${st === "done" ? html`<b>${slotText(m, s)}</b>` : s.event ? "수업 없음" : html`다음 차시 <b>${slotText(m, s)}</b>`}</div>
+              <div class="what">${st === "done" ? html`<b>${slotText(m, s)}</b>` : s.event ? "학사일정으로 수업 없음" : html`이번 차시 <b>${slotText(m, s)}</b>`}</div>
             </div>
           </button>`;
-        })}
-        ${lastP === 0 && html`<div class="card empty"><b>수업 없는 날</b></div>`}
-      </div>`}
+        })}</div>`}
     </section>
     <section>
-      <div class="section-title">학급별 진도<button class="btn sm ghost" style="margin-left:auto" onClick=${() => setTab("classes")}>자세히</button></div>
-      <div class="card" style="padding:6px 14px">
-        ${m.classes.map(c => {
-          const total = m.planOf(c).length, p = m.progress(c);
-          return html`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
-            <${Chip} c=${c} m=${m} />
-            <div style="flex:1;min-width:0;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p ? m.stepTitle(c, p) : html`<span style="color:var(--faint)">아직 기록 없음</span>`}</div>
-            ${total > 0 && html`<span style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums">${p}/${total}</span>`}
-          </div>`;
-        })}
-      </div>
+      <div class="section-title" style="margin-top:2px">시간표 변경 <span class="tag chg">${changes.length}</span><span style="font-weight:500;color:var(--faint)">앞으로 2주</span></div>
+      ${changes.length === 0 ? html`<div class="card empty" style="padding:16px">바뀐 시간표가 없어요</div>`
+        : html`<div class="card chg-list">${changes.map(s => html`<button class="row" style="border:0;border-bottom:1px solid var(--line);background:none;text-align:left;width:100%" onClick=${() => setDate(s.date)}>
+          <span class="when">${mdw(s.date)} ${s.p ? `${s.p}교시` : ""}</span>
+          ${s.allOff ? html`<span class="tag chg">하루 수업 전부 빠짐</span>` : s.removed ? html`<${Chip} c=${s.removed} m=${m} ghost /><span class="tag chg">${s.to ? `${s.to}교시로 이동` : "빠짐"}</span>`
+            : s.was ? html`<s>${s.was}</s><span class="arrow">→</span><${Chip} c=${s.c} m=${m} />${s.from && html`<span class="tag chg">${s.from}교시에서</span>`}`
+            : html`<${Chip} c=${s.c} m=${m} /><span class="tag chg">${s.from ? `${s.from}교시에서 이동` : "추가"}</span>`}
+        </button>`)}</div>`}
+      <div class="section-title">학급별 진도<button class="btn sm ghost" onClick=${() => setTab("classes")}>자세히</button></div>
+      <div class="card">${m.classes.map(c => {
+        const total = m.planOf(c).length, p = m.progress(c);
+        return html`<div class="mini-prog"><${Chip} c=${c} m=${m} />
+          <div class="t">${p ? m.stepTitle(c, p) : html`<span style="color:var(--faint)">아직 기록 없음</span>`}</div>
+          ${total > 0 && html`<span class="n">${p}/${total}</span>`}</div>`;
+      })}</div>
     </section>
   </div>`;
 }
 
-function Week({ m, now, open }) {
+// 연간 진도표: 학기 전체를 가로로. 마우스 휠(위/아래)로 좌우 이동, 모바일은 손가락으로 밀기.
+function Year({ m, now, open }) {
   const todayIso = iso(now);
-  const [mon, setMon] = useState(mondayOf(todayIso));
-  const days = [0, 1, 2, 3, 4].map(i => addDays(mon, i));
-  const grid = days.map(d => m.slotsFor(d));
+  const scroller = useRef();
+  const [only, setOnly] = useState(null); // 특정 반만 강조
+  const days = useMemo(() => {
+    const out = [];
+    for (let d = m.firstDay || todayIso; d <= YEAR_END; d = addDays(d, 1)) if (!isWeekend(d)) out.push(d);
+    return out;
+  }, [m.firstDay]);
+  const narrow = typeof innerWidth !== "undefined" && innerWidth < 600;
+  const colw = narrow ? 92 : 124, rowh = narrow ? 62 : 70;
+
+  const centerOn = (date, smooth) => {
+    const el = scroller.current?.querySelector(`[data-d="${date}"]`) || scroller.current?.querySelector(`[data-d^="${date.slice(0, 7)}"]`);
+    if (el) scroller.current.scrollTo({ left: el.offsetLeft - scroller.current.clientWidth / 2 + el.offsetWidth / 2, behavior: smooth ? "smooth" : "auto" });
+  };
+  useLayoutEffect(() => { centerOn(isWeekend(todayIso) ? nextSchoolDay(todayIso) : todayIso, false); }, []);
+  useEffect(() => {
+    const el = scroller.current;
+    const onWheel = e => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || e.shiftKey) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY * 1.6; // 아래로 굴리면 미래, 위로 굴리면 과거
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+  const page = dir => scroller.current.scrollBy({ left: dir * colw * 5, behavior: "smooth" });
+
   return html`<div>
-    <div class="daybar">
-      <h2>${md(days[0])} – ${md(days[4])}</h2>
+    <div class="tl-bar">
+      <h2>진도표</h2><span class="hint">${narrow ? "옆으로 밀어서 이동" : "마우스 휠로 좌우 이동"}</span>
       <div class="spacer"></div>
-      ${mon !== mondayOf(todayIso) && html`<button class="btn sm" onClick=${() => setMon(mondayOf(todayIso))}>이번 주</button>`}
-      <button class="icon-btn" aria-label="이전 주" onClick=${() => setMon(addDays(mon, -7))}><${Icon} n="left" /></button>
-      <button class="icon-btn" aria-label="다음 주" onClick=${() => setMon(addDays(mon, 7))}><${Icon} n="right" /></button>
+      <button class="icon-btn" aria-label="이전 주" onClick=${() => page(-1)}><${Icon} n="left" /></button>
+      <button class="btn sm" onClick=${() => centerOn(todayIso, true)}>오늘</button>
+      <button class="icon-btn" aria-label="다음 주" onClick=${() => page(1)}><${Icon} n="right" /></button>
     </div>
-    <div class="card week-wrap"><div class="week">
-      <div></div>
-      ${days.map(d => html`<div class=${"h" + (d === todayIso ? " today week-col-today" : "")}>${WD[fromIso(d).getDay()]}<small>${md(d)}</small></div>`)}
-      ${PERIODS.map(p => html`
-        <div class="p">${p}</div>
-        ${grid.map((slots, i) => {
-          const s = slots[p - 1], col = days[i] === todayIso ? "week-col-today" : "";
-          if (!s.c) return html`<div class=${col}><div class=${"cell" + (s.removed ? " changed" : "")}>${s.removed && html`<span class="t gone">${s.removed}</span>`}</div></div>`;
-          const st = slotState(m, s, now);
-          const cls = `cell has ${s.changed ? "changed" : ""} ${st === "todo" ? "todo" : ""} ${st === "blocked" ? "blocked" : ""}`;
-          return html`<div class=${col}><button class=${cls} onClick=${() => open(s)}>
-            <${Chip} c=${s.c} m=${m} />
-            <span class=${"t " + (st === "done" ? "done" : st === "todo" ? "todo" : st === "blocked" ? "ev" : "")}>
-              ${st === "blocked" ? s.event.title : st === "todo" ? "기록 필요" : slotText(m, s)}
-            </span>
-          </button></div>`;
-        })}`)}
-    </div></div>
+    <div class="filter">
+      <button class="all" onClick=${() => setOnly(null)}>전체</button>
+      ${m.classes.map(c => html`<button class=${!only || only === c ? "on" : ""} onClick=${() => setOnly(only === c ? null : c)}><${Chip} c=${c} m=${m} /></button>`)}
+    </div>
+    <div class="card tl" ref=${scroller} style=${`--colw:${colw}px;--rowh:${rowh}px`}>
+      <div class="tl-in">
+        <div class="tl-side"><div class="tl-head">교시</div>${PERIODS.map(p => html`<div class="tl-p">${p}</div>`)}</div>
+        ${days.map((d, i) => {
+          const off = m.dayOff(d), dt = fromIso(d);
+          const monthStart = i === 0 || days[i - 1].slice(0, 7) !== d.slice(0, 7);
+          const cls = `tl-col ${dt.getDay() === 1 ? "mon" : ""} ${d === todayIso ? "today" : ""} ${off ? "collapsed" : ""}`;
+          if (off) return html`<div class=${cls} data-d=${d} title=${`${mdw(d)} ${off.title}`}>
+            <div class="tl-head">${monthStart && html`<span class="m">${dt.getMonth() + 1}월</span>`}<span class="d" style="font-size:11px">${dt.getDate()}</span></div>
+            <div class="tl-v">${off.title}</div></div>`;
+          const slots = m.slotsFor(d);
+          return html`<div class=${cls} data-d=${d}>
+            <div class="tl-head">${monthStart && html`<span class="m">${dt.getMonth() + 1}월</span>`}<span class="d">${md(d)}</span><span class="w">${WD[dt.getDay()]}</span></div>
+            ${slots.map(s => html`<div class="tl-cell">${renderCell(m, s, now, open, only)}</div>`)}
+          </div>`;
+        })}
+      </div>
+    </div>
     <div class="legend">
-      <span><i style="border:1.5px dashed var(--warn)"></i>컴시간 변경</span>
-      <span><i style="background:var(--warn-soft)"></i>기록 필요</span>
+      <span><i style="box-shadow:inset 0 0 0 2px var(--chg)"></i>시간표 변경(컴시간)</span>
+      <span><i class="hatch" style="background-color:var(--chg-soft);box-shadow:inset 0 0 0 2px var(--chg)"></i>수업 빠짐</span>
+      <span style="color:var(--warn);font-weight:700">기록 필요</span>
+      <span style="color:var(--ok)"><${Icon} n="check" />기록함</span>
       <span><i style="background:var(--event-soft)"></i>학사일정(수업 없음)</span>
     </div>
   </div>`;
+}
+function renderCell(m, s, now, open, only) {
+  if (!s.c && s.removed) return html`<div class=${"gone hatch" + (only && only !== s.removed ? " dim" : "")}><s>${s.removed}</s><span>${s.to ? `→${s.to}교시` : "빠짐"}</span></div>`;
+  if (!s.c) return null;
+  const st = slotState(m, s, now);
+  const cls = `has ${s.changed ? "chg" : ""} ${st === "blocked" ? "blocked" : ""} ${only && only !== s.c ? "dim" : ""}`;
+  return html`<button class=${cls} style=${cc(m, s.c)} onClick=${() => open(s)} title=${s.changed ? chgLabel(s) : ""}>
+    ${s.changed && html`<span class="rib">${s.from ? `${s.from}→${s.p}` : s.was ? "변경" : "추가"}</span>`}
+    <${Chip} c=${s.c} m=${m} />
+    <span class=${"t " + (st === "done" ? "done" : st === "todo" ? "todo" : st === "blocked" ? "ev" : "")}>
+      ${st === "blocked" ? s.event.title : st === "todo" ? "기록 필요" : slotText(m, s)}
+    </span>
+    ${st === "done" && html`<span class="ok"><${Icon} n="check" /></span>`}
+  </button>`;
 }
 
 function Classes({ m, now, saveMeta }) {
@@ -532,9 +687,9 @@ function Classes({ m, now, saveMeta }) {
       const exam = m.nextExam(gradeOf(c), today);
       const left = exam ? m.lessonsUntil(c, today, exam.date) : null;
       const recent = [...(m.byClass[c] || [])].reverse().slice(0, 4);
-      return html`<div class="card class-card" style=${`--h:${m.hue[c]}`}>
+      return html`<div class="card class-card" style=${cc(m, c)}>
         <div class="head"><${Chip} c=${c} m=${m} lg />
-          <span style="font-size:13px;color:var(--muted);font-weight:600">${p}${total ? ` / ${total}차시` : "차시"}</span>
+          <span style="font-size:13px;color:var(--muted);font-weight:650">${p}${total ? ` / ${total}차시` : "차시"}</span>
           ${exam && html`<span class="exam" title=${exam.title}>시험까지 <b>${left}</b>회</span>`}
         </div>
         ${total > 0 && html`<div class="bar"><i style=${`width:${Math.min(100, p / total * 100)}%`}></i></div>`}
@@ -550,23 +705,25 @@ function Classes({ m, now, saveMeta }) {
   </div>`;
 }
 
-function RecordSheet({ slot, m, onSave, onClose }) {
+function RecordSheet({ slot, queue, m, onSave, onClose }) {
   const dlg = useRef();
   useEffect(() => { dlg.current.showModal(); }, []);
   const k = slotKey(slot.date, slot.p);
   const existing = m.lessons[k];
   const prev = m.stepBefore(slot.c, k);
   const plan = m.planOf(slot.c);
-  const [step, setStep] = useState(existing ? existing.step : prev + 1);
+  const [step, setStep] = useState(existing ? existing.step || prev + 1 : prev + 1);
   const [note, setNote] = useState(existing?.note || "");
   const maxStep = Math.max(plan.length, prev + 1, step) + 3;
 
   return html`<dialog class="sheet" ref=${dlg} onClose=${onClose} onClick=${e => e.target === dlg.current && dlg.current.close()}>
-    <div class="sheet-in">
+    <div class="sheet-in" style=${cc(m, slot.c)}>
       <div class="sheet-head"><${Chip} c=${slot.c} m=${m} lg />
-        <div><div style="font-weight:700">${mdw(slot.date)} ${slot.p}교시</div><div class="meta">${slot.s}${slot.changed ? " · 시간표 변경됨" : ""}</div></div>
+        <div><div style="font-weight:800">${mdw(slot.date)} ${slot.p}교시</div>
+          <div class="meta">${slot.s}${slot.changed ? html` · <span style="color:var(--chg);font-weight:800">${slot.from ? `${slot.from}교시에서 옮겨온 수업` : slot.was ? `시간표 변경 (원래 ${slot.was})` : "추가된 수업"}</span>` : ""}</div></div>
         <button class="icon-btn x" aria-label="닫기" onClick=${() => dlg.current.close()}><${Icon} n="x" /></button>
       </div>
+      ${queue > 0 && html`<div class="queue-note">밀린 기록 ${queue}개 남음 · 저장하면 다음 수업이 바로 열려요</div>`}
       ${slot.event && html`<div class="tag event" style="align-self:flex-start;font-size:13px;padding:5px 10px">${slot.event.title} — 학사일정상 수업 없음</div>`}
       <div class="plan-box">
         <div class="lbl">${existing ? "기록된 진도" : "이번 시간 계획"}</div>
@@ -578,18 +735,19 @@ function RecordSheet({ slot, m, onSave, onClose }) {
         ${prev > 0 && html`<button class="btn" onClick=${() => onSave(slot, { step: prev, note })}>진도 못 나감 · 이어서 했어요<small>${prev}차시 계속</small></button>`}
         <button class="btn" onClick=${() => onSave(slot, { skip: true, step: 0, note })}>수업 못함<small>행사·자습 등</small></button>
       </div>
-      <div class="manual">
-        <label for="step">차시 직접 고르기</label>
-        <select id="step" value=${step} onChange=${e => setStep(+e.target.value)}>
+      <details class="manual" open=${!!existing}>
+        <summary>차시 직접 고르기 · 메모</summary>
+        <label for="step">차시</label>
+        <select id="step" class="field" value=${step} onChange=${e => setStep(+e.target.value)}>
           ${Array.from({ length: maxStep }, (_, i) => i + 1).map(n => html`<option value=${n}>${m.stepTitle(slot.c, n)}</option>`)}
         </select>
         <label for="note">메모</label>
-        <textarea id="note" rows="2" placeholder="예: 실험 못 끝냄, 다음 시간 마무리" value=${note} onInput=${e => setNote(e.target.value)}></textarea>
+        <textarea id="note" class="field" rows="2" placeholder="예: 실험 못 끝냄, 다음 시간 마무리" value=${note} onInput=${e => setNote(e.target.value)}></textarea>
         <div class="acts">
-          ${existing && html`<button class="btn ghost" style="color:var(--danger)" onClick=${() => onSave(slot, null)}>기록 지우기</button>`}
+          ${existing && html`<button class="btn ghost" style="color:var(--chg)" onClick=${() => onSave(slot, null)}>기록 지우기</button>`}
           <button class="btn primary" onClick=${() => onSave(slot, { step, note })}>저장</button>
         </div>
-      </div>
+      </details>
     </div>
   </dialog>`;
 }
@@ -610,7 +768,7 @@ function Settings({ m, user, saveMeta, setToast }) {
   return html`<div class="settings">
     <div class="card panel">
       <h3>차시 계획</h3>
-      <p class="desc">한 줄에 한 차시씩 적어 주세요. 학년 내 모든 반이 같은 계획을 따라가며, 각 반이 어디까지 했는지는 자동으로 계산돼요.</p>
+      <p class="desc">한 줄에 한 차시씩 적어 주세요. 학년 내 모든 반이 같은 계획을 따라가며, 각 반이 어디까지 했는지는 자동으로 계산돼요. 엑셀·한글에서 복사해 붙여넣어도 돼요.</p>
       ${grades.length > 1 && html`<div class="grade-tabs">${grades.map(x => html`<button class=${"btn sm" + (x === g ? " primary" : "")} onClick=${() => { setG(x); setDraft(null); }}>${x}학년</button>`)}</div>`}
       <textarea class="plan" value=${text} onInput=${e => setDraft(e.target.value)}
         placeholder=${"예)\nⅠ-1. 물질의 구성 – 원소\nⅠ-2. 원소 기호 익히기\nⅠ-3. 원자와 분자 모형 만들기 (실험)\n…"}></textarea>
@@ -620,6 +778,7 @@ function Settings({ m, user, saveMeta, setToast }) {
       </div>
     </div>
     <div style="display:grid;gap:14px">
+      <${EventsPanel} m=${m} user=${user} setToast=${setToast} />
       <div class="card panel">
         <h3>PC 연동 (알림이 → 진도표)</h3>
         <p class="desc">${m.tt ? html`마지막 동기화 ${m.syncedAt ? m.syncedAt.toLocaleString("ko-KR") : "-"} · ${m.tt.source}` : "알림이가 깔린 학교 PC에서 한 번만 연결하면, 컴시간 시간표가 바뀔 때마다 자동으로 반영돼요."}</p>
@@ -629,13 +788,12 @@ function Settings({ m, user, saveMeta, setToast }) {
           <li>이후엔 PC가 켜져 있는 동안 20분마다 자동 동기화</li>
         </ol>
         <div class="code" style="margin-top:12px">
-          <input readonly type=${showCode ? "text" : "password"} value=${user.refreshToken} aria-label="연동 코드" />
+          <input class="field" readonly type=${showCode ? "text" : "password"} value=${user.refreshToken} aria-label="연동 코드" />
           <button class="btn sm" onClick=${() => setShowCode(!showCode)}>${showCode ? "숨기기" : "보기"}</button>
           <button class="btn sm primary" onClick=${copy}>복사</button>
         </div>
         <p class="desc" style="margin:10px 0 0;font-size:12px">이 코드는 비밀번호처럼 다뤄 주세요. 다른 사람에게 공유하지 마세요.</p>
       </div>
-      <${EventsPanel} user=${user} setToast=${setToast} />
       <div class="card panel" style="display:flex;align-items:center;gap:10px">
         <div style="flex:1;font-size:13.5px"><b>${user.displayName}</b><div style="color:var(--muted);font-size:12.5px">${user.email}</div></div>
         <button class="btn sm" onClick=${() => signOut(auth)}>로그아웃</button>
@@ -644,9 +802,19 @@ function Settings({ m, user, saveMeta, setToast }) {
   </div>`;
 }
 
-// 학사일정 엑셀(월별 달력 시트) 업로드 — 기존 앱의 파서 그대로
-function EventsPanel({ user, setToast }) {
+// 학사일정: 직접 추가/삭제 + 엑셀(월별 달력 시트) 일괄 업로드 — 파서는 기존 앱 그대로
+function EventsPanel({ m, user, setToast }) {
   const input = useRef();
+  const col = () => collection(db, "artifacts", APP_ID, "users", user.uid, "events");
+  const [f, setF] = useState({ date: iso(new Date()), type: "행사(수업제외)", title: "", period: "전교시" });
+  const add = async () => {
+    if (!f.title.trim()) return setToast("일정 이름을 적어 주세요");
+    await setDoc(doc(col(), `m-${Date.now()}`), { ...f, title: f.title.trim() });
+    setF({ ...f, title: "" });
+    setToast("일정을 추가했어요");
+  };
+  const upcoming = m.events.filter(e => e.date >= iso(new Date())).sort((a, b) => a.date < b.date ? -1 : 1);
+
   const loadXlsx = () => window.XLSX ? Promise.resolve() : new Promise((ok, no) => {
     const s = document.createElement("script");
     s.src = "https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js";
@@ -679,10 +847,9 @@ function EventsPanel({ user, setToast }) {
         }));
       }
       if (!list.length) throw new Error("일정을 찾지 못함");
-      const col = collection(db, "artifacts", APP_ID, "users", user.uid, "events");
       const batch = writeBatch(db);
-      (await getDocs(col)).forEach(d => batch.delete(d.ref));
-      list.forEach((ev, i) => batch.set(doc(col, `e-${i}`), ev));
+      (await getDocs(col())).forEach(d => batch.delete(d.ref));
+      list.forEach((ev, i) => batch.set(doc(col(), `e-${i}`), ev));
       await batch.commit();
       setToast(`학사일정 ${list.length}건 반영`);
     } catch (err) {
@@ -692,9 +859,26 @@ function EventsPanel({ user, setToast }) {
   };
   return html`<div class="card panel">
     <h3>학사일정</h3>
-    <p class="desc">시험·휴업일은 수업에서 빠지고, '시험까지 남은 수업' 계산에 쓰여요. 기존에 올린 일정은 그대로 이어서 사용합니다.</p>
+    <p class="desc">시험·휴업·행사(수업제외)는 수업에서 빠지고, '시험까지 남은 수업' 계산에 쓰여요.</p>
+    <div class="ev-form">
+      <input class="field" type="date" value=${f.date} onInput=${e => setF({ ...f, date: e.target.value })} aria-label="날짜" />
+      <select class="field" value=${f.period} onChange=${e => setF({ ...f, period: e.target.value })} aria-label="교시">
+        <option value="전교시">하루 종일</option>${PERIODS.map(p => html`<option value=${`${p}교시`}>${p}교시</option>`)}
+      </select>
+      <select class="field" value=${f.type} onChange=${e => setF({ ...f, type: e.target.value })} aria-label="종류">
+        <option value="행사(수업제외)">행사 (수업 없음)</option><option value="시험">시험</option><option value="휴업">휴업·방학</option><option value="행사">행사 (수업 있음)</option>
+      </select>
+      <input class="field" placeholder="예: 축제(2학년)" value=${f.title} onInput=${e => setF({ ...f, title: e.target.value })} onKeyDown=${e => e.key === "Enter" && add()} aria-label="일정 이름" />
+      <button class="btn primary wide" onClick=${add}>일정 추가</button>
+    </div>
+    <div class="ev-list">${upcoming.length === 0 ? html`<div class="row" style="color:var(--faint)">다가오는 일정이 없어요</div>` : upcoming.map(e => html`<div class="row">
+      <span class="d">${mdw(e.date)}</span>
+      <span class=${"tag " + (blocks(e) ? "event" : "ok")}>${e.type}</span>
+      <span class="ti">${e.title}${e.period && e.period !== "전교시" ? ` (${e.period})` : ""}</span>
+      <button aria-label="삭제" onClick=${() => deleteDoc(doc(col(), e.id))}><${Icon} n="trash" /></button>
+    </div>`)}</div>
     <input type="file" accept=".xlsx,.xls" hidden ref=${input} onChange=${upload} />
-    <button class="btn" onClick=${() => input.current.click()}>학사일정 엑셀 다시 올리기</button>
+    <button class="btn sm ghost" style="margin-top:8px" onClick=${() => input.current.click()}>학사일정 엑셀로 전체 다시 올리기</button>
   </div>`;
 }
 
