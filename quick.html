@@ -3,27 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#12171c">
+<meta name="theme-color" content="#121413">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="진도 기록">
 <title>진도 기록</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="theme.css">
 <style>
-/* 아이폰 단축어(동작 버튼)로 여는 빠른 기록 페이지. 바탕화면 진도표와 같은 색·글꼴 */
-:root {
-  --bg: #12171c; --ink: #eef1ee; --muted: #9aa7ad; --faint: #7c878d; --card: rgba(255,255,255,.06); --line: rgba(255,255,255,.1);
-  --hl: #ffe15a; --hl-ink: #12171c; --red: #ff5a62; --todo: #ffb347; --ok: #5cc6a2;
-  --serif: "Gowun Batang", "Batang", serif;
-  --sans: "IBM Plex Sans KR", -apple-system, system-ui, sans-serif;
-  --ease: cubic-bezier(.23, 1, .32, 1);
-  color-scheme: dark;
-}
+/* 아이폰 단축어(동작 버튼)로 여는 빠른 기록 페이지. 색·글꼴은 theme.css (바탕화면·앱과 같음) */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; min-height: 100%; }
-body { background: radial-gradient(140vw 90vh at 70% 10%, #24303a, var(--bg) 70%) fixed; color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased;
+body { -webkit-font-smoothing: antialiased;
   padding: calc(18px + env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); }
 button { font: inherit; color: inherit; cursor: pointer; }
 :focus-visible { outline: 2.5px solid var(--hl); outline-offset: 2px; }
@@ -41,7 +31,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .choices button { border: 0; border-radius: 16px; min-height: 62px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card); font-size: 17px; font-weight: 600; text-align: left; transition: transform 140ms var(--ease); }
 .choices button small { font-size: 13px; font-weight: 500; color: var(--muted); }
 .choices button.main { background: var(--hl); color: var(--hl-ink); }
-.choices button.main small { color: #5b5418; }
+.choices button.main small { color: #3b4a1c; }
 .choices button.del { background: none; color: var(--red); min-height: 48px; justify-content: center; font-size: 15px; }
 .choices button:active { transform: scale(.97); }
 .memo summary { font-size: 14px; color: var(--muted); cursor: pointer; padding: 4px 0; }
@@ -56,7 +46,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .list button:first-child { border-top: 0; }
 .list .p { font-size: 13px; color: var(--muted); }
 .list .c { font-size: 18px; font-weight: 700; }
-.list .s { font-size: 13.5px; color: #c4ccd0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.list .s { font-size: 13.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .list .st { font-size: 12.5px; font-weight: 600; }
 .list .st.ok { color: var(--ok); } .list .st.todo { color: var(--todo); } .list .st.now { color: var(--hl); }
 .list .empty { display: block; padding: 14px 16px; color: var(--faint); font-size: 13.5px; }

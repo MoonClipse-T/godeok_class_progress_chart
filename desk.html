@@ -4,23 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>진도표 바탕화면</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="theme.css">
 <style>
 /* 바탕화면용(Lively Wallpaper). 1280×720 기준으로 그리고 화면 크기에 맞춰 키움.
-   왼쪽 140px 은 바탕화면 아이콘, 아래 62px 은 작업 표시줄 자리 */
-:root {
-  --bg: #12171c; --ink: #eef1ee; --muted: #9aa7ad; --faint: #6f7b81; --cell: rgba(255,255,255,.045);
-  --hl: #ffe15a; --hl-ink: #12171c; --now: #f3f1e8; --red: #ff5a62; --todo: #ffb347;
-  --serif: "Gowun Batang", "Batang", serif;
-  --sans: "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif;
-  --ease: cubic-bezier(.23, 1, .32, 1);
-  color-scheme: dark;
-}
+   왼쪽 140px 은 바탕화면 아이콘, 아래 62px 은 작업 표시줄 자리. 색·글꼴은 theme.css */
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; overflow: hidden; }
-body { background: radial-gradient(120vw 100vh at 78% 40%, #24303a, var(--bg) 70%); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; user-select: none; }
+body { -webkit-font-smoothing: antialiased; user-select: none; }
 button { font: inherit; color: inherit; cursor: pointer; }
 #screen { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: top left; }
 
@@ -28,10 +18,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .label { grid-column: 1; font-size: 14px; color: var(--muted); display: flex; gap: 14px; align-items: baseline; }
 .label b { color: var(--hl); font-weight: 600; }
 .big { grid-column: 1; grid-row: 2; align-self: center; display: flex; align-items: baseline; gap: 22px; font-family: var(--serif); min-width: 0; }
-.big .cls { font-size: 128px; font-weight: 700; line-height: .9; letter-spacing: -.03em; }
+.big .cls { font-size: 132px; font-weight: 700; line-height: .9; letter-spacing: -.05em; }
 .big .cls.red { color: var(--red); }
-.big .cls.calm { font-size: 76px; }
-.big .what { font-size: 27px; line-height: 1.3; min-width: 0; }
+.big .cls.calm { font-size: 72px; letter-spacing: -.04em; }
+.big .what { font-size: 27px; font-weight: 600; line-height: 1.3; letter-spacing: -.02em; min-width: 0; }
 .big .what small { display: block; font-family: var(--sans); font-size: 14px; color: var(--muted); margin-top: 6px; }
 
 /* 연속 날짜 띠: 진도표 앱처럼 학기 전체가 옆으로 이어짐. 잡고 끌기·휠·‹ › 로 이동, 2분 안 건드리면 오늘로 */
@@ -45,7 +35,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pcol, .col { display: flex; flex-direction: column; gap: 4px; flex: none; }
 .pcol { width: 38px; padding-right: 6px; }
 .pcol .hd { height: 30px; }
-.pcol .p { height: 41px; display: grid; place-content: center end; text-align: right; font-weight: 600; font-size: 14px; color: #8d999f; line-height: 1.1; }
+.pcol .p { height: 41px; display: grid; place-content: center end; text-align: right; font-weight: 600; font-size: 14px; color: var(--faint); line-height: 1.1; }
 .pcol .p small { display: block; font-size: 9.5px; font-weight: 400; color: var(--faint); }
 /* 가장자리는 흐리게 사라지게 (더 있다는 표시) */
 .scroller { position: relative; flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; cursor: grab;
@@ -56,40 +46,40 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .track { display: flex; gap: 4px; width: max-content; padding: 0 12px; }
 .col { width: 104px; }
 .col.mon { margin-left: 8px; }
-.col .hd { height: 30px; display: grid; place-items: center; position: relative; font-size: 13px; color: #8d999f; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.col .hd { height: 30px; display: grid; place-items: center; position: relative; font-size: 13px; color: var(--faint); border-radius: 7px; cursor: pointer; white-space: nowrap; }
 .col .hd .m { position: absolute; left: 2px; top: -3px; font-size: 10.5px; font-weight: 700; color: var(--hl); }
 .col.today .hd { background: var(--hl); color: var(--hl-ink); font-weight: 700; }
 .col.sel .hd { box-shadow: inset 0 0 0 1.5px var(--hl); color: var(--ink); }
 .col .c { height: 41px; border-radius: 8px; background: var(--cell); }
-.col.today .c { background: rgba(255,225,90,.08); }
+.col.today .c { background: rgba(185,226,106,.08); }
 .col .c button { width: 100%; height: 100%; border: 0; border-radius: 8px; background: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 4px; position: relative; }
 .col .c b { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
-.col .c i { font-style: normal; font-size: 12px; color: #8d999f; }
+.col .c i { font-style: normal; font-size: 12px; color: var(--faint); }
 .col.off { width: 30px; }
 .col.off .hd { font-size: 11px; }
 .col.off .v { flex: 1; writing-mode: vertical-rl; display: grid; place-items: center; font-size: 11.5px; color: var(--todo); letter-spacing: .05em; border-radius: 8px; background: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(255,255,255,.03) 5px 10px); overflow: hidden; }
 .red { color: var(--red) !important; } /* 컴시간에서 바뀐 수업: 반 글씨만 빨간색 */
-.week .past { opacity: .42; }
+.week .past { opacity: .5; }
 .week .todo { opacity: 1; box-shadow: inset 0 0 0 1.5px var(--todo); }
 .col .c button.now { background: var(--now); color: var(--hl-ink); }
-.col .c button.now i { color: #4a535a; }
+.col .c button.now i { color: #4d524e; }
 .week .ev { opacity: .3; }
 .railcap { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); margin-bottom: -10px; }
 .railcap b { color: var(--hl); font-weight: 600; }
-.cap { display: flex; justify-content: space-between; font-size: 12px; color: #7f8b91; margin-top: 6px; padding-left: 38px; }
+.cap { display: flex; justify-content: space-between; font-size: 12px; color: var(--faint); margin-top: 6px; padding-left: 38px; }
 .cap b { color: var(--red); font-weight: 600; }
 
 .rail { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.rail > * { border: 0; background: rgba(255,255,255,.06); border-radius: 10px; padding: 9px 10px 10px; text-align: left; display: grid; gap: 3px; min-height: 76px; align-content: start; min-width: 0; }
+.rail > * { border: 0; background: var(--granite); border-radius: 10px; padding: 9px 10px 10px; text-align: left; display: grid; gap: 3px; min-height: 76px; align-content: start; min-width: 0; }
 .rail .empty { background: transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
-.rail .p { font-size: 11px; color: #8d999f; }
+.rail .p { font-size: 11px; color: var(--faint); }
 .rail .c { font-size: 20px; font-weight: 700; }
-.rail .s { font-size: 11px; color: #aab5ba; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.rail .past { opacity: .45; }
+.rail .s { font-size: 11px; color: var(--muted); line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.rail .past { opacity: .55; }
 .rail .now { background: var(--now); color: var(--hl-ink); }
-.rail .now .p, .rail .now .s { color: #4a535a; }
+.rail .now .p, .rail .now .s { color: #4d524e; }
 .rail .todo .s { color: var(--todo); font-weight: 600; }
-.notes { grid-column: 1 / -1; display: flex; gap: 28px; font-size: 13.5px; color: #c4ccd0; min-width: 0; }
+.notes { grid-column: 1 / -1; display: flex; gap: 28px; font-size: 13.5px; color: var(--muted); min-width: 0; }
 .notes b { font-weight: 600; color: #fff; }
 .notes .todo { color: var(--todo); }
 .sync { grid-column: 1 / -1; margin-top: -8px; font-size: 11.5px; color: var(--faint); }
@@ -114,7 +104,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .setup { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 100px; }
 .setup .box { width: 520px; display: grid; gap: 14px; }
 .setup h1 { font-family: var(--serif); font-size: 34px; margin: 0; }
-.setup p, .setup li { color: #c4ccd0; font-size: 14px; line-height: 1.6; margin: 0; }
+.setup p, .setup li { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0; }
 .setup ol { margin: 0; padding-left: 20px; }
 .setup .row { display: flex; gap: 8px; }
 .setup input { flex: 1; min-width: 0; font: 13px ui-monospace, monospace; color: var(--ink); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 10px 12px; user-select: text; }
