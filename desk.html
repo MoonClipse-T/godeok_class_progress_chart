@@ -161,7 +161,8 @@ try {
   const c = JSON.parse(store.get(CACHE_KEY));
   if (c) { data = c; const t = data.meta.timetable; if (t?.syncedAt) t.syncedAt = new Date(t.syncedAt); }
 } catch { }
-const bumpAt = () => { lastAt = Math.max(0, ...Object.values(data.lessons).map(l => l.at || 0)); };
+// at 이 숫자가 아닌 옛 기록(날짜형 등)은 건너뜀. 섞이면 NaN 이 되어 새 기록 확인이 멈춤
+const bumpAt = () => { lastAt = Math.max(0, ...Object.values(data.lessons).map(l => Number.isFinite(l.at) ? l.at : 0)); };
 bumpAt();
 const save = () => store.set(CACHE_KEY, JSON.stringify(data));
 
@@ -205,7 +206,16 @@ function state(m, s, now) {
 }
 const stepText = (i, s) => s.event ? s.event.title : i.l?.skip ? "수업 못함" : i.step ? `${i.step}차시 ${i.name}` : i.over ? "계획 끝" : "";
 
+// 그리다 오류가 나면 빈 화면 대신 무엇이 문제인지 보여 줌
 function draw() {
+  try { drawBoard(); }
+  catch (e) {
+    console.error(e);
+    screen.innerHTML = `<div class="setup"><div class="box"><h1>화면을 그리지 못했어요</h1><p>아래 내용을 알려 주시면 고칠게요.</p><p class="err" style="user-select:text">${esc(e?.stack || e)}</p></div></div>`;
+  }
+  fit();
+}
+function drawBoard() {
   if (!code) return drawSetup();
   if (problem === "auth") return drawSetup("연동 코드가 맞지 않거나 만료됐어요. 진도표 앱 설정에서 새로 복사해 붙여 넣어 주세요.");
   const m = buildModel(data), now = new Date(), today = iso(now);
@@ -344,12 +354,17 @@ screen.addEventListener("click", e => {
 document.addEventListener("click", closePop);
 document.addEventListener("keydown", e => e.key === "Escape" && closePop());
 
-// 1280×720 을 화면에 꽉 차게 (남는 쪽은 가운데 정렬)
+// 1280×720 을 화면에 꽉 차게 (남는 쪽은 가운데 정렬).
+// Lively 는 처음에 창 크기를 0 으로 알려 줄 때가 있어서, 0 이면 1배로 두고 크기가 잡히는 대로 다시 맞춤
 function fit() {
-  const z = Math.min(innerWidth / 1280, innerHeight / 720);
-  screen.style.transform = `translate(${(innerWidth - 1280 * z) / 2}px, ${(innerHeight - 720 * z) / 2}px) scale(${z})`;
+  const w = document.documentElement.clientWidth || innerWidth, h = document.documentElement.clientHeight || innerHeight;
+  if (!w || !h) { screen.style.transform = ""; return; }
+  const z = Math.min(w / 1280, h / 720);
+  screen.style.transform = `translate(${(w - 1280 * z) / 2}px, ${(h - 720 * z) / 2}px) scale(${z})`;
 }
-addEventListener("resize", fit); fit();
+addEventListener("resize", fit);
+new ResizeObserver(fit).observe(document.documentElement);
+addEventListener("error", e => { if (!screen.innerHTML) screen.innerHTML = `<div class="setup"><div class="box"><h1>불러오지 못했어요</h1><p class="err" style="user-select:text">${esc(e.message)}</p></div></div>`; });
 
 // ---------- 주기 ----------
 // 새 기록 15초, 시간표·차시 계획 5분, 전체(지운 기록 반영) 30분, 화면 시계 30초
