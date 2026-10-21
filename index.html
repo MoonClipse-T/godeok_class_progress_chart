@@ -38,7 +38,9 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--paper); color: var(--ink); }
-body { font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum"; }
+body { font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum"; font-optical-sizing: auto; }
+/* 자간은 크기별로: 큰 제목은 좁게(각 규칙에서), 12px 이하 작은 글씨는 살짝 넓게 */
+.tl-cell .t, .tl-head .w, .ticket .when small, .tag, .count, .legend, .h-row .sub, .tl-bar .hint, nav.tabs button { letter-spacing: .01em; }
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; }
@@ -60,9 +62,12 @@ header.top { display: flex; align-items: center; gap: 14px; padding: 18px 0 14px
 .sync i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; box-shadow: 0 0 0 3px var(--accent-soft); }
 .sync i.old { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
 
+/* 휴대폰 아래 탭 막대: 시간표가 밑으로 비쳐 지나가는 반투명 재질, 위 가장자리는 빛 받는 밝은 선 */
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex;
-  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  border-top: 1px solid var(--rule); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+  background: color-mix(in srgb, var(--surface) 72%, transparent); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 60%, transparent), 0 -1px 0 var(--rule); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+@media (prefers-reduced-transparency: reduce) { nav.tabs { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+@media (prefers-contrast: more) { :root { --rule: var(--rule-2); --faint: var(--muted); } nav.tabs { background: var(--surface); } }
 nav.tabs button { flex: 1; border: 0; background: none; padding: 6px 0 4px; font-size: 11.5px; font-weight: 700; color: var(--faint); display: flex; flex-direction: column; align-items: center; gap: 3px; border-radius: 12px; position: relative; }
 nav.tabs button svg { width: 23px; height: 23px; }
 nav.tabs button.on { color: var(--ink); }
@@ -71,7 +76,7 @@ nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); backgroun
 @media (min-width: 900px) {
   .app { padding-bottom: 40px; }
   header.top { padding: 22px 0 18px; }
-  nav.tabs { position: static; order: 2; background: var(--sunk); border: 1px solid var(--rule); border-radius: 14px; padding: 3px; gap: 2px; backdrop-filter: none; }
+  nav.tabs { position: static; order: 2; background: var(--sunk); border: 1px solid var(--rule); border-radius: 14px; padding: 3px; gap: 2px; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
   nav.tabs button { flex: none; white-space: nowrap; flex-direction: row; font-size: 14px; padding: 7px 15px; gap: 7px; border-radius: 11px; color: var(--muted); }
   nav.tabs button svg { width: 17px; height: 17px; }
   nav.tabs button.on { background: var(--surface); box-shadow: 0 1px 2px rgba(23,32,43,.08), 0 0 0 1px var(--rule); }
@@ -126,6 +131,9 @@ nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); backgroun
 /* 오늘 */
 .today-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
 @media (min-width: 900px) { .today-layout { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 32px; align-items: start; } }
+/* 옆으로 밀 때 세로 스크롤은 브라우저에 맡기고, 넘어가는 시간표가 옆 칸을 덮지 않게 자름 (테두리·그림자 여유 8px) */
+section.day { touch-action: pan-y; overflow: clip; overflow-clip-margin: 8px; }
+.day-pane { will-change: transform; }
 .daybar { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 16px; }
 .daybar h2 { margin: 0; font-size: 34px; line-height: 1; letter-spacing: -.045em; font-weight: 850; }
 .daybar h2 small { display: block; font-size: 14px; letter-spacing: 0; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
@@ -273,13 +281,14 @@ ol.steps code { background: var(--sunk); border: 1px solid var(--rule); border-r
 
 /* 기록 시트 */
 dialog.sheet { border: 0; padding: 0; background: var(--surface); color: var(--ink); width: min(100%, 470px); max-width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; margin: auto auto 0; box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
-dialog.sheet[open] { animation: sheet-up 280ms var(--ease); }
-dialog.sheet::backdrop { background: rgba(10, 16, 14, .42); animation: fade 200ms ease; }
-@media (min-width: 600px) { dialog.sheet { border-radius: 24px; margin: auto; } dialog.sheet[open] { animation-name: sheet-pop; } }
-@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }
-@keyframes sheet-pop { from { transform: scale(.96); opacity: 0; } }
+/* 열고 닫기·끌기는 스크립트의 스프링이 transform 과 --p(0~1, 펼쳐진 정도)를 움직임 */
+dialog.sheet::backdrop { background: rgba(10, 16, 14, .42); opacity: var(--p, 1); }
+@media (min-width: 600px) { dialog.sheet { border-radius: 24px; margin: auto; opacity: var(--p, 1); } }
 @keyframes fade { from { opacity: 0; } }
-.sheet-in { padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+.sheet-in { padding: 8px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+.grab { touch-action: none; cursor: grab; display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
+.grab:active { cursor: grabbing; }
+.grabber { width: 38px; height: 5px; border-radius: 3px; background: var(--rule-2); align-self: center; }
 .sheet-head { display: flex; align-items: center; gap: 11px; }
 .sheet-head .meta { font-size: 13px; color: var(--muted); font-weight: 600; }
 .sheet-head .x { margin-left: auto; }
@@ -309,6 +318,7 @@ dialog.sheet::backdrop { background: rgba(10, 16, 14, .42); animation: fade 200m
 .login .mark svg { width: 30px; height: 30px; }
 .toast { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 700; z-index: 50; box-shadow: 0 8px 28px rgba(0,0,0,.22); white-space: nowrap; animation: toast-in 220ms var(--ease); }
 @keyframes toast-in { from { transform: translate(-50%, 10px); opacity: 0; } }
+.toast.out { transform: translate(-50%, 10px); opacity: 0; transition: transform 180ms var(--ease), opacity 180ms ease; }
 @media (min-width: 900px) { .toast { bottom: 28px; } }
 @media (prefers-reduced-motion: reduce) {
   dialog.sheet[open], .toast { animation: fade 150ms ease; }
@@ -504,6 +514,32 @@ function useModel({ meta, lessons, events }) {
   }, [meta, lessons, events]);
 }
 
+// ---------- 움직임 (Apple 'Designing Fluid Interfaces' 방식) ----------
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+// 임계 감쇠 스프링(damping 1.0, 튕김 없음)의 정확한 해. 지금 값·속도에서 출발하므로 도중에 잡거나 방향을 바꿔도 끊김 없음
+function spring(from, to, v0, response, onFrame, onDone) {
+  if (reduceMotion()) { onFrame(to); onDone?.(); return () => { }; }
+  const w = 2 * Math.PI / response, x0 = from - to, t0 = performance.now();
+  let id;
+  // 시각은 직접 잼: rAF 가 넘겨주는 시각은 기준이 달라 t 가 음수가 되는 브라우저가 있음
+  const step = () => {
+    const t = Math.max(0, performance.now() - t0) / 1000, e = Math.exp(-w * t);
+    const x = (x0 + (v0 + w * x0) * t) * e, v = (v0 - w * t * (v0 + w * x0)) * e;
+    if (Math.abs(x) < 0.5 && Math.abs(v) < 20) { onFrame(to); onDone?.(); return; }
+    onFrame(to + x);
+    id = requestAnimationFrame(step);
+  };
+  id = requestAnimationFrame(step);
+  return () => cancelAnimationFrame(id);
+}
+// 손을 뗀 속도로 어디까지 미끄러질지 (스크롤 감속과 같은 식)
+const project = (v, rate = 0.998) => v / 1000 * rate / (1 - rate);
+// 경계 너머로 끌면 점점 덜 따라옴
+const rubber = (d, dim, c = 0.55) => d * dim * c / (dim + c * Math.abs(d));
+// 최근 80ms 포인터 기록 → 속도(px/s)
+const track = (hist, v, t) => { hist.push({ v, t }); while (hist.length > 2 && t - hist[0].t > 80) hist.shift(); };
+const velocity = hist => { const a = hist[0], b = hist[hist.length - 1]; return a && b && b.t > a.t ? (b.v - a.v) / (b.t - a.t) * 1000 : 0; };
+
 // ---------- 아이콘 ----------
 const ICONS = {
   today: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9 16l2 2 4-4",
@@ -556,7 +592,14 @@ function Main({ user }) {
   const [toast, setToast] = useState("");
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(t); }, []);
   useEffect(() => { try { localStorage.setItem("tab", tab); } catch { } }, [tab]);
-  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(""), 2200); return () => clearTimeout(t); } }, [toast]);
+  // 알림은 아래에서 올라와서, 사라질 때도 아래로 내려감
+  const [toastOut, setToastOut] = useState(false);
+  useEffect(() => {
+    if (!toast) return;
+    setToastOut(false);
+    const a = setTimeout(() => setToastOut(true), 2000), b = setTimeout(() => setToast(""), 2200);
+    return () => { clearTimeout(a); clearTimeout(b); };
+  }, [toast]);
 
   const pending = m.tt ? m.pending(now) : [];
   const open = (slot, queue = false) => setSheet({ slot, queue });
@@ -592,7 +635,7 @@ function Main({ user }) {
       : tab === "classes" ? html`<${Classes} ...${ctx} />`
       : html`<${Settings} ...${ctx} />`}
     ${sheet && html`<${RecordSheet} key=${slotKey(sheet.slot.date, sheet.slot.p)} slot=${sheet.slot} queue=${sheet.queue ? pending.length : 0} m=${m} onSave=${saveLesson} onClose=${() => setSheet(null)} />`}
-    ${toast && html`<div class="toast" role="status">${toast}</div>`}
+    ${toast && html`<div class=${"toast" + (toastOut ? " out" : "")} role="status">${toast}</div>`}
   </div>`;
 }
 
@@ -619,27 +662,64 @@ function Today({ m, now, open, setTab, pending }) {
   const isToday = date === todayIso;
   const changes = m.changesFrom(todayIso, 14);
 
-  // 좌우로 밀어서 날짜 이동 (모바일)
-  const touch = useRef(null);
-  const onTouchStart = e => { touch.current = [e.touches[0].clientX, e.touches[0].clientY]; };
-  const onTouchEnd = e => {
-    if (!touch.current) return;
-    const dx = e.changedTouches[0].clientX - touch.current[0], dy = e.changedTouches[0].clientY - touch.current[1];
-    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) setDate(nextSchoolDay(date, dx < 0 ? 1 : -1));
-    touch.current = null;
+  // 날짜 넘기기: 시간표가 손가락을 1:1로 따라오고, 놓으면 그 속도 그대로 다음 날로 넘어가거나 제자리로 돌아옴.
+  // 화살표 버튼도 같은 길(밀려 나가고 반대편에서 들어옴)로 움직임
+  const pane = useRef(), x = useRef(0), stopX = useRef(null), swipe = useRef(null);
+  const setX = v => { x.current = v; if (pane.current) pane.current.style.transform = v ? `translateX(${v}px)` : ""; };
+  useEffect(() => () => stopX.current?.(), []);
+  const go = (dir, v0 = 0) => {
+    stopX.current?.();
+    const w = (pane.current?.offsetWidth || 400) + 24;
+    stopX.current = spring(x.current, -dir * w, v0, 0.22, setX, () => {
+      setDate(d => nextSchoolDay(d, dir));
+      setX(dir * w);
+      stopX.current = spring(dir * w, 0, v0, 0.34, setX);
+    });
   };
+  const sw = {
+    onPointerDown: e => {
+      if (e.pointerType === "mouse") return; // 마우스는 화살표 버튼으로
+      swipe.current = { x0: e.clientX, y0: e.clientY, on: false, hist: [] };
+    },
+    onPointerMove: e => {
+      const g = swipe.current;
+      if (!g) return;
+      if (!g.on) {
+        const dx = e.clientX - g.x0, dy = e.clientY - g.y0;
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { swipe.current = null; return; } // 세로 스크롤에 양보
+        if (Math.abs(dx) < 10) return;
+        // 10px 넘게 옆으로 움직였을 때부터 잡음 (그 자리 기준이라 튀지 않음)
+        stopX.current?.();
+        Object.assign(g, { on: true, x0: e.clientX - x.current });
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }
+      setX(e.clientX - g.x0);
+      track(g.hist, x.current, e.timeStamp);
+    },
+    onPointerUp: e => {
+      const g = swipe.current;
+      swipe.current = null;
+      if (!g?.on) return;
+      track(g.hist, x.current, e.timeStamp);
+      const v = velocity(g.hist), end = x.current + project(v, 0.99);
+      if (Math.abs(end) > pane.current.offsetWidth * 0.35) go(end < 0 ? 1 : -1, v);
+      else stopX.current = spring(x.current, 0, v, 0.3, setX);
+    },
+  };
+  sw.onPointerCancel = sw.onPointerUp;
 
   return html`<div class="today-layout">
-    <section onTouchStart=${onTouchStart} onTouchEnd=${onTouchEnd}>
+    <section class="day" ...${sw}>
       ${pending.length > 0 && html`<button class="banner" onClick=${() => open(pending[0], true)}>
         <${Icon} n="alert" /><span>기록 안 한 수업 <b>${pending.length}</b>개</span><span class="go">차례로 기록하기<${Icon} n="right" /></span></button>`}
       <div class="daybar">
         <h2><small>${isToday ? mdw(date) : WD[fromIso(date).getDay()] + "요일"}</small>${isToday ? "오늘" : md(date)}</h2>
         <div class="spacer"></div>
         ${!isToday && html`<button class="btn sm" onClick=${() => setDate(todayIso)}>오늘로</button>`}
-        <button class="icon-btn" aria-label="이전 날" onClick=${() => setDate(nextSchoolDay(date, -1))}><${Icon} n="left" /></button>
-        <button class="icon-btn" aria-label="다음 날" onClick=${() => setDate(nextSchoolDay(date, 1))}><${Icon} n="right" /></button>
+        <button class="icon-btn" aria-label="이전 날" onClick=${() => go(-1)}><${Icon} n="left" /></button>
+        <button class="icon-btn" aria-label="다음 날" onClick=${() => go(1)}><${Icon} n="right" /></button>
       </div>
+      <div class="day-pane" ref=${pane}>
       ${m.dayOff(date) ? html`<div class="panel empty"><b>${m.dayOff(date).title}</b>학사일정상 수업이 없는 날이에요.</div>`
         : lastP === 0 ? html`<div class="panel empty"><b>수업 없는 날</b></div>`
         : html`<div class="periods">${slots.filter(s => s.p <= lastP).map(s => {
@@ -666,6 +746,7 @@ function Today({ m, now, open, setTab, pending }) {
             </div>
           </button>`;
         })}</div>`}
+      </div>
     </section>
     <section>
       <div class="h-row"><h3>시간표 변경</h3><span class=${"count" + (changes.length ? " red" : "")}>${changes.length}</span><span class="sub">앞으로 2주</span></div>
@@ -804,8 +885,54 @@ function Classes({ m, now, saveMeta }) {
 }
 
 function RecordSheet({ slot, queue, m, onSave, onClose }) {
-  const dlg = useRef();
-  useEffect(() => { dlg.current.showModal(); }, []);
+  const dlg = useRef(), y = useRef(0), dist = useRef(1), stop = useRef(null), drag = useRef(null);
+  // y = 아래로 내려간 거리. --p(0~1)로 뒷배경 어둡기·데스크톱 투명도를 같이 움직임
+  const setY = v => {
+    y.current = v;
+    const d = dlg.current;
+    if (!d) return;
+    d.style.transform = v ? `translateY(${v}px)` : "";
+    d.style.setProperty("--p", Math.max(0, Math.min(1, 1 - v / dist.current)).toFixed(3));
+  };
+  // 화면 아래에서 올라오고, 닫을 때는 같은 길로 내려감
+  useLayoutEffect(() => {
+    dlg.current.showModal();
+    dist.current = innerHeight - dlg.current.getBoundingClientRect().top;
+    setY(dist.current);
+    stop.current = spring(dist.current, 0, 0, 0.36, setY);
+    return () => stop.current?.();
+  }, []);
+  const exit = (v0 = 0, then) => {
+    stop.current?.();
+    stop.current = spring(y.current, dist.current, Math.max(0, v0), 0.3, setY, () => { dlg.current?.close(); then?.(); });
+  };
+  const save = rec => exit(0, () => onSave(slot, rec));
+  // 머리 부분을 잡고 끌어내리기: 손가락 1:1, 위로는 고무줄, 놓을 때 속도로 닫을지 결정
+  const grab = {
+    onPointerDown: e => {
+      if (e.button > 0 || e.target.closest("button")) return;
+      stop.current?.();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      drag.current = { y0: e.clientY - y.current, hist: [] };
+    },
+    onPointerMove: e => {
+      const g = drag.current;
+      if (!g) return;
+      const v = e.clientY - g.y0;
+      setY(v < 0 ? rubber(v, dist.current) : v);
+      track(g.hist, y.current, e.timeStamp);
+    },
+    onPointerUp: e => {
+      const g = drag.current;
+      if (!g) return;
+      drag.current = null;
+      track(g.hist, y.current, e.timeStamp); // 멈췄다 놓으면 속도 0
+      const v = velocity(g.hist);
+      if (y.current + project(v) > dist.current * 0.4) exit(v);
+      else stop.current = spring(y.current, 0, v, 0.32, setY);
+    },
+  };
+  grab.onPointerCancel = grab.onPointerUp;
   const k = slotKey(slot.date, slot.p);
   const existing = m.lessons[k];
   const prev = m.stepBefore(slot.c, k);
@@ -815,13 +942,14 @@ function RecordSheet({ slot, queue, m, onSave, onClose }) {
   const maxStep = Math.max(plan.length, prev + 1, step) + 3;
   const shown = existing ? (existing.skip ? 0 : existing.step) : prev + 1;
 
-  return html`<dialog class="sheet" ref=${dlg} onClose=${onClose} onClick=${e => e.target === dlg.current && dlg.current.close()}>
+  return html`<dialog class="sheet" ref=${dlg} onClose=${onClose} onCancel=${e => { e.preventDefault(); exit(); }} onClick=${e => e.target === dlg.current && exit()}>
     <div class="sheet-in">
+      <div class="grab" ...${grab}><div class="grabber"></div>
       <div class="sheet-head"><${Chip} c=${slot.c} lg solid />
         <div><div style="font-weight:800">${mdw(slot.date)} ${slot.p}교시</div>
           <div class="meta">${slot.s}${slot.changed ? html`, <span style="color:var(--red);font-weight:800">${slot.from ? `${slot.from}교시에서 옮겨온 수업` : slot.was ? `시간표 변경 (원래 ${slot.was})` : "추가된 수업"}</span>` : ""}</div></div>
-        <button class="icon-btn x" aria-label="닫기" onClick=${() => dlg.current.close()}><${Icon} n="x" /></button>
-      </div>
+        <button class="icon-btn x" aria-label="닫기" onClick=${() => exit()}><${Icon} n="x" /></button>
+      </div></div>
       ${queue > 0 && html`<div class="queue-note">밀린 기록 ${queue}개 남음. 저장하면 다음 수업이 바로 열려요</div>`}
       ${slot.event && html`<div class="tag event" style="align-self:flex-start;font-size:13px;padding:5px 10px">${slot.event.title}: 학사일정상 수업 없음</div>`}
       <div class=${"plan-box " + kc(m, shown, !existing)} style=${kh(shown)}>
@@ -831,9 +959,9 @@ function RecordSheet({ slot, queue, m, onSave, onClose }) {
         <div class="prev">지난 시간: ${prev ? m.stepTitle(slot.c, prev) : "기록 없음"}</div>
       </div>
       <div class="quick">
-        <button class="btn primary" onClick=${() => onSave(slot, { step: prev + 1, note })}><${Icon} n="check" />계획대로 했어요<small>${prev + 1}차시</small></button>
-        ${prev > 0 && html`<button class="btn" onClick=${() => onSave(slot, { step: prev, note })}>진도 못 나감, 이어서 했어요<small>${prev}차시 계속</small></button>`}
-        <button class="btn" onClick=${() => onSave(slot, { skip: true, step: 0, note })}>수업 못함<small>행사·자습 등</small></button>
+        <button class="btn primary" onClick=${() => save({ step: prev + 1, note })}><${Icon} n="check" />계획대로 했어요<small>${prev + 1}차시</small></button>
+        ${prev > 0 && html`<button class="btn" onClick=${() => save({ step: prev, note })}>진도 못 나감, 이어서 했어요<small>${prev}차시 계속</small></button>`}
+        <button class="btn" onClick=${() => save({ skip: true, step: 0, note })}>수업 못함<small>행사·자습 등</small></button>
       </div>
       <details class="manual" open=${!!existing}>
         <summary>차시 직접 고르기, 메모</summary>
@@ -844,8 +972,8 @@ function RecordSheet({ slot, queue, m, onSave, onClose }) {
         <label for="note">메모</label>
         <textarea id="note" class="field" rows="2" placeholder="예: 실험 못 끝냄, 다음 시간 마무리" value=${note} onInput=${e => setNote(e.target.value)}></textarea>
         <div class="acts">
-          ${existing && html`<button class="btn ghost" style="color:var(--red)" onClick=${() => onSave(slot, null)}>기록 지우기</button>`}
-          <button class="btn primary" onClick=${() => onSave(slot, { step, note })}>저장</button>
+          ${existing && html`<button class="btn ghost" style="color:var(--red)" onClick=${() => save(null)}>기록 지우기</button>`}
+          <button class="btn primary" onClick=${() => save({ step, note })}>저장</button>
         </div>
       </details>
     </div>
