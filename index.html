@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#121413">
+<meta name="theme-color" content="#f2f4ec">
 <title>고덕중 진도표</title>
 <link rel="stylesheet" href="theme.css">
 <style>
@@ -11,11 +11,13 @@
    컴시간식 표시: 바뀐 수업은 반 글씨만 빨간색, 빠진 수업은 빈칸 */
 :root {
   /* 차시 색(OKLCH): 같은 밝기·채도에서 색상(--h)만 바꿔 어느 차시든 대비가 같음. --t=1 인 차시는 *d 만큼 밝기를 옮김 */
-  --kL: .36; --kC: .07; --kbL: .78; --kbC: .12; --kpL: .25; --kpC: .025; --klL: .5; --klC: .07;
-  --kd: .06; --kbd: .07; --kpd: .025;
+  --kL: .905; --kC: .07; --kbL: .56; --kbC: .15; --kpL: .975; --kpC: .025; --klL: .76; --klC: .09;
+  --kd: -.06; --kbd: -.08; --kpd: -.02;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+/* 지도 위에 바로 놓인 글자: 지도 라벨처럼 흰 테두리 */
+header.top .brand, header.top .sync, .h-row, .daybar h2, .tl-bar h2, .tl-bar .hint, .legend, .ticket.free { text-shadow: var(--halo); }
 body { font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum"; }
 /* 자간은 크기별로: 큰 제목은 좁게(각 규칙에서), 12px 이하 작은 글씨는 살짝 넓게 */
 .tl-cell .t, .tl-head .w, .ticket .when small, .tag, .count, .legend, .h-row .sub, .tl-bar .hint, nav.tabs button { letter-spacing: .01em; }
@@ -55,7 +57,7 @@ nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); backgroun
 @media (min-width: 900px) {
   .app { padding-bottom: 40px; }
   header.top { padding: 22px 0 18px; }
-  nav.tabs { position: static; order: 2; background: rgba(255,255,255,.04); border: 1px solid var(--rule); border-radius: 14px; padding: 3px; gap: 2px; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+  nav.tabs { position: static; order: 2; background: var(--tint); border: 1px solid var(--rule); border-radius: 14px; padding: 3px; gap: 2px; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
   nav.tabs button { flex: none; white-space: nowrap; flex-direction: row; font-size: 14px; padding: 7px 15px; gap: 7px; border-radius: 11px; color: var(--muted); }
   nav.tabs button svg { width: 17px; height: 17px; }
   nav.tabs button.on { background: var(--sunk); }
@@ -80,7 +82,7 @@ nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); backgroun
 .btn:disabled { opacity: .4; cursor: default; transform: none; }
 @media (hover: hover) and (pointer: fine) {
   .btn:hover:not(:disabled) { background: var(--granite-2); }
-  .btn.primary:hover:not(:disabled) { background: #cdee8a; }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-hover); }
   .btn.ghost:hover { color: var(--ink); background: var(--sunk); }
 }
 .icon-btn { border: 1px solid var(--rule-2); background: var(--sunk); width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; color: var(--muted); }
@@ -93,7 +95,7 @@ nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); backgroun
 /* 차시 색: .k 가 --k-bg(바탕) --k-bar(진한 색) --k-line(테두리)을 정함. tint 가 없으면 무채색 */
 .k { --k-bg: var(--sunk); --k-bar: var(--ink); --k-line: var(--rule-2); }
 .k.tint { --k-bg: oklch(calc(var(--kL) + var(--t, 0) * var(--kd)) var(--kC) var(--h)); --k-bar: oklch(calc(var(--kbL) + var(--t, 0) * var(--kbd)) var(--kbC) var(--h)); --k-line: oklch(var(--klL) var(--klC) var(--h)); }
-.k.plan { --k-bg: rgba(255,255,255,.035); --k-bar: var(--muted); --k-line: var(--rule-2); }
+.k.plan { --k-bg: var(--cell); --k-bar: var(--muted); --k-line: var(--rule-2); }
 .k.plan.tint { --k-bg: oklch(calc(var(--kpL) + var(--t, 0) * var(--kpd)) var(--kpC) var(--h)); --k-bar: oklch(calc(var(--kbL) + var(--t, 0) * var(--kbd)) var(--kbC) var(--h)); }
 .k.over { --k-bg: transparent; --k-line: var(--rule); }
 .step { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 12.5px; font-weight: 700; background: var(--k-bar); color: var(--paper); flex: none; }
@@ -101,7 +103,7 @@ nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); backgroun
 .step.lg { min-width: 30px; height: 30px; border-radius: 15px; font-size: 15px; }
 .tag { font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
 .tag.event { background: var(--event-soft); color: var(--event); }
-.tag.ok { background: #24331f; color: var(--done); }
+.tag.ok { background: var(--done-soft); color: var(--done); }
 .tag svg { width: 12px; height: 12px; }
 
 /* 오늘 */
@@ -135,7 +137,7 @@ section.day { touch-action: pan-y; overflow: clip; overflow-clip-margin: 8px; }
 /* 수업 중: 바탕화면처럼 크림색 칸 */
 .k.ticket.now { --k-bg: var(--now); --k-line: var(--now); color: var(--hl-ink); } /* .k.plan.tint 보다 뒤·같은 세기라 이게 이김 */
 .ticket.now .chip { color: var(--hl-ink); }
-.ticket.now .when small, .ticket.now .name small, .ticket.now .name.dim { color: #4d524e; }
+.ticket.now .when small, .ticket.now .name small, .ticket.now .name.dim { color: var(--now-sub); }
 .ticket.todo { --k-line: var(--warn); border-style: solid; }
 .ticket.todo .when { border-right-style: solid; }
 .ticket.blocked { opacity: .6; }
@@ -166,7 +168,7 @@ section.day { touch-action: pan-y; overflow: clip; overflow-clip-margin: 8px; }
 .tl-bar h2 { margin: 0; font-family: var(--serif); font-size: 30px; letter-spacing: -.03em; font-weight: 700; }
 .tl-bar .hint { font-size: 12.5px; color: var(--faint); }
 .tl-bar .spacer { flex: 1; }
-.seg { display: inline-flex; background: rgba(255,255,255,.04); border: 1px solid var(--rule); border-radius: 11px; padding: 2px; }
+.seg { display: inline-flex; background: var(--tint); border: 1px solid var(--rule); border-radius: 11px; padding: 2px; }
 .seg button { border: 0; background: none; min-height: 34px; padding: 0 12px; border-radius: 9px; font-size: 13px; font-weight: 600; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .seg button.on { background: var(--sunk); color: var(--ink); }
 .seg .sw { width: 22px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, oklch(.7 .13 230), oklch(.7 .13 330), oklch(.7 .13 145), oklch(.7 .13 283)); }
@@ -180,14 +182,14 @@ section.day { touch-action: pan-y; overflow: clip; overflow-clip-margin: 8px; }
 .tl-in { display: flex; width: max-content; }
 .tl-col { flex: none; width: var(--colw); border-right: 1px solid var(--rule); }
 .tl-col.mon { border-left: 1.5px solid var(--rule-2); }
-.tl-col.today { background: rgba(185,226,106,.07); }
-.tl-col.collapsed { width: 34px; background: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(255,255,255,.03) 5px 10px); }
+.tl-col.today { background: var(--today-tint); }
+.tl-col.collapsed { width: 34px; background: repeating-linear-gradient(-45deg, transparent 0 5px, var(--stripe) 5px 10px); }
 .tl-head { height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid var(--rule); position: relative; }
 .tl-head .m { position: absolute; top: 4px; left: 7px; font-size: 11px; font-weight: 700; color: var(--hl); }
 .tl-head .d { font-size: 15px; font-weight: 700; }
 .tl-head .w { font-size: 11.5px; font-weight: 500; color: var(--muted); }
 .tl-col.today .tl-head .d { background: var(--hl); color: var(--hl-ink); border-radius: 7px; padding: 0 7px; }
-.tl-side { position: sticky; left: 0; z-index: 5; width: 38px; background: var(--surface); border-right: 1px solid var(--rule); flex: none; }
+.tl-side { position: sticky; left: 0; z-index: 5; width: 38px; background: var(--solid); border-right: 1px solid var(--rule); flex: none; }
 .tl-side .tl-head { font-size: 11px; color: var(--faint); font-weight: 600; }
 .tl-p { height: var(--rowh); display: grid; place-items: center; border-bottom: 1px solid var(--rule); font-weight: 700; color: var(--faint); font-size: 15px; }
 .tl-p:last-child, .tl-cell:last-child { border-bottom: 0; }
@@ -251,9 +253,9 @@ ol.steps b { color: var(--ink); font-weight: 600; }
 ol.steps code { background: var(--sunk); border: 1px solid var(--rule); border-radius: 6px; padding: 1px 5px; font-size: 12px; color: var(--ink); }
 
 /* 기록 시트 */
-dialog.sheet { border: 0; padding: 0; background: var(--surface); color: var(--ink); width: min(100%, 470px); max-width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; margin: auto auto 0; box-shadow: 0 0 0 1px var(--rule), 0 -10px 40px rgba(0,0,0,.45); }
+dialog.sheet { border: 0; padding: 0; background: var(--solid); color: var(--ink); width: min(100%, 470px); max-width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; margin: auto auto 0; box-shadow: 0 0 0 1px var(--rule), 0 -10px 40px rgba(0,0,0,.45); }
 /* 열고 닫기·끌기는 스크립트의 스프링이 transform 과 --p(0~1, 펼쳐진 정도)를 움직임 */
-dialog.sheet::backdrop { background: rgba(4, 7, 9, .62); opacity: var(--p, 1); }
+dialog.sheet::backdrop { background: var(--backdrop); opacity: var(--p, 1); }
 @media (min-width: 600px) { dialog.sheet { border-radius: 24px; margin: auto; opacity: var(--p, 1); } }
 @keyframes fade { from { opacity: 0; } }
 .sheet-in { padding: 8px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }

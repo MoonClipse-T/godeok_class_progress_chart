@@ -11,6 +11,9 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; overflow: hidden; }
 body { -webkit-font-smoothing: antialiased; user-select: none; }
+/* 지도 위에 바로 놓인 글자: 지도 라벨처럼 흰 테두리 */
+.label, .big, .railcap, .notes, .sync, .cap, .wnav .range, .pcol, .col .hd { text-shadow: var(--halo); }
+.col.today .hd { text-shadow: none; }
 button { font: inherit; color: inherit; cursor: pointer; }
 #screen { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: top left; }
 
@@ -27,7 +30,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* 연속 날짜 띠: 진도표 앱처럼 학기 전체가 옆으로 이어짐. 잡고 끌기·휠·‹ › 로 이동, 2분 안 건드리면 오늘로 */
 .week { grid-column: 2; grid-row: 1 / 3; align-self: start; min-width: 0; }
 .wnav { display: flex; align-items: center; gap: 6px; margin: 0 2px 6px 38px; font-size: 13px; color: var(--muted); }
-.wnav button { border: 0; background: rgba(255,255,255,.07); color: var(--ink); border-radius: 8px; min-width: 34px; height: 30px; padding: 0 10px; font-size: 15px; transition: transform 120ms var(--ease); }
+.wnav button { border: 1px solid var(--seam); background: var(--tint); color: var(--ink); border-radius: 8px; min-width: 34px; height: 30px; padding: 0 10px; font-size: 15px; transition: transform 120ms var(--ease); }
 .wnav button:active { transform: scale(.95); }
 .wnav .range { min-width: 112px; text-align: center; font-weight: 600; color: var(--ink); }
 .wnav .home { margin-left: auto; background: var(--hl); color: var(--hl-ink); font-weight: 700; font-size: 13px; }
@@ -51,18 +54,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .col.today .hd { background: var(--hl); color: var(--hl-ink); font-weight: 700; }
 .col.sel .hd { box-shadow: inset 0 0 0 1.5px var(--hl); color: var(--ink); }
 .col .c { height: 41px; border-radius: 8px; background: var(--cell); }
-.col.today .c { background: rgba(185,226,106,.08); }
+.col.today .c { background: linear-gradient(var(--today-tint), var(--today-tint)), var(--cell); } /* 흰 칸 위에 옅은 파랑 (지도가 비쳐 탁해지지 않게) */
 .col .c button { width: 100%; height: 100%; border: 0; border-radius: 8px; background: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 4px; position: relative; }
 .col .c b { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
 .col .c i { font-style: normal; font-size: 12px; color: var(--faint); }
 .col.off { width: 30px; }
 .col.off .hd { font-size: 11px; }
-.col.off .v { flex: 1; writing-mode: vertical-rl; display: grid; place-items: center; font-size: 11.5px; color: var(--todo); letter-spacing: .05em; border-radius: 8px; background: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(255,255,255,.03) 5px 10px); overflow: hidden; }
+.col.off .v { flex: 1; writing-mode: vertical-rl; display: grid; place-items: center; font-size: 11.5px; color: var(--todo); letter-spacing: .05em; border-radius: 8px; background: repeating-linear-gradient(-45deg, transparent 0 5px, var(--stripe) 5px 10px); overflow: hidden; }
 .red { color: var(--red) !important; } /* 컴시간에서 바뀐 수업: 반 글씨만 빨간색 */
 .week .past { opacity: .5; }
 .week .todo { opacity: 1; box-shadow: inset 0 0 0 1.5px var(--todo); }
 .col .c button.now { background: var(--now); color: var(--hl-ink); }
-.col .c button.now i { color: #4d524e; }
+.col .c button.now i { color: var(--now-sub); }
 .week .ev { opacity: .3; }
 .railcap { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); margin-bottom: -10px; }
 .railcap b { color: var(--hl); font-weight: 600; }
@@ -70,17 +73,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .cap b { color: var(--red); font-weight: 600; }
 
 .rail { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.rail > * { border: 0; background: var(--granite); border-radius: 10px; padding: 9px 10px 10px; text-align: left; display: grid; gap: 3px; min-height: 76px; align-content: start; min-width: 0; }
-.rail .empty { background: transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.rail > * { border: 0; background: var(--cell); border-radius: 10px; padding: 9px 10px 10px; text-align: left; display: grid; gap: 3px; min-height: 76px; align-content: start; min-width: 0; }
+.rail .empty { background: var(--tint); box-shadow: inset 0 0 0 1px var(--seam); }
 .rail .p { font-size: 11px; color: var(--faint); }
 .rail .c { font-size: 20px; font-weight: 700; }
 .rail .s { font-size: 11px; color: var(--muted); line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .rail .past { opacity: .55; }
 .rail .now { background: var(--now); color: var(--hl-ink); }
-.rail .now .p, .rail .now .s { color: #4d524e; }
+.rail .now .p, .rail .now .s { color: var(--now-sub); }
 .rail .todo .s { color: var(--todo); font-weight: 600; }
 .notes { grid-column: 1 / -1; display: flex; gap: 28px; font-size: 13.5px; color: var(--muted); min-width: 0; }
-.notes b { font-weight: 600; color: #fff; }
+.notes b { font-weight: 600; color: var(--ink); }
 .notes .todo { color: var(--todo); }
 .sync { grid-column: 1 / -1; margin-top: -8px; font-size: 11.5px; color: var(--faint); }
 .sync .bad { color: var(--todo); }
@@ -107,7 +110,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .setup p, .setup li { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0; }
 .setup ol { margin: 0; padding-left: 20px; }
 .setup .row { display: flex; gap: 8px; }
-.setup input { flex: 1; min-width: 0; font: 13px ui-monospace, monospace; color: var(--ink); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 10px 12px; user-select: text; }
+.setup input { flex: 1; min-width: 0; font: 13px ui-monospace, monospace; color: var(--ink); background: var(--solid); border: 1px solid var(--seam-2); border-radius: 10px; padding: 10px 12px; user-select: text; }
 .setup .go { border: 0; border-radius: 10px; padding: 10px 16px; background: var(--hl); color: var(--hl-ink); font-weight: 700; }
 .setup .err { color: var(--todo); }
 @media (prefers-reduced-motion: reduce) { .flash::after, .pop { animation: none; } }

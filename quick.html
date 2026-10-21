@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#121413">
+<meta name="theme-color" content="#f2f4ec">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="진도 기록">
@@ -13,6 +13,8 @@
 /* 아이폰 단축어(동작 버튼)로 여는 빠른 기록 페이지. 색·글꼴은 theme.css (바탕화면·앱과 같음) */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; min-height: 100%; }
+/* 지도 위에 바로 놓인 글자: 지도 라벨처럼 흰 테두리 */
+.top, .when, .cls, .plan, .more, .h, .done, .back, .memo summary { text-shadow: var(--halo); }
 body { -webkit-font-smoothing: antialiased;
   padding: calc(18px + env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); }
 button { font: inherit; color: inherit; cursor: pointer; }
@@ -31,7 +33,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .choices button { border: 0; border-radius: 16px; min-height: 62px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card); font-size: 17px; font-weight: 600; text-align: left; transition: transform 140ms var(--ease); }
 .choices button small { font-size: 13px; font-weight: 500; color: var(--muted); }
 .choices button.main { background: var(--hl); color: var(--hl-ink); }
-.choices button.main small { color: #3b4a1c; }
+.choices button.main small { color: var(--now-sub); }
 .choices button.del { background: none; color: var(--red); min-height: 48px; justify-content: center; font-size: 15px; }
 .choices button:active { transform: scale(.97); }
 .memo summary { font-size: 14px; color: var(--muted); cursor: pointer; padding: 4px 0; }
