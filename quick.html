@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12171c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="진도 기록">
+<title>진도 기록</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* 아이폰 단축어(동작 버튼)로 여는 빠른 기록 페이지. 바탕화면 진도표와 같은 색·글꼴 */
+:root {
+  --bg: #12171c; --ink: #eef1ee; --muted: #9aa7ad; --faint: #7c878d; --card: rgba(255,255,255,.06); --line: rgba(255,255,255,.1);
+  --hl: #ffe15a; --hl-ink: #12171c; --red: #ff5a62; --todo: #ffb347; --ok: #5cc6a2;
+  --serif: "Gowun Batang", "Batang", serif;
+  --sans: "IBM Plex Sans KR", -apple-system, system-ui, sans-serif;
+  --ease: cubic-bezier(.23, 1, .32, 1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; }
+body { background: radial-gradient(140vw 90vh at 70% 10%, #24303a, var(--bg) 70%) fixed; color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased;
+  padding: calc(18px + env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2.5px solid var(--hl); outline-offset: 2px; }
+.app { max-width: 460px; margin: 0 auto; display: grid; gap: 18px; }
+.top { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); }
+.top b { color: var(--ink); font-weight: 600; }
+
+.when { font-size: 14px; color: var(--muted); display: flex; gap: 10px; align-items: baseline; }
+.when b { color: var(--hl); font-weight: 600; }
+.cls { font-family: var(--serif); font-size: 96px; font-weight: 700; line-height: .95; letter-spacing: -.03em; }
+.red { color: var(--red); }
+.plan { font-family: var(--serif); font-size: 22px; line-height: 1.35; }
+.plan small { display: block; font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 4px; }
+.choices { display: grid; gap: 10px; }
+.choices button { border: 0; border-radius: 16px; min-height: 62px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card); font-size: 17px; font-weight: 600; text-align: left; transition: transform 140ms var(--ease); }
+.choices button small { font-size: 13px; font-weight: 500; color: var(--muted); }
+.choices button.main { background: var(--hl); color: var(--hl-ink); }
+.choices button.main small { color: #5b5418; }
+.choices button.del { background: none; color: var(--red); min-height: 48px; justify-content: center; font-size: 15px; }
+.choices button:active { transform: scale(.97); }
+.memo summary { font-size: 14px; color: var(--muted); cursor: pointer; padding: 4px 0; }
+.memo textarea { width: 100%; margin-top: 8px; min-height: 70px; resize: vertical; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 16px/1.5 var(--sans); padding: 10px 12px; }
+.more { font-size: 13.5px; color: var(--todo); }
+
+.done { display: grid; gap: 8px; padding: 6px 0; }
+.done h1 { font-family: var(--serif); font-size: 34px; margin: 0; }
+.done p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.list { display: grid; border-radius: 16px; overflow: hidden; background: var(--card); }
+.list button { border: 0; border-top: 1px solid var(--line); background: none; display: grid; grid-template-columns: 52px 54px 1fr auto; align-items: center; gap: 6px; padding: 13px 16px; text-align: left; min-height: 54px; }
+.list button:first-child { border-top: 0; }
+.list .p { font-size: 13px; color: var(--muted); }
+.list .c { font-size: 18px; font-weight: 700; }
+.list .s { font-size: 13.5px; color: #c4ccd0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.list .st { font-size: 12.5px; font-weight: 600; }
+.list .st.ok { color: var(--ok); } .list .st.todo { color: var(--todo); } .list .st.now { color: var(--hl); }
+.list .empty { display: block; padding: 14px 16px; color: var(--faint); font-size: 13.5px; }
+.h { font-size: 13px; color: var(--muted); margin: 6px 2px -8px; }
+.back { border: 0; background: none; color: var(--muted); font-size: 14px; padding: 6px 0; justify-self: start; }
+
+.login { min-height: 80vh; display: grid; place-content: center; gap: 14px; text-align: center; }
+.login h1 { font-family: var(--serif); font-size: 36px; margin: 0; }
+.login p { color: var(--muted); margin: 0; font-size: 14.5px; line-height: 1.6; }
+.login button { border: 0; border-radius: 14px; min-height: 54px; padding: 0 22px; background: var(--hl); color: var(--hl-ink); font-weight: 700; font-size: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 14px; font-weight: 700; font-size: 15px; white-space: nowrap; animation: up 220ms var(--ease); box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+@keyframes up { from { transform: translate(-50%, 12px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } .choices button:active { transform: none; } }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { FB_CONFIG, APP_ID, BELL, WD, iso, fromIso, md, atTime, slotKey, isWeekend, buildModel, slotInfo, lessonDoc } from "./model.js";
+
+const fbApp = initializeApp(FB_CONFIG);
+const auth = getAuth(fbApp);
+const db = initializeFirestore(fbApp, { localCache: persistentLocalCache() });
+const app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+let user, data = { meta: {}, lessons: {}, events: [] }, got = 0; // user: undefined = 로그인 확인 중, null = 로그인 안 됨
+let pick = null;     // 직접 고른 수업(오늘 목록에서 누름). 없으면 가장 최근에 끝난 기록 전 수업
+let toast = "";
+
+onAuthStateChanged(auth, u => {
+  user = u;
+  if (!u) return draw();
+  const base = ["artifacts", APP_ID, "users", u.uid];
+  const ready = () => { got++; draw(); };
+  onSnapshot(collection(db, ...base, "meta"), s => { const m = {}; s.forEach(x => m[x.id] = x.data()); data.meta = m; ready(); }, ready);
+  onSnapshot(collection(db, ...base, "lessons"), s => { const m = {}; s.forEach(x => m[x.id] = x.data()); data.lessons = m; ready(); }, ready);
+  onSnapshot(collection(db, ...base, "events"), s => { data.events = s.docs.map(x => ({ id: x.id, ...x.data() })); ready(); }, ready);
+});
+
+function say(t) { toast = t; draw(); setTimeout(() => { if (toast === t) { toast = ""; draw(); } }, 2000); }
+
+async function save(slot, rec) {
+  const k = slotKey(slot.date, slot.p);
+  pick = null;
+  const ref = doc(db, "artifacts", APP_ID, "users", user.uid, "lessons", k);
+  // 오프라인이어도 바로 다음 화면으로 (Firestore 가 연결되면 올려 줌)
+  if (rec === null) { deleteDoc(ref); say("기록을 지웠어요"); return; }
+  setDoc(ref, lessonDoc(slot, rec));
+  say(rec.skip ? `${slot.c} 수업 못함 기록함` : `${slot.c} ${rec.step}차시 기록함`);
+}
+
+function draw() {
+  if (user === undefined) { app.innerHTML = `<p class="top">불러오는 중…</p>`; return; }
+  if (user === null) {
+    app.innerHTML = `<div class="login"><h1>진도 기록</h1><p>진도표와 같은 Google 계정으로 한 번만 로그인하면<br>다음부터는 바로 열려요.</p><button id="in">Google 계정으로 로그인</button></div>`;
+    document.getElementById("in").onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(() => signInWithRedirect(auth, new GoogleAuthProvider()));
+    return;
+  }
+  if (got < 3) { app.innerHTML = `<p class="top">불러오는 중…</p>`; return; }
+  const m = buildModel(data), now = new Date(), today = iso(now);
+  if (!m.tt) { app.innerHTML = `<div class="done"><h1>시간표가 아직 없어요</h1><p>알림이 PC 에서 시간표가 올라오면 여기서 기록할 수 있어요.</p></div>`; return; }
+
+  const pending = m.pending(now).reverse(); // 방금 끝난 수업부터
+  const target = pick || pending[0];
+  const top = `<div class="top"><span><b>${md(today)} ${WD[now.getDay()]}요일</b></span><span>${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}</span></div>`;
+  let body;
+  if (target) {
+    const k = slotKey(target.date, target.p), existing = m.lessons[k], prev = m.stepBefore(target.c, k), i = slotInfo(m, target);
+    const ended = atTime(target.date, BELL[target.p][1]) <= now;
+    body = `
+      <div class="when"><b>${target.date === today ? "오늘" : `${md(target.date)}(${WD[fromIso(target.date).getDay()]})`} ${target.p}교시</b><span>${BELL[target.p][0]}–${BELL[target.p][1]}${ended ? "" : ", 아직 수업 전"}</span></div>
+      <div class="cls ${target.changed ? "red" : ""}">${target.c}</div>
+      <div class="plan">${existing ? `기록: ${existing.skip ? "수업 못함" : esc(m.stepTitle(target.c, existing.step))}` : `${prev + 1}차시 ${esc(m.planName(target.c, prev + 1))}`}
+        <small>지난 시간: ${prev ? esc(m.stepTitle(target.c, prev)) : "기록 없음"}${target.changed ? `, <span class="red">컴시간에서 바뀐 수업</span>` : ""}</small></div>
+      <div class="choices">
+        <button class="main" data-r="next">계획대로 했어요<small>${prev + 1}차시</small></button>
+        ${prev > 0 ? `<button data-r="same">이어서 했어요<small>${prev}차시 계속</small></button>` : ""}
+        <button data-r="skip">수업 못함<small>행사·자습 등</small></button>
+        ${existing ? `<button class="del" data-r="del">기록 지우기</button>` : ""}
+      </div>
+      <details class="memo"${existing?.note ? " open" : ""}><summary>메모 남기기</summary><textarea id="note" placeholder="예: 실험 못 끝냄, 다음 시간 마무리">${esc(existing?.note || "")}</textarea></details>
+      ${!pick && pending.length > 1 ? `<div class="more">기록 전 수업이 ${pending.length - 1}개 더 있어요. 이 수업을 기록하면 이어서 나와요.</div>` : ""}
+      ${pick ? `<button class="back" id="back">← 오늘 수업 목록</button>` : ""}`;
+  } else {
+    body = `<div class="done"><h1>밀린 기록 없음</h1><p>${nextText(m, now)}</p></div>`;
+  }
+
+  // 오늘(주말이면 다음 수업일) 수업 목록: 눌러서 고치거나 미리 기록
+  const day = isWeekend(today) ? null : today;
+  const rows = day ? m.slotsFor(day).filter(s => s.c) : [];
+  const list = `<div class="h">오늘 수업</div><div class="list">${rows.length ? rows.map(s => {
+    const k = slotKey(s.date, s.p), l = m.lessons[k], i = slotInfo(m, s);
+    const st = l ? `<span class="st ok">✓</span>` : atTime(s.date, BELL[s.p][1]) <= now ? `<span class="st todo">기록 전</span>` : atTime(s.date, BELL[s.p][0]) <= now ? `<span class="st now">수업 중</span>` : `<span class="st"></span>`;
+    return `<button data-k="${k}"><span class="p">${s.p}교시</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${esc(l?.skip ? "수업 못함" : i.step ? `${i.step}차시 ${i.name}` : i.name)}</span>${st}</button>`;
+  }).join("") : `<span class="empty">${day ? "오늘은 수업이 없어요" : "주말이에요"}</span>`}</div>`;
+
+  app.innerHTML = top + body + list + (toast ? `<div class="toast" role="status">${esc(toast)}</div>` : "");
+
+  app.querySelectorAll("[data-r]").forEach(b => b.onclick = () => {
+    const note = document.getElementById("note")?.value.trim() || "";
+    const k = slotKey(target.date, target.p), prev = m.stepBefore(target.c, k);
+    const r = b.dataset.r;
+    save(target, r === "del" ? null : r === "next" ? { step: prev + 1, note } : r === "same" ? { step: prev, note } : { skip: true, note });
+  });
+  app.querySelectorAll("[data-k]").forEach(b => b.onclick = () => {
+    const [date, p] = [b.dataset.k.slice(0, 10), +b.dataset.k.slice(11)];
+    pick = m.slotsFor(date)[p - 1]; draw(); scrollTo({ top: 0 });
+  });
+  document.getElementById("back")?.addEventListener("click", () => { pick = null; draw(); });
+}
+
+function nextText(m, now) {
+  const today = iso(now);
+  const next = isWeekend(today) ? null : m.slotsFor(today).find(s => s.c && atTime(s.date, BELL[s.p][0]) > now);
+  return next ? `다음 수업은 ${next.p}교시 ${next.c} (${BELL[next.p][0]})` : "오늘 남은 수업이 없어요";
+}
+
+draw();
+setInterval(() => { if (!document.hidden && !document.activeElement?.matches("textarea")) draw(); }, 30000);
+document.addEventListener("visibilitychange", () => !document.hidden && draw());
+</script>
+</body>
+</html>

@@ -271,13 +271,6 @@ section.day { touch-action: pan-y; overflow: clip; overflow-clip-margin: 8px; }
 ol.steps { margin: 8px 0 0; padding-left: 20px; font-size: 13px; color: var(--muted); }
 ol.steps li { margin: 4px 0; }
 ol.steps code { background: var(--sunk); border: 1px solid var(--rule); border-radius: 6px; padding: 1px 5px; font-size: 12px; color: var(--ink); }
-.ev-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.ev-form .wide { grid-column: 1 / -1; }
-.ev-list { margin-top: 14px; display: flex; flex-direction: column; max-height: 270px; overflow-y: auto; border-top: 1px solid var(--rule); }
-.ev-list .row { display: flex; align-items: center; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--rule); font-size: 13px; }
-.ev-list .row .d { width: 70px; color: var(--muted); flex: none; }
-.ev-list .row .ti { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ev-list .row button { border: 0; background: none; color: var(--faint); padding: 9px; margin: -6px -4px; border-radius: 8px; }
 
 /* 기록 시트 */
 dialog.sheet { border: 0; padding: 0; background: var(--surface); color: var(--ink); width: min(100%, 470px); max-width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; margin: auto auto 0; box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
@@ -332,57 +325,20 @@ dialog.sheet::backdrop { background: rgba(10, 16, 14, .42); opacity: var(--p, 1)
 import { html, render, useState, useEffect, useMemo, useRef, useLayoutEffect } from "https://unpkg.com/htm@3.1.1/preact/standalone.module.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// 기존 앱과 같은 Firebase 프로젝트/경로 → 기존 로그인·학사일정(events) 그대로 사용
-const fbApp = initializeApp({
-  apiKey: "AIzaSyC74vmNOFabZ0qd2iPjDL7pWFg3W13h6rE",
-  authDomain: "moon-pixel.firebaseapp.com",
-  projectId: "moon-pixel",
-  storageBucket: "moon-pixel.firebasestorage.app",
-  messagingSenderId: "690517363714",
-  appId: "1:690517363714:web:a5204517fcc83982942b1b",
-});
-const APP_ID = "godeok-ms-final-v3";
+import { FB_CONFIG, APP_ID, BELL, PERIODS, WD, YEAR_END, iso, fromIso, addDays, isWeekend, md, mdw, atTime, gradeOf, slotKey, nextSchoolDay, buildModel, slotInfo, lessonDoc } from "./model.js";
+
+const fbApp = initializeApp(FB_CONFIG);
 const auth = getAuth(fbApp);
 const db = initializeFirestore(fbApp, { localCache: persistentLocalCache() });
 
-// ponytail: 일반적인 중학교 종 시간(45분 수업·10분 휴식). 학교 시정과 다르면 여기만 고치면 됨.
-const BELL = [null, ["09:00", "09:45"], ["09:55", "10:40"], ["10:50", "11:35"], ["11:45", "12:30"], ["13:20", "14:05"], ["14:15", "15:00"], ["15:10", "15:55"]];
-const PERIODS = [1, 2, 3, 4, 5, 6, 7];
-const WD = ["일", "월", "화", "수", "목", "금", "토"];
-const YEAR_END = "2027-02-26";
 // 차시 색: 빨강·주황(시간표 변경·기록 필요 표시색)을 뺀 8색(88°~340°, 36° 간격).
 // 1·2차시 차이가 가장 멀어지게 섞은 순서(전수 탐색 최적). 3차시 차이·8차시 차이는 색이 가까워서
 // 밝기(--t)를 엇갈려 구분: 홀짝으로 바뀌고 8차시마다 한 번 더 뒤집힘
 const HUE_ORDER = [0, 3, 6, 1, 4, 7, 2, 5];
 const hue = step => 88 + HUE_ORDER[(step - 1) % 8] * 36;
 const shade = step => (step + Math.floor((step - 1) / 8)) % 2;
-
-// ---------- 날짜 ----------
-const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-const fromIso = s => new Date(s + "T00:00:00");
-const addDays = (s, n) => { const d = fromIso(s); d.setDate(d.getDate() + n); return iso(d); };
-const isWeekend = s => [0, 6].includes(fromIso(s).getDay());
-const md = s => { const d = fromIso(s); return `${d.getMonth() + 1}/${d.getDate()}`; };
-const mdw = s => `${md(s)}(${WD[fromIso(s).getDay()]})`;
-const atTime = (s, hhmm) => new Date(`${s}T${hhmm}:00`);
-const gradeOf = c => +c.split("-")[0];
-const slotKey = (date, p) => `${date}_${p}`;
-const nextSchoolDay = (s, dir = 1) => { let d = addDays(s, dir); while (isWeekend(d)) d = addDays(d, dir); return d; };
-
-// 학사일정(기존 앱 규칙 그대로): 제목 괄호의 'n학년' → 대상 학년, 없으면 전 학년
-const targetGrades = title => {
-  const m = title?.match(/\(([^)]*?)\s*학년/);
-  if (!m) return [1, 2, 3];
-  const r = m[1].match(/([1-3])\s*[-~∼–—]\s*([1-3])/);
-  if (r) { const a = []; for (let g = Math.min(+r[1], +r[2]); g <= Math.max(+r[1], +r[2]); g++) a.push(g); return a; }
-  const gs = [...new Set((m[1].match(/[1-3]/g) || []).map(Number))];
-  return gs.length ? gs : [1, 2, 3];
-};
-const isExam = e => e.type === "시험" || e.title?.includes("고사");
-const blocks = e => !e.title?.includes("창체") && (e.type === "시험" || e.type === "휴업" || e.type === "행사(수업제외)");
-const allDay = e => !e.period || e.period === "전교시";
 
 // ---------- 데이터 ----------
 function useUserData(user) {
@@ -403,116 +359,8 @@ function useUserData(user) {
 }
 const ref = (user, col, id) => doc(db, "artifacts", APP_ID, "users", user.uid, col, id);
 
-// 시간표·진도 계산을 한곳에
-function useModel({ meta, lessons, events }) {
-  return useMemo(() => {
-    let tt = null;
-    try { tt = meta.timetable?.json ? JSON.parse(meta.timetable.json) : null; } catch { }
-    const syncedAt = meta.timetable?.syncedAt?.toDate?.() || null;
-    const plans = meta.plans || {};
-    const notes = meta.notes || {};
-    const tinted = meta.prefs?.colorMode !== "mono";
-
-    const classes = [...new Set(Object.values(tt?.base || {}).flatMap(d => Object.values(d).map(x => x.c)))]
-      .sort((a, b) => gradeOf(a) - gradeOf(b) || +a.split("-")[1] - +b.split("-")[1]);
-    const firstDay = Object.keys(tt?.days || {}).sort()[0];
-
-    const eventsByDate = {};
-    for (const e of events) (eventsByDate[e.date] ||= []).push(e);
-    const blockingEvent = (date, p, grade) => (eventsByDate[date] || []).find(e => blocks(e) && (allDay(e) || e.period === `${p}교시`) && targetGrades(e.title).includes(grade));
-    const grades = [...new Set(classes.map(gradeOf))];
-    // 내 모든 학년이 하루 종일 수업이 없는 날(방학·휴업·시험) → 연간표에서 접어서 표시
-    const dayOff = date => {
-      const e = (eventsByDate[date] || []).find(e => blocks(e) && allDay(e) && grades.every(g => targetGrades(e.title).includes(g)));
-      if (e) return e;
-      const wd = fromIso(date).getDay(), live = tt?.days[date];
-      // 컴시간에서 그날 내 수업이 전부 빠짐(시험·출장 등)
-      if (live && !Object.keys(live).length && Object.keys(tt.base[wd] || {}).length) return { title: "수업 없음 (컴시간)" };
-    };
-
-    // 그날의 교시별 수업. 알림이 주간 데이터가 있으면 그것(변경 반영), 없으면 기본 시간표.
-    const slotsFor = date => {
-      const wd = fromIso(date).getDay();
-      if (!tt || wd === 0 || wd === 6) return [];
-      const base = tt.base[wd] || {};
-      const live = tt.days[date];
-      const day = live || base;
-      const slots = PERIODS.map(p => {
-        const cur = day[p], orig = base[p];
-        const c = cur?.c || null, oc = orig?.c || null;
-        return {
-          date, p, c, s: cur?.s,
-          changed: !!live && !!c && c !== oc,   // 이 시간에 다른 반(또는 원래 없던 수업)이 들어옴
-          was: !!live && c !== oc ? oc : null,   // 원래 있던 반
-          removed: !!live && !c && oc ? oc : null, // 원래 있던 수업이 빠짐
-          event: c ? blockingEvent(date, p, gradeOf(c)) : null,
-        };
-      });
-      // 같은 날 빠진 반이 다른 교시에 들어왔으면 '이동'으로 짝지음
-      for (const r of slots.filter(s => s.removed)) {
-        const a = slots.find(s => s.changed && s.c === r.removed && !s.from);
-        if (a) { a.from = r.p; r.to = a.p; }
-      }
-      return slots;
-    };
-
-    // 수업 기록: lessons/{date_p} = { date, p, c, step, note, skip }
-    const byClass = {};
-    for (const [k, l] of Object.entries(lessons)) (byClass[l.c] ||= []).push({ ...l, k });
-    for (const c in byClass) byClass[c].sort((a, b) => a.k < b.k ? -1 : 1);
-    const stepBefore = (c, k) => { let s = 0; for (const l of byClass[c] || []) { if (l.k >= k) break; if (l.step) s = Math.max(s, l.step); } return s; };
-    const progress = c => Math.max(0, ...(byClass[c] || []).map(l => l.step || 0));
-    const lastLesson = c => [...(byClass[c] || [])].reverse().find(l => !l.skip);
-    const planOf = c => plans[gradeOf(c)] || [];
-    const planName = (c, step) => planOf(c)[step - 1] || `${step}차시`;
-    const stepTitle = (c, step) => step ? `${step}. ${planOf(c)[step - 1] || `${step}차시`}` : "";
-    const firstLesson = Object.keys(lessons).sort()[0]?.slice(0, 10);
-
-    // 칸마다 차시: 기록한 수업은 기록 그대로, 아직인 수업은 앞 기록 +1, +2 … 로 이어서 예상
-    // (기록을 쓰기 시작한 날 전, 학사일정으로 빠진 수업은 차시 없음. 차시 계획을 넘어가면 -1 = 계획 끝)
-    const stepOf = {};
-    const startFrom = firstLesson || iso(new Date());
-    const run = {};
-    for (let d = firstDay; d && d <= YEAR_END; d = addDays(d, 1)) for (const s of slotsFor(d)) {
-      if (!s.c) continue;
-      const k = slotKey(d, s.p), l = lessons[k];
-      if (l) { stepOf[k] = l.skip ? 0 : l.step || 0; continue; }
-      if (s.event || d < startFrom) continue;
-      const b = stepBefore(s.c, k);
-      const r = run[s.c]?.[0] === b ? run[s.c] : (run[s.c] = [b, 0]);
-      const n = b + ++r[1], last = planOf(s.c).length;
-      stepOf[k] = last && n > last ? -1 : n;
-    }
-
-    const nextExam = (grade, from) => events.filter(e => isExam(e) && e.date >= from && targetGrades(e.title).includes(grade)).sort((a, b) => a.date < b.date ? -1 : 1)[0];
-    const lessonsUntil = (c, from, until) => {
-      let n = 0;
-      for (let d = from; d < until; d = addDays(d, 1)) n += slotsFor(d).filter(s => s.c === c && !s.event).length;
-      return n;
-    };
-
-    // 끝났는데 기록 안 한 수업: 처음 기록을 남긴 날 이후, 최근 2주까지만 (쓰기 전 수업까지 밀린 걸로 치지 않음)
-    const pending = now => {
-      const today = iso(now), out = [];
-      const start = [addDays(today, -14), firstLesson || today].sort()[1];
-      for (let d = start; d <= today; d = addDays(d, 1))
-        for (const s of slotsFor(d))
-          if (s.c && !s.event && !lessons[slotKey(d, s.p)] && atTime(d, BELL[s.p][1]) <= now) out.push(s);
-      return out;
-    };
-
-    // 오늘부터 n일 안의 시간표 변경 (컴시간 알리미처럼 한눈에)
-    const changesFrom = (from, n) => {
-      const out = [];
-      for (let d = from, i = 0; i < n; d = addDays(d, 1), i++)
-        if (dayOff(d)?.title === "수업 없음 (컴시간)") out.push({ date: d, p: 0, allOff: true });
-        else for (const s of slotsFor(d)) if (s.changed || s.removed) out.push(s);
-      return out;
-    };
-
-    return { tt, syncedAt, plans, notes, tinted, classes, firstDay, slotsFor, dayOff, byClass, stepBefore, stepOf, progress, lastLesson, planOf, planName, stepTitle, nextExam, lessonsUntil, pending, changesFrom, lessons, events };
-  }, [meta, lessons, events]);
-}
+// 시간표·진도 계산은 model.js
+const useModel = ({ meta, lessons, events }) => useMemo(() => buildModel({ meta, lessons, events }), [meta, lessons, events]);
 
 // ---------- 움직임 (Apple 'Designing Fluid Interfaces' 방식) ----------
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -607,7 +455,7 @@ function Main({ user }) {
   const saveLesson = async (slot, rec) => {
     const k = slotKey(slot.date, slot.p);
     if (rec === null) await deleteDoc(ref(user, "lessons", k));
-    else await setDoc(ref(user, "lessons", k), { date: slot.date, p: slot.p, c: slot.c, step: rec.step || 0, note: rec.note || "", skip: !!rec.skip, at: Date.now() });
+    else await setDoc(ref(user, "lessons", k), lessonDoc(slot, rec));
     // 밀린 기록 모드면 다음 밀린 수업을 바로 띄움
     const next = sheet?.queue && rec !== null && pending.find(s => slotKey(s.date, s.p) !== k);
     setSheet(next ? { slot: next, queue: true } : null);
@@ -646,12 +494,6 @@ function slotState(m, s, now) {
   if (atTime(s.date, BELL[s.p][1]) <= now) return "todo";
   if (atTime(s.date, BELL[s.p][0]) <= now) return "now";
   return "later";
-}
-// 칸에 보일 차시 번호와 이름
-function slotInfo(m, s) {
-  const l = m.lessons[slotKey(s.date, s.p)];
-  const v = m.stepOf[slotKey(s.date, s.p)] || 0, step = Math.max(0, v), over = v < 0;
-  return { l, step, over, planned: !l, name: l?.skip ? "수업 못함" : step ? m.planName(s.c, step) : over ? "계획 끝" : "", note: l?.note || "" };
 }
 
 function Today({ m, now, open, setTab, pending }) {
@@ -1006,7 +848,20 @@ function Settings({ m, user, saveMeta, setToast }) {
       </div>
     </div>
     <div style="display:grid;gap:14px">
-      <${EventsPanel} m=${m} user=${user} setToast=${setToast} />
+      <div class="panel pad">
+        <h3>바탕화면 진도표 · 휴대폰 기록</h3>
+        <p class="desc">노트북 바탕화면에 진도표를 띄워 두고, 수업이 끝나면 아이폰 동작 버튼으로 바로 기록해요. 휴대폰 기록은 몇 초 안에 바탕화면에 나타나요.</p>
+        <ol class="steps">
+          <li>Microsoft Store 에서 <b>Lively Wallpaper</b> 설치 → <b>+ 추가</b> → 아래 <b>바탕화면 주소</b>를 붙여넣기</li>
+          <li>아이폰 <b>단축어</b> 앱 → 새 단축어 → <b>URL 열기</b>에 아래 <b>휴대폰 기록 주소</b> → 설정 → 동작 버튼 → 단축어로 지정</li>
+        </ol>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn sm primary" onClick=${async () => { await navigator.clipboard.writeText(new URL(`desk.html#code=${user.refreshToken}`, location.href).href); setToast("바탕화면 주소를 복사했어요"); }}>바탕화면 주소 복사</button>
+          <button class="btn sm" onClick=${async () => { await navigator.clipboard.writeText(new URL("quick.html", location.href).href); setToast("휴대폰 기록 주소를 복사했어요"); }}>휴대폰 기록 주소 복사</button>
+          <a class="btn sm ghost" href="quick.html" style="text-decoration:none;color:inherit">기록 화면 열기</a>
+        </div>
+        <p class="desc" style="margin:10px 0 0;font-size:12px">바탕화면 주소에는 연동 코드가 들어 있어요. 비밀번호처럼 다뤄 주세요.</p>
+      </div>
       <div class="panel pad">
         <h3>PC 연동 (알림이 → 진도표)</h3>
         <p class="desc">${m.tt ? html`마지막 동기화 ${m.syncedAt ? m.syncedAt.toLocaleString("ko-KR") : "-"} (${m.tt.source})` : "알림이가 깔린 학교 PC에서 한 번만 연결하면, 컴시간 시간표가 바뀔 때마다 자동으로 반영돼요."}</p>
@@ -1027,86 +882,6 @@ function Settings({ m, user, saveMeta, setToast }) {
         <button class="btn sm" onClick=${() => signOut(auth)}>로그아웃</button>
       </div>
     </div>
-  </div>`;
-}
-
-// 학사일정: 직접 추가/삭제 + 엑셀(월별 달력 시트) 일괄 업로드 — 파서는 기존 앱 그대로
-function EventsPanel({ m, user, setToast }) {
-  const input = useRef();
-  const col = () => collection(db, "artifacts", APP_ID, "users", user.uid, "events");
-  const [f, setF] = useState({ date: iso(new Date()), type: "행사(수업제외)", title: "", period: "전교시" });
-  const add = async () => {
-    if (!f.title.trim()) return setToast("일정 이름을 적어 주세요");
-    await setDoc(doc(col(), `m-${Date.now()}`), { ...f, title: f.title.trim() });
-    setF({ ...f, title: "" });
-    setToast("일정을 추가했어요");
-  };
-  const upcoming = m.events.filter(e => e.date >= iso(new Date())).sort((a, b) => a.date < b.date ? -1 : 1);
-
-  const loadXlsx = () => window.XLSX ? Promise.resolve() : new Promise((ok, no) => {
-    const s = document.createElement("script");
-    s.src = "https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js";
-    s.onload = ok; s.onerror = no; document.head.appendChild(s);
-  });
-  const upload = async e => {
-    const file = e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    try {
-      await loadXlsx();
-      const wb = XLSX.read(await file.arrayBuffer());
-      const list = [];
-      for (const name of wb.SheetNames) {
-        const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1 });
-        let ym = null;
-        for (const row of rows.slice(0, 15)) for (const cell of row || []) {
-          const s = String(cell ?? "").trim();
-          const a = s.match(/(\d+)월\s+(\d{4})/), b = s.match(/(\d{4})\s+(\d+)월/);
-          if (!ym && (a || b)) ym = a ? [+a[2], +a[1]] : [+b[1], +b[2]];
-        }
-        if (!ym) continue;
-        rows.forEach((row, r) => (row || []).forEach((v, c) => {
-          const day = parseInt(v);
-          if (!v || isNaN(v) || day < 1 || day > 31) return;
-          const title = String(rows[r + 1]?.[c] ?? "").trim();
-          if (!title || !isNaN(title)) return;
-          const type = /고사|시험/.test(title) ? "시험" : /휴일|방학|휴업/.test(title) ? "휴업" : "행사";
-          list.push({ date: `${ym[0]}-${String(ym[1]).padStart(2, "0")}-${String(day).padStart(2, "0")}`, type, title });
-        }));
-      }
-      if (!list.length) throw new Error("일정을 찾지 못함");
-      const batch = writeBatch(db);
-      (await getDocs(col())).forEach(d => batch.delete(d.ref));
-      list.forEach((ev, i) => batch.set(doc(col(), `e-${i}`), ev));
-      await batch.commit();
-      setToast(`학사일정 ${list.length}건 반영`);
-    } catch (err) {
-      setToast("학사일정 파일을 읽지 못했어요");
-      console.error(err);
-    }
-  };
-  return html`<div class="panel pad">
-    <h3>학사일정</h3>
-    <p class="desc">시험·휴업·행사(수업제외)는 수업에서 빠지고, '시험까지 남은 수업' 계산에 쓰여요.</p>
-    <div class="ev-form">
-      <input class="field" type="date" value=${f.date} onInput=${e => setF({ ...f, date: e.target.value })} aria-label="날짜" />
-      <select class="field" value=${f.period} onChange=${e => setF({ ...f, period: e.target.value })} aria-label="교시">
-        <option value="전교시">하루 종일</option>${PERIODS.map(p => html`<option value=${`${p}교시`}>${p}교시</option>`)}
-      </select>
-      <select class="field" value=${f.type} onChange=${e => setF({ ...f, type: e.target.value })} aria-label="종류">
-        <option value="행사(수업제외)">행사 (수업 없음)</option><option value="시험">시험</option><option value="휴업">휴업·방학</option><option value="행사">행사 (수업 있음)</option>
-      </select>
-      <input class="field" placeholder="예: 축제(2학년)" value=${f.title} onInput=${e => setF({ ...f, title: e.target.value })} onKeyDown=${e => e.key === "Enter" && add()} aria-label="일정 이름" />
-      <button class="btn primary wide" onClick=${add}>일정 추가</button>
-    </div>
-    <div class="ev-list">${upcoming.length === 0 ? html`<div class="row" style="color:var(--faint)">다가오는 일정이 없어요</div>` : upcoming.map(e => html`<div class="row">
-      <span class="d">${mdw(e.date)}</span>
-      <span class=${"tag " + (blocks(e) ? "event" : "ok")}>${e.type}</span>
-      <span class="ti">${e.title}${e.period && e.period !== "전교시" ? ` (${e.period})` : ""}</span>
-      <button aria-label="삭제" onClick=${() => deleteDoc(doc(col(), e.id))}><${Icon} n="trash" /></button>
-    </div>`)}</div>
-    <input type="file" accept=".xlsx,.xls" hidden ref=${input} onChange=${upload} />
-    <button class="btn sm ghost" style="margin-top:10px" onClick=${() => input.current.click()}>학사일정 엑셀로 전체 다시 올리기</button>
   </div>`;
 }
 

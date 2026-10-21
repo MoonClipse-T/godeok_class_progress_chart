@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>진도표 바탕화면</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* 바탕화면용(Lively Wallpaper). 1280×720 기준으로 그리고 화면 크기에 맞춰 키움.
+   왼쪽 140px 은 바탕화면 아이콘, 아래 62px 은 작업 표시줄 자리 */
+:root {
+  --bg: #12171c; --ink: #eef1ee; --muted: #9aa7ad; --faint: #6f7b81; --cell: rgba(255,255,255,.045);
+  --hl: #ffe15a; --hl-ink: #12171c; --now: #f3f1e8; --red: #ff5a62; --todo: #ffb347;
+  --serif: "Gowun Batang", "Batang", serif;
+  --sans: "IBM Plex Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --ease: cubic-bezier(.23, 1, .32, 1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+body { background: radial-gradient(120vw 100vh at 78% 40%, #24303a, var(--bg) 70%); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; user-select: none; }
+button { font: inherit; color: inherit; cursor: pointer; }
+#screen { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: top left; }
+
+.board { position: absolute; inset: 0; padding: 40px 44px 62px 140px; display: grid; grid-template-columns: minmax(0, 1fr) 580px; grid-template-rows: auto 1fr auto auto auto; column-gap: 30px; row-gap: 16px; }
+.label { grid-column: 1; font-size: 14px; color: var(--muted); display: flex; gap: 14px; align-items: baseline; }
+.label b { color: var(--hl); font-weight: 600; }
+.big { grid-column: 1; grid-row: 2; align-self: center; display: flex; align-items: baseline; gap: 22px; font-family: var(--serif); min-width: 0; }
+.big .cls { font-size: 128px; font-weight: 700; line-height: .9; letter-spacing: -.03em; }
+.big .cls.red { color: var(--red); }
+.big .cls.calm { font-size: 76px; }
+.big .what { font-size: 27px; line-height: 1.3; min-width: 0; }
+.big .what small { display: block; font-family: var(--sans); font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+.week { grid-column: 2; grid-row: 1 / 3; align-self: start; }
+.week table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+.week th { font-size: 13px; font-weight: 500; color: #8d999f; height: 28px; }
+.week th.p { width: 30px; text-align: right; padding-right: 6px; font-weight: 600; font-size: 14px; line-height: 1.1; }
+.week th.p small { display: block; font-size: 9.5px; font-weight: 400; color: var(--faint); }
+.week th.today { color: var(--hl-ink); background: var(--hl); border-radius: 7px; font-weight: 700; }
+.week th small.off { display: block; font-size: 10px; color: var(--todo); font-weight: 500; line-height: 1.1; }
+.week td { height: 44px; padding: 0; border-radius: 8px; background: var(--cell); }
+.week td.today { background: rgba(255,225,90,.08); }
+.week td button { width: 100%; height: 100%; border: 0; border-radius: 8px; background: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 4px; position: relative; }
+.week td b { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+.week td i { font-style: normal; font-size: 12px; color: #8d999f; }
+.red { color: var(--red) !important; }
+.week .past { opacity: .42; }
+.week .todo { opacity: 1; box-shadow: inset 0 0 0 1.5px var(--todo); }
+.week .now { background: var(--now); color: var(--hl-ink); }
+.week .now i { color: #4a535a; }
+.week .ev { opacity: .3; }
+.cap { display: flex; justify-content: space-between; font-size: 12px; color: #7f8b91; margin-top: 6px; padding-left: 38px; }
+.cap b { color: var(--red); font-weight: 600; }
+
+.rail { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.rail > * { border: 0; background: rgba(255,255,255,.06); border-radius: 10px; padding: 9px 10px 10px; text-align: left; display: grid; gap: 3px; min-height: 76px; align-content: start; min-width: 0; }
+.rail .empty { background: transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.rail .p { font-size: 11px; color: #8d999f; }
+.rail .c { font-size: 20px; font-weight: 700; }
+.rail .s { font-size: 11px; color: #aab5ba; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.rail .past { opacity: .45; }
+.rail .now { background: var(--now); color: var(--hl-ink); }
+.rail .now .p, .rail .now .s { color: #4a535a; }
+.rail .todo .s { color: var(--todo); font-weight: 600; }
+.notes { grid-column: 1 / -1; display: flex; gap: 28px; font-size: 13.5px; color: #c4ccd0; min-width: 0; }
+.notes b { font-weight: 600; color: #fff; }
+.notes .todo { color: var(--todo); }
+.sync { grid-column: 1 / -1; margin-top: -8px; font-size: 11.5px; color: var(--faint); }
+.sync .bad { color: var(--todo); }
+
+/* 기록이 들어오면 그 칸이 한 번 반짝 (휴대폰에서 기록한 것이 여기 도착했다는 표시) */
+.flash::after { content: ""; position: absolute; inset: -2px; border-radius: inherit; background: var(--hl); opacity: 0; animation: flash 1400ms ease-out; pointer-events: none; }
+@keyframes flash { from { opacity: .85; } to { opacity: 0; } }
+
+/* 칸을 눌렀을 때 작은 기록 창 */
+.pop { position: absolute; z-index: 5; width: 220px; border-radius: 12px; padding: 6px; background: #fff; color: #17202b;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 12px 32px rgba(0,0,0,.35); transform-origin: var(--o, top left); animation: pop 160ms var(--ease); }
+@keyframes pop { from { transform: scale(.96); opacity: 0; } }
+.pop .t { font-size: 12px; color: #5b6670; padding: 6px 8px 4px; line-height: 1.4; }
+.pop .t b { color: #17202b; }
+.pop button { display: flex; justify-content: space-between; width: 100%; border: 0; background: none; padding: 8px; border-radius: 8px; font-size: 13px; text-align: left; color: #17202b; }
+.pop button small { color: #8a939a; }
+.pop button:hover { background: #f1f3f2; }
+.pop button.del { color: #c0262f; }
+
+/* 처음 연결 */
+.setup { position: absolute; inset: 0; display: grid; place-items: center; padding-left: 100px; }
+.setup .box { width: 520px; display: grid; gap: 14px; }
+.setup h1 { font-family: var(--serif); font-size: 34px; margin: 0; }
+.setup p, .setup li { color: #c4ccd0; font-size: 14px; line-height: 1.6; margin: 0; }
+.setup ol { margin: 0; padding-left: 20px; }
+.setup .row { display: flex; gap: 8px; }
+.setup input { flex: 1; min-width: 0; font: 13px ui-monospace, monospace; color: var(--ink); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 10px 12px; user-select: text; }
+.setup .go { border: 0; border-radius: 10px; padding: 10px 16px; background: var(--hl); color: var(--hl-ink); font-weight: 700; }
+.setup .err { color: var(--todo); }
+@media (prefers-reduced-motion: reduce) { .flash::after, .pop { animation: none; } }
+</style>
+</head>
+<body>
+<div id="screen"></div>
+<script type="module">
+import { FB_CONFIG, APP_ID, BELL, PERIODS, WD, iso, fromIso, addDays, isWeekend, md, atTime, slotKey, nextSchoolDay, buildModel, slotInfo, lessonDoc } from "./model.js";
+
+// ---------- 연결: 진도표 앱의 'PC 연동 코드'(로그인 갱신 토큰)로 접속 ----------
+// 바탕화면 프로그램 안에서는 구글 로그인이 막혀서, 알림이 연동 키트와 같은 방식(REST)을 씀
+const CODE_KEY = "desk-code", CACHE_KEY = "desk-cache";
+const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch { } } };
+// Lively 에 주소를 넣을 때 desk.html#code=… 로 넣을 수 있게 (주소 뒤 # 부분은 인터넷으로 전송되지 않음)
+const hashCode = new URLSearchParams(location.hash.slice(1)).get("code");
+if (hashCode) { store.set(CODE_KEY, hashCode); history.replaceState(null, "", location.pathname); }
+let code = store.get(CODE_KEY);
+let idToken = null, uid = null, tokenExp = 0;
+class AuthError extends Error { }
+
+async function token() {
+  if (idToken && Date.now() < tokenExp - 60000) return idToken;
+  const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FB_CONFIG.apiKey}`, {
+    method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: code }),
+  });
+  if (r.status === 400 || r.status === 401 || r.status === 403) throw new AuthError();
+  if (!r.ok) throw new Error(`token ${r.status}`);
+  const j = await r.json();
+  idToken = j.id_token; uid = j.user_id; tokenExp = Date.now() + j.expires_in * 1000;
+  if (j.refresh_token && j.refresh_token !== code) { code = j.refresh_token; store.set(CODE_KEY, code); }
+  return idToken;
+}
+const base = () => `https://firestore.googleapis.com/v1/projects/${FB_CONFIG.projectId}/databases/(default)/documents/artifacts/${APP_ID}/users/${uid}`;
+async function api(path, opt = {}) {
+  const t = await token();
+  const r = await fetch(base() + path, { ...opt, headers: { Authorization: `Bearer ${t}`, "Content-Type": "application/json" } });
+  if (r.status === 401 || r.status === 403) { idToken = null; throw new AuthError(); }
+  if (!r.ok) throw new Error(`firestore ${r.status}`);
+  return r.json();
+}
+// Firestore REST 값 ↔ JS 값
+const val = v => "stringValue" in v ? v.stringValue : "integerValue" in v ? +v.integerValue : "doubleValue" in v ? v.doubleValue
+  : "booleanValue" in v ? v.booleanValue : "timestampValue" in v ? new Date(v.timestampValue)
+  : "mapValue" in v ? fields(v.mapValue.fields) : "arrayValue" in v ? (v.arrayValue.values || []).map(val) : null;
+const fields = f => Object.fromEntries(Object.entries(f || {}).map(([k, v]) => [k, val(v)]));
+const enc = x => typeof x === "string" ? { stringValue: x } : typeof x === "boolean" ? { booleanValue: x } : Number.isInteger(x) ? { integerValue: String(x) } : { doubleValue: x };
+const docId = d => d.name.split("/").pop();
+async function list(col) {
+  const out = [];
+  let pt = "";
+  do {
+    const j = await api(`/${col}?pageSize=300${pt ? `&pageToken=${encodeURIComponent(pt)}` : ""}`);
+    for (const d of j.documents || []) out.push([docId(d), fields(d.fields)]);
+    pt = j.nextPageToken;
+  } while (pt);
+  return out;
+}
+
+// ---------- 데이터 (마지막 상태는 이 PC 에 저장해 두고 켜자마자 보여 줌) ----------
+let data = { meta: {}, lessons: {}, events: [] };
+let lastAt = 0, checkedAt = null, problem = "", flashKeys = new Set();
+try {
+  const c = JSON.parse(store.get(CACHE_KEY));
+  if (c) { data = c; const t = data.meta.timetable; if (t?.syncedAt) t.syncedAt = new Date(t.syncedAt); }
+} catch { }
+const bumpAt = () => { lastAt = Math.max(0, ...Object.values(data.lessons).map(l => l.at || 0)); };
+bumpAt();
+const save = () => store.set(CACHE_KEY, JSON.stringify(data));
+
+async function loadMeta() { data.meta = Object.fromEntries(await list("meta")); }
+async function loadAll() {
+  const [meta, lessons, events] = await Promise.all([list("meta"), list("lessons"), list("events")]);
+  data = { meta: Object.fromEntries(meta), lessons: Object.fromEntries(lessons), events: events.map(([id, e]) => ({ id, ...e })) };
+  bumpAt();
+}
+// 새 기록만 가져오기 (휴대폰에서 기록한 것이 여기로 옴). 바뀐 문서 수만큼만 읽어서 하루 종일 켜 둬도 가벼움
+async function loadNew() {
+  const rows = await api(":runQuery", { method: "POST", body: JSON.stringify({ structuredQuery: {
+    from: [{ collectionId: "lessons" }],
+    where: { fieldFilter: { field: { fieldPath: "at" }, op: "GREATER_THAN", value: { integerValue: String(lastAt) } } },
+  } }) });
+  const got = rows.filter(r => r.document).map(r => [docId(r.document), fields(r.document.fields)]);
+  for (const [k, l] of got) { data.lessons[k] = l; flashKeys.add(k); }
+  bumpAt();
+  return got.length;
+}
+async function run(job) {
+  try { const n = await job(); problem = ""; checkedAt = new Date(); save(); return n; }
+  catch (e) {
+    if (e instanceof AuthError) { problem = "auth"; }
+    else problem = "net";
+    console.warn(e);
+  } finally { draw(); }
+}
+
+// ---------- 화면 ----------
+const screen = document.getElementById("screen");
+const hm = d => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function state(m, s, now) {
+  if (s.event) return "ev";
+  if (m.lessons[slotKey(s.date, s.p)]) return "done";
+  if (atTime(s.date, BELL[s.p][1]) <= now) return "todo";
+  if (atTime(s.date, BELL[s.p][0]) <= now) return "now";
+  return "later";
+}
+const stepText = (i, s) => s.event ? s.event.title : i.l?.skip ? "수업 못함" : i.step ? `${i.step}차시 ${i.name}` : i.over ? "계획 끝" : "";
+
+function draw() {
+  if (!code) return drawSetup();
+  if (problem === "auth") return drawSetup("연동 코드가 맞지 않거나 만료됐어요. 진도표 앱 설정에서 새로 복사해 붙여 넣어 주세요.");
+  const m = buildModel(data), now = new Date(), today = iso(now);
+  if (!m.tt) { screen.innerHTML = `<div class="setup"><div class="box"><h1>${problem ? "연결하는 중…" : "시간표를 기다리는 중"}</h1><p>${problem === "net" ? "인터넷 연결을 확인하고 있어요." : "알림이 PC 에서 시간표가 아직 올라오지 않았어요. 알림이 연동 키트가 한 번 돌면 자동으로 나타나요."}</p></div></div>`; return; }
+
+  // 보여 줄 날: 주말이면 다음 주, 아니면 이번 주 월~금
+  const schoolDay = isWeekend(today) ? nextSchoolDay(today) : today;
+  const mon = addDays(schoolDay, 1 - fromIso(schoolDay).getDay());
+  const days = [0, 1, 2, 3, 4].map(i => addDays(mon, i));
+  const todaySlots = m.slotsFor(schoolDay);
+  const pending = m.pending(now).reverse(); // 최근 것부터
+
+  // 지금 수업 / 다음 수업
+  const live = todaySlots.filter(s => s.c);
+  let label, focus, after;
+  const cur = schoolDay === today && live.find(s => state(m, s, now) === "now");
+  const next = live.find(s => schoolDay !== today || atTime(s.date, BELL[s.p][0]) > now);
+  if (cur) {
+    const left = Math.round((atTime(today, BELL[cur.p][1]) - now) / 60000);
+    label = `<b>지금 ${cur.p}교시</b><span>${BELL[cur.p][0]}–${BELL[cur.p][1]}, 끝나기까지 ${left}분</span>`;
+    focus = cur; after = next && next !== cur ? next : live.find(s => s.p > cur.p);
+  } else if (next) {
+    const mins = Math.round((atTime(next.date, BELL[next.p][0]) - now) / 60000);
+    label = schoolDay === today
+      ? `<b>다음 ${next.p}교시</b><span>${BELL[next.p][0]} 시작, ${mins < 60 ? `${mins}분 뒤` : `${Math.floor(mins / 60)}시간 ${mins % 60}분 뒤`}</span>`
+      : `<b>${md(schoolDay)} ${WD[fromIso(schoolDay).getDay()]}요일 ${next.p}교시</b><span>${BELL[next.p][0]} 시작</span>`;
+    focus = next; after = live.find(s => s.p > next.p);
+  } else {
+    label = `<b>오늘 수업 끝</b><span>${pending.length ? "기록 전 수업을 확인하세요" : "수고하셨어요"}</span>`;
+  }
+  const off = m.dayOff(schoolDay);
+  let big;
+  if (off) { label = `<b>${md(schoolDay)} ${WD[fromIso(schoolDay).getDay()]}요일</b><span>수업 없는 날</span>`; big = `<div class="cls calm">${esc(off.title)}</div>`; }
+  else if (focus) {
+    const i = slotInfo(m, focus);
+    big = `<div class="cls ${focus.changed ? "red" : ""}">${focus.c}</div><div class="what">${i.step ? `${i.step}차시<br>${esc(i.name)}` : esc(stepText(i, focus)) || "차시 계획 전"}${after ? `<small>다음 시간: ${after.p}교시 ${after.c}${slotInfo(m, after).step ? `, ${slotInfo(m, after).step}차시` : ""}</small>` : ""}</div>`;
+  } else {
+    const nd = nextSchoolDay(today), first = m.slotsFor(nd).find(s => s.c);
+    big = first ? `<div class="cls calm">내일 ${first.p}교시 <span class="${first.changed ? "red" : ""}">${first.c}</span></div>` : `<div class="cls calm">내일 수업 없음</div>`;
+  }
+
+  const fl = s => flashKeys.has(slotKey(s.date, s.p)) ? " flash" : "";
+  const cell = (date, s) => {
+    const t = date === schoolDay ? "today" : "";
+    if (!s?.c) return `<td class="${t}"></td>`; // 빠진 수업·공강은 빈칸
+    const st = state(m, s, now), i = slotInfo(m, s);
+    const cls = st === "now" ? "now" : st === "todo" ? "todo past" : st === "ev" ? "ev" : atTime(date, BELL[s.p][1]) <= now ? "past" : "";
+    return `<td class="${t}"><button class="${cls}${fl(s)}" data-k="${slotKey(date, s.p)}" title="${esc(stepText(i, s))}"><b class="${s.changed ? "red" : ""}">${s.c}</b><i>${i.l?.skip || s.event ? "–" : i.step || ""}</i></button></td>`;
+  };
+  const cols = days.map(d => ({ d, slots: m.slotsFor(d), off: m.dayOff(d) }));
+  const week = `<table><thead><tr><th class="p"></th>${cols.map(({ d, off }) => `<th class="${d === schoolDay ? "today" : ""}" title="${esc(off?.title || "")}">${WD[fromIso(d).getDay()]} ${fromIso(d).getDate()}${off ? `<small class="off">${esc(off.title).slice(0, 8)}</small>` : ""}</th>`).join("")}</tr></thead>
+    <tbody>${PERIODS.map(p => `<tr><th class="p">${p}<small>${BELL[p][0]}</small></th>${cols.map(({ d, slots, off }) => off ? `<td></td>` : cell(d, slots[p - 1])).join("")}</tr>`).join("")}</tbody></table>
+    <div class="cap"><span>작은 숫자 = 차시</span><span><b>빨간 반</b> 바뀐 수업, 빈칸 빠진 수업</span></div>`;
+
+  const rail = PERIODS.map(p => {
+    const s = todaySlots[p - 1];
+    if (!s?.c) return `<div class="empty"><span class="p">${p}교시</span></div>`;
+    const st = state(m, s, now), i = slotInfo(m, s);
+    const cls = st === "now" ? "now" : st === "todo" ? "todo past" : atTime(s.date, BELL[p][1]) <= now ? "past" : "";
+    return `<button class="${cls}${fl(s)}" data-k="${slotKey(s.date, p)}"><span class="p">${p}교시 ${BELL[p][0]}</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${st === "todo" ? "기록 전" : esc(stepText(i, s))}</span></button>`;
+  }).join("");
+
+  const nd = nextSchoolDay(schoolDay), ndSlots = m.slotsFor(nd).filter(s => s.c);
+  const nameNd = nd === addDays(today, 1) ? "내일" : `${md(nd)}`;
+  const notes = `${pending.length ? `<span class="todo">기록 전: ${pending.slice(0, 4).map(s => `${WD[fromIso(s.date).getDay()]} ${s.p}교시 ${s.c}`).join(", ")}${pending.length > 4 ? ` 외 ${pending.length - 4}개` : ""}</span>` : "<span>밀린 기록 없음</span>"}
+    <span><b>${nameNd}(${WD[fromIso(nd).getDay()]})</b> ${m.dayOff(nd) ? esc(m.dayOff(nd).title) : ndSlots.length ? ndSlots.map(s => `${s.p}교시 <span class="${s.changed ? "red" : ""}">${s.c}</span>`).join(", ") : "수업 없음"}</span>`;
+  const sync = `컴시간 ${esc(m.tt.savedAt?.slice(5, 16).replace("-", "/"))} 저장분, ${problem === "net" ? `<span class="bad">인터넷 연결 끊김 (마지막 확인 ${checkedAt ? hm(checkedAt) : "-"})</span>` : `마지막 확인 ${checkedAt ? hm(checkedAt) : "-"}`}`;
+
+  screen.innerHTML = `<div class="board">
+    <div class="label">${label}</div>
+    <div class="big">${big}</div>
+    <div class="week">${week}</div>
+    <div class="rail">${rail}</div>
+    <div class="notes">${notes}</div>
+    <div class="sync">${sync}</div>
+  </div>`;
+  flashKeys.clear();
+}
+
+function drawSetup(err = "") {
+  screen.innerHTML = `<div class="setup"><div class="box">
+    <h1>바탕화면 진도표 연결</h1>
+    <ol>
+      <li>휴대폰이나 PC 에서 진도표 앱을 열고 <b>설정 → PC 연동 → 복사</b></li>
+      <li>아래 칸에 붙여 넣고 <b>연결</b></li>
+    </ol>
+    <p>붙여 넣기가 안 되면 Lively 에 주소를 <b>desk.html#code=복사한코드</b> 로 넣어도 돼요.</p>
+    <div class="row"><input id="code" type="password" placeholder="PC 연동 코드" autocomplete="off"><button class="go" id="go">연결</button></div>
+    ${err ? `<p class="err">${esc(err)}</p>` : ""}
+    <p style="font-size:12.5px;color:var(--faint)">이 코드는 비밀번호와 같아요. 이 PC 에만 저장돼요.</p>
+  </div></div>`;
+  document.getElementById("go").onclick = () => {
+    const v = document.getElementById("code").value.trim();
+    if (!v) return;
+    code = v; store.set(CODE_KEY, v); idToken = null; problem = "";
+    run(loadAll);
+  };
+}
+
+// ---------- 칸을 눌러 기록 (휴대폰과 같은 3가지) ----------
+let pop = null;
+const closePop = () => { pop?.remove(); pop = null; };
+screen.addEventListener("click", e => {
+  const b = e.target.closest("[data-k]");
+  if (!b) return;
+  e.stopPropagation(); closePop();
+  const m = buildModel(data), k = b.dataset.k, [date, p] = [k.slice(0, 10), +k.slice(11)];
+  const s = m.slotsFor(date)[p - 1];
+  if (!s?.c) return;
+  const prev = m.stepBefore(s.c, k), existing = m.lessons[k];
+  const sr = screen.getBoundingClientRect(), br = b.getBoundingClientRect(), z = sr.width / 1280;
+  let x = (br.left - sr.left) / z, y = (br.bottom - sr.top) / z + 6, o = "top left";
+  if (x + 220 > 1270) { x = (br.right - sr.left) / z - 220; o = "top right"; }
+  if (y + 190 > 680) { y = (br.top - sr.top) / z - 196; o = o.replace("top", "bottom"); }
+  pop = document.createElement("div");
+  pop.className = "pop";
+  pop.style.cssText = `left:${x}px;top:${y}px;--o:${o}`;
+  pop.innerHTML = `<div class="t">${md(date)}(${WD[fromIso(date).getDay()]}) ${p}교시 <b>${s.c}</b><br>${existing ? `기록: ${existing.skip ? "수업 못함" : m.stepTitle(s.c, existing.step)}` : `계획: ${m.stepTitle(s.c, prev + 1)}`}</div>
+    <button data-r="next">계획대로 했어요<small>${prev + 1}차시</small></button>
+    ${prev > 0 ? `<button data-r="same">이어서 했어요<small>${prev}차시 계속</small></button>` : ""}
+    <button data-r="skip">수업 못함</button>
+    ${existing ? `<button data-r="del" class="del">기록 지우기</button>` : ""}`;
+  pop.addEventListener("click", async ev => {
+    const r = ev.target.closest("[data-r]")?.dataset.r;
+    if (!r) return;
+    ev.stopPropagation(); closePop();
+    // 화면은 바로, 저장은 뒤에서. (반짝임은 휴대폰 등 다른 곳에서 들어온 기록에만)
+    if (r === "del") { delete data.lessons[k]; draw(); await run(() => api(`/lessons/${k}`, { method: "DELETE" })); return; }
+    const doc = lessonDoc(s, r === "next" ? { step: prev + 1 } : r === "same" ? { step: prev } : { skip: true });
+    data.lessons[k] = doc; draw();
+    await run(() => api(`/lessons/${k}`, { method: "PATCH", body: JSON.stringify({ fields: Object.fromEntries(Object.entries(doc).map(([a, v]) => [a, enc(v)])) }) }));
+    bumpAt();
+  });
+  screen.appendChild(pop);
+});
+document.addEventListener("click", closePop);
+document.addEventListener("keydown", e => e.key === "Escape" && closePop());
+
+// 1280×720 을 화면에 꽉 차게 (남는 쪽은 가운데 정렬)
+function fit() {
+  const z = Math.min(innerWidth / 1280, innerHeight / 720);
+  screen.style.transform = `translate(${(innerWidth - 1280 * z) / 2}px, ${(innerHeight - 720 * z) / 2}px) scale(${z})`;
+}
+addEventListener("resize", fit); fit();
+
+// ---------- 주기 ----------
+// 새 기록 15초, 시간표·차시 계획 5분, 전체(지운 기록 반영) 30분, 화면 시계 30초
+draw();
+if (code) run(loadAll);
+setInterval(() => code && problem !== "auth" && run(loadNew), 15000);
+setInterval(() => code && problem !== "auth" && run(loadMeta), 5 * 60000);
+setInterval(() => code && problem !== "auth" && run(loadAll), 30 * 60000);
+setInterval(() => !pop && draw(), 30000);
+addEventListener("online", () => code && run(loadNew));
+document.addEventListener("visibilitychange", () => !document.hidden && code && run(loadNew));
+</script>
+</body>
+</html>
