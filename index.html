@@ -11,26 +11,29 @@
 <style>
 /* 교무수첩 종이 · 칠판 초록 · 형광펜(오늘/수업 중) · 빨간펜(시간표 변경) */
 :root {
-  --paper: #eef1f0; --surface: #ffffff; --sunk: #f5f7f6; --ink: #17202b; --muted: #5b6670; --faint: #949ea5;
+  /* 글자색은 종이·흰 바탕 모두에서 4.5:1 이상 (muted 7.4, faint 4.6) */
+  --paper: #eef1f0; --surface: #ffffff; --sunk: #f5f7f6; --ink: #17202b; --muted: #4b5560; --faint: #646f78;
   --rule: #dce2df; --rule-2: #c3ccc8;
   --accent: #1d6b55; --accent-ink: #ffffff; --accent-soft: #dcefe7;
   --hl: #ffe15a; --hl-ink: #3d3200;
-  --red: #d6283e; --red-soft: #fde7ea; --warn: #b25e00; --warn-soft: #fff0d9;
+  --red: #d6283e; --red-soft: #fde7ea; --warn: #9a4f00; --warn-soft: #fff0d9;
   --event: #6b4fbb; --event-soft: #eeeafb;
-  /* 차시 색(OKLCH): 같은 밝기·채도에서 색상(--h)만 바꿔 어느 차시든 대비가 같음 */
+  /* 차시 색(OKLCH): 같은 밝기·채도에서 색상(--h)만 바꿔 어느 차시든 대비가 같음. --t=1 인 차시는 *d 만큼 밝기를 옮김 */
   --kL: .905; --kC: .07; --kbL: .56; --kbC: .15; --kpL: .975; --kpC: .025; --klL: .76; --klC: .09;
+  --kd: -.06; --kbd: -.08; --kpd: -.02;
   --ease: cubic-bezier(.23, 1, .32, 1);
   --font: "Wanted Sans Variable", "Wanted Sans", "Pretendard Variable", Pretendard, system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #101513; --surface: #18201d; --sunk: #1e2724; --ink: #e6ece9; --muted: #9ba7a2; --faint: #67736e;
+    --paper: #101513; --surface: #18201d; --sunk: #1e2724; --ink: #e6ece9; --muted: #a9b4af; --faint: #818d88;
     --rule: #28322e; --rule-2: #3a4641;
     --accent: #5cc6a2; --accent-ink: #07140f; --accent-soft: #1b3a2f;
     --hl: #e3c343; --hl-ink: #241d00;
     --red: #ff6b7b; --red-soft: #3a1a20; --warn: #f5b14a; --warn-soft: #33260f;
     --event: #b9a6ff; --event-soft: #262140;
     --kL: .37; --kC: .07; --kbL: .78; --kbC: .12; --kpL: .24; --kpC: .025; --klL: .5; --klC: .07;
+    --kd: .06; --kbd: .07; --kpd: .025;
   }
 }
 * { box-sizing: border-box; }
@@ -96,7 +99,7 @@ nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); backgroun
   .btn.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, var(--ink)); }
   .btn.ghost:hover { color: var(--ink); background: var(--sunk); }
 }
-.icon-btn { border: 1px solid var(--rule-2); background: var(--surface); width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none; color: var(--muted); }
+.icon-btn { border: 1px solid var(--rule-2); background: var(--surface); width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; color: var(--muted); }
 
 /* 반 이름표: 색 없이 글자로만 구분 */
 .chip { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; padding: 2px 8px; border-radius: 7px; font-weight: 800; font-size: 14px; letter-spacing: -.01em; white-space: nowrap;
@@ -107,9 +110,10 @@ nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); backgroun
 
 /* 차시 색: .k 가 --k-bg(바탕) --k-bar(진한 색) --k-line(테두리)을 정함. tint 가 없으면 무채색 */
 .k { --k-bg: var(--sunk); --k-bar: var(--ink); --k-line: var(--rule-2); }
-.k.tint { --k-bg: oklch(var(--kL) var(--kC) var(--h)); --k-bar: oklch(var(--kbL) var(--kbC) var(--h)); --k-line: oklch(var(--klL) var(--klC) var(--h)); }
+.k.tint { --k-bg: oklch(calc(var(--kL) + var(--t, 0) * var(--kd)) var(--kC) var(--h)); --k-bar: oklch(calc(var(--kbL) + var(--t, 0) * var(--kbd)) var(--kbC) var(--h)); --k-line: oklch(var(--klL) var(--klC) var(--h)); }
 .k.plan { --k-bg: var(--surface); --k-bar: var(--muted); }
-.k.plan.tint { --k-bg: oklch(var(--kpL) var(--kpC) var(--h)); --k-bar: oklch(var(--kbL) var(--kbC) var(--h)); }
+.k.plan.tint { --k-bg: oklch(calc(var(--kpL) + var(--t, 0) * var(--kpd)) var(--kpC) var(--h)); --k-bar: oklch(calc(var(--kbL) + var(--t, 0) * var(--kbd)) var(--kbC) var(--h)); }
+.k.over { --k-bg: transparent; --k-line: var(--rule); }
 .step { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 12.5px; font-weight: 800; background: var(--k-bar); color: var(--surface); flex: none; }
 .plan .step { background: transparent; color: var(--k-bar); box-shadow: inset 0 0 0 1.5px var(--k-bar); }
 .step.lg { min-width: 30px; height: 30px; border-radius: 15px; font-size: 15px; }
@@ -177,14 +181,14 @@ nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); backgroun
 .tl-bar .hint { font-size: 12.5px; color: var(--faint); }
 .tl-bar .spacer { flex: 1; }
 .seg { display: inline-flex; background: var(--sunk); border: 1px solid var(--rule); border-radius: 11px; padding: 2px; }
-.seg button { border: 0; background: none; padding: 4px 11px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.seg button { border: 0; background: none; min-height: 34px; padding: 0 12px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(23,32,43,.08), 0 0 0 1px var(--rule); }
 .seg .sw { width: 22px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, oklch(.68 .14 230), oklch(.68 .14 7), oklch(.68 .14 145), oklch(.68 .14 283)); }
 .seg .sw.mono { background: linear-gradient(90deg, var(--ink), var(--rule-2)); }
 .chips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 12px; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
 .chips button { flex: none; border: 0; padding: 0; background: none; border-radius: 8px; }
-.chips button .chip { transition: background-color 150ms ease, color 150ms ease; }
+.chips button .chip { padding: 6px 12px; transition: background-color 150ms ease, color 150ms ease; }
 .chips button.on .chip { background: var(--ink); color: var(--paper); box-shadow: none; }
 .tl { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; position: relative; }
 .tl-in { display: flex; width: max-content; }
@@ -265,7 +269,7 @@ ol.steps code { background: var(--sunk); border: 1px solid var(--rule); border-r
 .ev-list .row { display: flex; align-items: center; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--rule); font-size: 13px; }
 .ev-list .row .d { width: 70px; color: var(--muted); flex: none; }
 .ev-list .row .ti { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ev-list .row button { border: 0; background: none; color: var(--faint); padding: 4px; border-radius: 6px; }
+.ev-list .row button { border: 0; background: none; color: var(--faint); padding: 9px; margin: -6px -4px; border-radius: 8px; }
 
 /* 기록 시트 */
 dialog.sheet { border: 0; padding: 0; background: var(--surface); color: var(--ink); width: min(100%, 470px); max-width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; margin: auto auto 0; box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
@@ -338,9 +342,12 @@ const BELL = [null, ["09:00", "09:45"], ["09:55", "10:40"], ["10:50", "11:35"], 
 const PERIODS = [1, 2, 3, 4, 5, 6, 7];
 const WD = ["일", "월", "화", "수", "목", "금", "토"];
 const YEAR_END = "2027-02-26";
-// 차시 n → 색상각. 황금비씩 돌려서 이웃한 차시끼리 확실히 다른 색.
-// 빨강·주황(시간표 변경·기록 필요 표시색)은 빼고 노랑~초록~파랑~보라~분홍(80°~335°)만 씀
-const hue = step => Math.round(80 + ((step * 0.618034 + 0.45) % 1) * 255);
+// 차시 색: 빨강·주황(시간표 변경·기록 필요 표시색)을 뺀 8색(88°~340°, 36° 간격).
+// 1·2차시 차이가 가장 멀어지게 섞은 순서(전수 탐색 최적). 3차시 차이·8차시 차이는 색이 가까워서
+// 밝기(--t)를 엇갈려 구분: 홀짝으로 바뀌고 8차시마다 한 번 더 뒤집힘
+const HUE_ORDER = [0, 3, 6, 1, 4, 7, 2, 5];
+const hue = step => 88 + HUE_ORDER[(step - 1) % 8] * 36;
+const shade = step => (step + Math.floor((step - 1) / 8)) % 2;
 
 // ---------- 날짜 ----------
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -452,7 +459,7 @@ function useModel({ meta, lessons, events }) {
     const firstLesson = Object.keys(lessons).sort()[0]?.slice(0, 10);
 
     // 칸마다 차시: 기록한 수업은 기록 그대로, 아직인 수업은 앞 기록 +1, +2 … 로 이어서 예상
-    // (기록을 쓰기 시작한 날 전, 학사일정으로 빠진 수업은 차시 없음)
+    // (기록을 쓰기 시작한 날 전, 학사일정으로 빠진 수업은 차시 없음. 차시 계획을 넘어가면 -1 = 계획 끝)
     const stepOf = {};
     const startFrom = firstLesson || iso(new Date());
     const run = {};
@@ -463,7 +470,8 @@ function useModel({ meta, lessons, events }) {
       if (s.event || d < startFrom) continue;
       const b = stepBefore(s.c, k);
       const r = run[s.c]?.[0] === b ? run[s.c] : (run[s.c] = [b, 0]);
-      stepOf[k] = b + ++r[1];
+      const n = b + ++r[1], last = planOf(s.c).length;
+      stepOf[k] = last && n > last ? -1 : n;
     }
 
     const nextExam = (grade, from) => events.filter(e => isExam(e) && e.date >= from && targetGrades(e.title).includes(grade)).sort((a, b) => a.date < b.date ? -1 : 1)[0];
@@ -515,7 +523,7 @@ const chgLabel = s => s.from ? `${s.from}→${s.p}교시 이동` : s.was ? `${s.
 const Chip = ({ c, lg, solid, gone }) => html`<span class=${"chip" + (lg ? " lg" : "") + (solid ? " solid" : "") + (gone ? " gone" : "")}>${c}</span>`;
 // 차시 색 입히기: k(무채색 바탕) + tint(차시 색) + plan(아직 안 한 수업 = 점선·연하게)
 const kc = (m, step, planned) => `k${step && m.tinted ? " tint" : ""}${planned ? " plan" : ""}`;
-const kh = step => step ? `--h:${hue(step)}` : "";
+const kh = step => step ? `--h:${hue(step)};--t:${shade(step)}` : "";
 const Step = ({ n, lg }) => n ? html`<span class=${"step" + (lg ? " lg" : "")} title=${`${n}차시`}>${n}</span>` : null;
 
 // ---------- 앱 ----------
@@ -599,8 +607,8 @@ function slotState(m, s, now) {
 // 칸에 보일 차시 번호와 이름
 function slotInfo(m, s) {
   const l = m.lessons[slotKey(s.date, s.p)];
-  const step = m.stepOf[slotKey(s.date, s.p)] || 0;
-  return { l, step, planned: !l, name: l?.skip ? "수업 못함" : step ? m.planName(s.c, step) : "", note: l?.note || "" };
+  const v = m.stepOf[slotKey(s.date, s.p)] || 0, step = Math.max(0, v), over = v < 0;
+  return { l, step, over, planned: !l, name: l?.skip ? "수업 못함" : step ? m.planName(s.c, step) : over ? "계획 끝" : "", note: l?.note || "" };
 }
 
 function Today({ m, now, open, setTab, pending }) {
@@ -641,7 +649,7 @@ function Today({ m, now, open, setTab, pending }) {
             <div class="name">${s.to ? `이 수업은 ${s.to}교시로 옮겨졌어요` : "컴시간에서 이 수업이 빠졌어요"}</div></div></div>`;
           if (!s.c) return html`<div class="ticket free"><div class="when"><b>${s.p}</b></div><div class="body">공강</div></div>`;
           const st = slotState(m, s, now), i = slotInfo(m, s);
-          return html`<button class=${`ticket ${kc(m, i.step, i.planned)} ${st} ${s.changed ? "chg" : ""}`} style=${kh(i.step)} onClick=${() => open(s)}>
+          return html`<button class=${`ticket ${kc(m, i.step, i.planned)} ${i.over ? "over" : ""} ${st} ${s.changed ? "chg" : ""}`} style=${kh(i.step)} onClick=${() => open(s)}>
             ${when}
             <div class="body">
               <div class="row1"><${Chip} c=${s.c} /><${Step} n=${i.step} />
@@ -652,6 +660,7 @@ function Today({ m, now, open, setTab, pending }) {
                 ${st === "now" && html`<span class="status now">수업 중</span>`}
               </div>
               ${s.event ? html`<div class="name dim">학사일정으로 수업 없음</div>`
+                : i.over ? html`<div class="name dim">차시 계획 끝. 설정에서 다음 차시를 적어 주세요</div>`
                 : i.name ? html`<div class="name">${i.name}${i.note && html`<small> · ${i.note}</small>`}</div>`
                 : html`<div class="name dim">차시 기록 전</div>`}
             </div>
@@ -756,7 +765,7 @@ function renderCell(m, s, now, open, only) {
   if (!s.c && s.removed) return html`<div class=${"gone" + (only && only !== s.removed ? " dim" : "")}><s>${s.removed}</s><span>${s.to ? `→${s.to}교시` : "빠짐"}</span></div>`;
   if (!s.c) return null;
   const st = slotState(m, s, now), i = slotInfo(m, s);
-  const cls = `has ${kc(m, i.step, i.planned)} ${s.changed ? "chg" : ""} ${st === "blocked" ? "blocked" : ""} ${only && only !== s.c ? "dim" : ""}`;
+  const cls = `has ${kc(m, i.step, i.planned)} ${i.over ? "over" : ""} ${s.changed ? "chg" : ""} ${st === "blocked" ? "blocked" : ""} ${only && only !== s.c ? "dim" : ""}`;
   return html`<button class=${cls} style=${kh(i.step)} onClick=${() => open(s)} title=${[s.changed && chgLabel(s), i.step && m.stepTitle(s.c, i.step)].filter(Boolean).join("\n")}>
     ${s.changed && html`<span class="rib">${s.from ? `${s.from}→${s.p}` : s.was ? "변경" : "추가"}</span>`}
     <span class="r1"><${Chip} c=${s.c} />${st !== "blocked" && html`<${Step} n=${i.step} />`}</span>
