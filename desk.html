@@ -376,6 +376,20 @@ screen.addEventListener("click", e => {
 document.addEventListener("click", closePop);
 document.addEventListener("keydown", e => e.key === "Escape" && closePop());
 
+// 마우스 휠로 주 넘기기: 아래로 굴리면 다음 주, 위로 굴리면 이전 주 (진도표 앱과 같은 방향).
+// 터치패드는 한 번 쓸어도 이벤트가 수십 개 오므로, 모아서 한 칸 넘긴 뒤 0.35초는 쉼
+let wheelSum = 0, wheelAt = 0;
+screen.addEventListener("wheel", e => {
+  if (!code || problem === "auth") return;
+  e.preventDefault();
+  const now = Date.now();
+  if (now - wheelAt < 350) return;
+  wheelSum += Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+  if (Math.abs(wheelSum) < 40) return;
+  weekOff += Math.sign(wheelSum); wheelSum = 0; wheelAt = navAt = now;
+  closePop(); draw();
+}, { passive: false });
+
 // 1280×720 을 화면에 꽉 차게 (남는 쪽은 가운데 정렬).
 // Lively 는 처음에 창 크기를 0 으로 알려 줄 때가 있어서, 0 이면 1배로 두고 크기가 잡히는 대로 다시 맞춤
 function fit() {
