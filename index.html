@@ -3,254 +3,313 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f6f5f1">
+<meta name="theme-color" content="#eef1f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101513" media="(prefers-color-scheme: dark)">
 <title>고덕중 진도표</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/split/WantedSansVariable.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
+/* 교무수첩 종이 · 칠판 초록 · 형광펜(오늘/수업 중) · 빨간펜(시간표 변경) */
 :root {
-  --bg: #f4f3ef; --surface: #ffffff; --surface-2: #f8f7f4; --ink: #1b2130; --muted: #646b7a; --faint: #a0a5b0;
-  --line: #e6e3db; --line-2: #d6d2c8; --accent: #2f5bea; --accent-ink: #ffffff; --accent-soft: #e6ecfe;
-  --ok: #15803d; --ok-soft: #e3f4e8; --warn: #b45309; --warn-soft: #fff1d6;
-  --chg: #e11d48; --chg-soft: #ffe4ea; --event: #6d28d9; --event-soft: #efe9fc;
-  --tint: 13%; --shadow: 0 1px 2px rgba(27,33,48,.05), 0 4px 14px rgba(27,33,48,.05);
+  --paper: #eef1f0; --surface: #ffffff; --sunk: #f5f7f6; --ink: #17202b; --muted: #5b6670; --faint: #949ea5;
+  --rule: #dce2df; --rule-2: #c3ccc8;
+  --accent: #1d6b55; --accent-ink: #ffffff; --accent-soft: #dcefe7;
+  --hl: #ffe15a; --hl-ink: #3d3200;
+  --red: #d6283e; --red-soft: #fde7ea; --warn: #b25e00; --warn-soft: #fff0d9;
+  --event: #6b4fbb; --event-soft: #eeeafb;
+  /* 차시 색(OKLCH): 같은 밝기·채도에서 색상(--h)만 바꿔 어느 차시든 대비가 같음 */
+  --kL: .905; --kC: .07; --kbL: .56; --kbC: .15; --kpL: .975; --kpC: .025; --klL: .76; --klC: .09;
+  --ease: cubic-bezier(.23, 1, .32, 1);
+  --font: "Wanted Sans Variable", "Wanted Sans", "Pretendard Variable", Pretendard, system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #111317; --surface: #1a1d23; --surface-2: #1f232a; --ink: #e8eaef; --muted: #9aa0ab; --faint: #636974;
-    --line: #2a2f38; --line-2: #3a404b; --accent: #7c9cff; --accent-ink: #0c1020; --accent-soft: #222b47;
-    --ok: #4ade80; --ok-soft: #15301f; --warn: #fbbf24; --warn-soft: #33270e;
-    --chg: #fb7185; --chg-soft: #3a1820; --event: #c4b5fd; --event-soft: #29223e;
-    --tint: 24%; --shadow: none;
+    --paper: #101513; --surface: #18201d; --sunk: #1e2724; --ink: #e6ece9; --muted: #9ba7a2; --faint: #67736e;
+    --rule: #28322e; --rule-2: #3a4641;
+    --accent: #5cc6a2; --accent-ink: #07140f; --accent-soft: #1b3a2f;
+    --hl: #e3c343; --hl-ink: #241d00;
+    --red: #ff6b7b; --red-soft: #3a1a20; --warn: #f5b14a; --warn-soft: #33260f;
+    --event: #b9a6ff; --event-soft: #262140;
+    --kL: .37; --kC: .07; --kbL: .78; --kbC: .12; --kpL: .24; --kpC: .025; --klL: .5; --klC: .07;
   }
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--bg); color: var(--ink); }
-body { font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif; font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); }
+body { font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum"; }
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; }
 svg { width: 18px; height: 18px; flex: none; }
 
-.app { max-width: 1280px; margin: 0 auto; padding: 0 16px calc(84px + env(safe-area-inset-bottom)); }
-header.top { display: flex; align-items: center; gap: 12px; padding: 16px 0 12px; }
-.brand { font-weight: 800; font-size: 19px; letter-spacing: -.02em; line-height: 1.2; }
-.brand small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
-.sync { margin-left: auto; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; text-align: right; line-height: 1.3; }
-.sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
-.sync i.old { background: var(--warn); }
+/* 누르면 살짝 눌림 */
+.btn, .icon-btn, .ticket, .tl-cell > button, .seg button, nav.tabs button, .chips button { transition: transform 140ms var(--ease); }
+.btn:active, .icon-btn:active, .ticket:active, .seg button:active, nav.tabs button:active, .chips button:active { transform: scale(.97); }
+.tl-cell > button:active { transform: scale(.95); }
+
+.app { max-width: 1280px; margin: 0 auto; padding: 0 16px calc(88px + env(safe-area-inset-bottom)); }
+header.top { display: flex; align-items: center; gap: 14px; padding: 18px 0 14px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand .mark { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; }
+.brand .mark svg { width: 19px; height: 19px; }
+.brand b { display: block; font-size: 17px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+.brand small { display: block; font-size: 12.5px; color: var(--muted); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sync { margin-left: auto; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.sync i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.sync i.old { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
 
 nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex;
-  background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(12px);
-  border-top: 1px solid var(--line); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
-nav.tabs button { flex: 1; border: 0; background: none; padding: 5px 0; font-size: 11.5px; font-weight: 650; color: var(--faint); display: flex; flex-direction: column; align-items: center; gap: 3px; border-radius: 10px; position: relative; }
+  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--rule); padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+nav.tabs button { flex: 1; border: 0; background: none; padding: 6px 0 4px; font-size: 11.5px; font-weight: 700; color: var(--faint); display: flex; flex-direction: column; align-items: center; gap: 3px; border-radius: 12px; position: relative; }
 nav.tabs button svg { width: 23px; height: 23px; }
-nav.tabs button.on { color: var(--accent); }
-nav.tabs .badge { position: absolute; top: 0; left: calc(50% + 6px); background: var(--warn); color: #fff; font-size: 10px; font-weight: 800; min-width: 17px; height: 17px; border-radius: 9px; display: grid; place-items: center; padding: 0 4px; }
+nav.tabs button.on { color: var(--ink); }
+nav.tabs button.on svg { color: var(--accent); }
+nav.tabs .badge { position: absolute; top: 1px; left: calc(50% + 7px); background: var(--warn); color: #fff; font-size: 10px; font-weight: 800; min-width: 17px; height: 17px; border-radius: 9px; display: grid; place-items: center; padding: 0 4px; }
 @media (min-width: 900px) {
-  .app { padding-bottom: 36px; }
-  nav.tabs { position: static; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px; gap: 2px; backdrop-filter: none; margin-left: 12px; }
-  nav.tabs button { flex-direction: row; font-size: 14px; padding: 7px 14px; gap: 6px; }
+  .app { padding-bottom: 40px; }
+  header.top { padding: 22px 0 18px; }
+  nav.tabs { position: static; order: 2; background: var(--sunk); border: 1px solid var(--rule); border-radius: 14px; padding: 3px; gap: 2px; backdrop-filter: none; }
+  nav.tabs button { flex: none; white-space: nowrap; flex-direction: row; font-size: 14px; padding: 7px 15px; gap: 7px; border-radius: 11px; color: var(--muted); }
   nav.tabs button svg { width: 17px; height: 17px; }
-  nav.tabs button.on { background: var(--accent-soft); }
-  nav.tabs .badge { position: static; margin-left: 2px; }
-  header.top { padding: 20px 0 16px; }
+  nav.tabs button.on { background: var(--surface); box-shadow: 0 1px 2px rgba(23,32,43,.08), 0 0 0 1px var(--rule); }
+  nav.tabs .badge { position: static; margin-left: 1px; }
+  .sync { order: 3; margin-left: 4px; }
+  .brand { margin-right: auto; }
 }
 
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
-.section-title { font-size: 13px; font-weight: 750; color: var(--muted); margin: 20px 2px 9px; display: flex; align-items: center; gap: 8px; }
-.section-title:first-child { margin-top: 2px; }
-.section-title .btn { margin-left: auto; }
-.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 9px 14px; font-weight: 650; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
-.btn:hover { background: var(--surface-2); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.btn.primary:hover { filter: brightness(1.06); }
-.btn.ghost { border-color: transparent; background: none; }
-.btn.sm { padding: 5px 10px; font-size: 13px; border-radius: 10px; }
-.btn:disabled { opacity: .45; cursor: default; }
-.icon-btn { border: 1px solid var(--line); background: var(--surface); width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex: none; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 18px; }
+.h-row { display: flex; align-items: center; gap: 8px; margin: 26px 2px 10px; }
+.h-row:first-child { margin-top: 0; }
+.h-row h3 { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -.01em; }
+.h-row .sub { font-size: 12.5px; color: var(--faint); }
+.h-row .btn { margin-left: auto; }
+.count { font-size: 12px; font-weight: 800; min-width: 22px; height: 20px; border-radius: 10px; display: inline-grid; place-items: center; padding: 0 6px; background: var(--sunk); color: var(--muted); border: 1px solid var(--rule); }
+.count.red { background: var(--red); border-color: var(--red); color: #fff; }
 
-/* 학급 색: --cc 하나로 칩·배경·막대가 모두 같은 색을 씀 */
-.chip { display: inline-flex; align-items: center; justify-content: center; min-width: 46px; padding: 3px 9px; border-radius: 8px;
-  font-weight: 800; font-size: 14px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap;
-  background: var(--cc); color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.15); }
-.chip.lg { font-size: 16px; padding: 5px 11px; min-width: 58px; }
-.chip.ghost { background: transparent; color: var(--cc); box-shadow: inset 0 0 0 1.5px var(--cc); text-shadow: none; }
-.tag { font-size: 11px; font-weight: 750; padding: 2px 7px; border-radius: 99px; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
-.tag.chg { background: var(--chg); color: #fff; }
+.btn { border: 1px solid var(--rule-2); background: var(--surface); border-radius: 12px; padding: 9px 15px; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.ghost { border-color: transparent; background: none; color: var(--muted); }
+.btn.sm { padding: 5px 11px; font-size: 13px; border-radius: 10px; }
+.btn:disabled { opacity: .4; cursor: default; transform: none; }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled) { background: var(--sunk); }
+  .btn.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, var(--ink)); }
+  .btn.ghost:hover { color: var(--ink); background: var(--sunk); }
+}
+.icon-btn { border: 1px solid var(--rule-2); background: var(--surface); width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none; color: var(--muted); }
+
+/* 반 이름표: 색 없이 글자로만 구분 */
+.chip { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; padding: 2px 8px; border-radius: 7px; font-weight: 800; font-size: 14px; letter-spacing: -.01em; white-space: nowrap;
+  background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--rule-2); }
+.chip.lg { font-size: 17px; padding: 4px 11px; min-width: 58px; border-radius: 9px; }
+.chip.solid { background: var(--ink); color: var(--paper); box-shadow: none; }
+.chip.gone { background: transparent; color: var(--red); box-shadow: inset 0 0 0 1.5px var(--red); text-decoration: line-through; text-decoration-thickness: 2px; }
+
+/* 차시 색: .k 가 --k-bg(바탕) --k-bar(진한 색) --k-line(테두리)을 정함. tint 가 없으면 무채색 */
+.k { --k-bg: var(--sunk); --k-bar: var(--ink); --k-line: var(--rule-2); }
+.k.tint { --k-bg: oklch(var(--kL) var(--kC) var(--h)); --k-bar: oklch(var(--kbL) var(--kbC) var(--h)); --k-line: oklch(var(--klL) var(--klC) var(--h)); }
+.k.plan { --k-bg: var(--surface); --k-bar: var(--muted); }
+.k.plan.tint { --k-bg: oklch(var(--kpL) var(--kpC) var(--h)); --k-bar: oklch(var(--kbL) var(--kbC) var(--h)); }
+.step { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 12.5px; font-weight: 800; background: var(--k-bar); color: var(--surface); flex: none; }
+.plan .step { background: transparent; color: var(--k-bar); box-shadow: inset 0 0 0 1.5px var(--k-bar); }
+.step.lg { min-width: 30px; height: 30px; border-radius: 15px; font-size: 15px; }
+.tag { font-size: 11.5px; font-weight: 750; padding: 2px 8px; border-radius: 99px; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
+.tag.chg { background: var(--red); color: #fff; }
 .tag.event { background: var(--event-soft); color: var(--event); }
-.tag.todo { background: var(--warn-soft); color: var(--warn); }
-.tag.ok { background: var(--ok-soft); color: var(--ok); }
+.tag.ok { background: var(--accent-soft); color: var(--accent); }
 .tag svg { width: 12px; height: 12px; }
-.hatch { background-image: repeating-linear-gradient(-45deg, transparent 0 6px, color-mix(in srgb, var(--chg) 14%, transparent) 6px 12px); }
 
 /* 오늘 */
-.today-layout { display: grid; gap: 16px; }
-@media (min-width: 900px) { .today-layout { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; } }
-.daybar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.daybar h2 { margin: 0; font-size: 22px; letter-spacing: -.03em; font-weight: 800; }
-.daybar h2 span { color: var(--muted); font-weight: 600; font-size: 15px; margin-left: 6px; }
+.today-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+@media (min-width: 900px) { .today-layout { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 32px; align-items: start; } }
+.daybar { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 16px; }
+.daybar h2 { margin: 0; font-size: 34px; line-height: 1; letter-spacing: -.045em; font-weight: 850; }
+.daybar h2 small { display: block; font-size: 14px; letter-spacing: 0; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
 .daybar .spacer { flex: 1; }
-.banner { display: flex; align-items: center; gap: 10px; padding: 12px 14px; margin-bottom: 12px; border-radius: 14px; font-weight: 650; font-size: 14px; border: 0; width: 100%; text-align: left; }
-.banner b { font-size: 17px; }
-.banner.todo { background: var(--warn-soft); color: var(--warn); }
-.banner .go { margin-left: auto; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.banner { display: flex; align-items: center; gap: 10px; padding: 13px 16px; margin-bottom: 18px; border-radius: 14px; font-weight: 700; font-size: 14px; border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); width: 100%; text-align: left; background: var(--warn-soft); color: var(--warn); }
+.banner b { font-size: 18px; }
+.banner .go { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; font-size: 13px; }
 
 .periods { display: flex; flex-direction: column; gap: 8px; }
-.period { display: grid; grid-template-columns: 46px 1fr; gap: 12px; padding: 12px 14px 12px 10px; align-items: center; text-align: left; width: 100%; color: inherit;
-  border-left: 6px solid var(--cc, var(--line)); background: color-mix(in srgb, var(--cc, transparent) var(--tint), var(--surface)); position: relative; overflow: hidden; }
-button.period:hover { filter: brightness(.985); }
-.period .no { font-size: 21px; font-weight: 800; color: var(--muted); line-height: 1; text-align: center; font-variant-numeric: tabular-nums; }
-.period .no small { display: block; font-size: 10.5px; font-weight: 600; margin-top: 4px; color: var(--faint); }
-.period .main { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-.period .row1 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.period .what { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.period .what b { color: var(--ink); font-weight: 700; }
-.period.free { background: transparent; border: 1px dashed var(--line); box-shadow: none; padding: 7px 14px 7px 10px; }
-.period.free .no { font-size: 15px; color: var(--faint); }
-.period.free .what { font-size: 13px; color: var(--faint); }
-.period.removed { border: 2px solid var(--chg); border-left-width: 6px; background-color: var(--chg-soft); }
-.period.removed .what { color: var(--chg); font-weight: 700; }
-.period.chg { box-shadow: 0 0 0 2px var(--chg); }
-.period.now { box-shadow: 0 0 0 3px var(--accent); }
-.period.now .no { color: var(--accent); }
-.period.blocked { filter: saturate(.35); }
-.status { margin-left: auto; font-size: 12px; font-weight: 750; display: inline-flex; align-items: center; gap: 4px; }
+.ticket { display: grid; grid-template-columns: 58px 1fr; align-items: stretch; width: 100%; text-align: left; color: inherit; padding: 0; overflow: hidden;
+  background: var(--k-bg); border: 1.5px solid var(--k-line); border-radius: 16px; }
+.ticket.plan { border-style: dashed; }
+.ticket .when { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-right: 1.5px solid var(--k-line); padding: 12px 0; }
+.ticket.plan .when { border-right-style: dashed; }
+.ticket .when b { font-size: 22px; font-weight: 850; line-height: 1; letter-spacing: -.03em; }
+.ticket .when small { font-size: 11px; color: var(--muted); font-weight: 600; }
+.ticket .body { min-width: 0; padding: 11px 14px 12px; display: flex; flex-direction: column; gap: 6px; }
+.ticket .row1 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ticket .name { font-size: 15.5px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ticket .name.dim { color: var(--muted); font-weight: 600; font-size: 14px; }
+.ticket .name small { font-weight: 500; color: var(--muted); font-size: 13px; }
+.ticket.now { box-shadow: 0 0 0 3px var(--hl); border-color: transparent; }
+.ticket.now .when b, .tl-col.today .tl-head .d { background: linear-gradient(transparent 52%, var(--hl) 52%, var(--hl) 92%, transparent 92%); padding: 0 3px; }
+.ticket.chg { border: 2px solid var(--red); }
+.ticket.blocked { opacity: .75; }
+.ticket.free { background: transparent; border: 1.5px dashed var(--rule); grid-template-columns: 58px 1fr; cursor: default; }
+.ticket.free .when { border-right: 0; padding: 7px 0; }
+.ticket.free .when b { font-size: 15px; color: var(--faint); }
+.ticket.free .body { padding: 7px 14px; justify-content: center; font-size: 13px; color: var(--faint); }
+.ticket.removed { background: var(--red-soft); border: 2px solid var(--red); cursor: default; }
+.ticket.removed .when { border-color: color-mix(in srgb, var(--red) 40%, transparent); }
+.ticket.removed .name { color: var(--red); font-size: 14px; }
+.status { margin-left: auto; font-size: 12.5px; font-weight: 750; display: inline-flex; align-items: center; gap: 4px; }
 .status.todo { color: var(--warn); }
-.status.done { color: var(--ok); }
-.status.now { color: var(--accent); }
+.status.done { color: var(--accent); }
+.status.now { color: var(--hl-ink); background: var(--hl); padding: 1px 8px; border-radius: 99px; }
 .status svg { width: 15px; height: 15px; }
 
-.chg-list { display: flex; flex-direction: column; }
-.chg-list .row { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
-.chg-list .row:last-child { border-bottom: 0; }
-.chg-list .when { width: 112px; flex: none; white-space: nowrap; color: var(--muted); font-weight: 650; font-variant-numeric: tabular-nums; }
-.chg-list .arrow { color: var(--faint); }
-.chg-list s { color: var(--faint); }
-.mini-prog { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
-.mini-prog:last-child { border-bottom: 0; }
-.mini-prog .t { flex: 1; min-width: 0; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mini-prog .n { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.list { display: flex; flex-direction: column; }
+.list > * { display: flex; align-items: center; gap: 9px; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--rule); background: none; width: 100%; text-align: left; font-size: 13.5px; min-width: 0; }
+.list > *:last-child { border-bottom: 0; }
+.list .when { width: 104px; flex: none; white-space: nowrap; color: var(--muted); font-weight: 650; }
+.list s { color: var(--faint); }
+.list .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list .n { font-size: 12px; color: var(--muted); }
+@media (hover: hover) and (pointer: fine) { button.list-row:hover { background: var(--sunk); } }
+.minibar { width: 54px; height: 5px; border-radius: 3px; background: var(--sunk); box-shadow: inset 0 0 0 1px var(--rule); overflow: hidden; flex: none; }
+.minibar i { display: block; height: 100%; background: var(--k-bar); }
 
 /* 연간 진도표 */
-.tl-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
-.tl-bar h2 { margin: 0; font-size: 20px; letter-spacing: -.03em; font-weight: 800; }
-.tl-bar .hint { font-size: 12px; color: var(--faint); }
+.tl-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.tl-bar h2 { margin: 0; font-size: 26px; letter-spacing: -.04em; font-weight: 850; }
+.tl-bar .hint { font-size: 12.5px; color: var(--faint); }
 .tl-bar .spacer { flex: 1; }
-.filter { display: flex; gap: 5px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none; }
-.filter::-webkit-scrollbar { display: none; }
-.filter button { flex: none; border: 0; padding: 0; background: none; border-radius: 9px; opacity: .35; transition: opacity .15s; }
-.filter button.on { opacity: 1; }
-.filter .all { border: 1px solid var(--line); background: var(--surface); padding: 3px 10px; font-size: 13px; font-weight: 700; opacity: 1; }
-.tl { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; padding: 0; position: relative; }
+.seg { display: inline-flex; background: var(--sunk); border: 1px solid var(--rule); border-radius: 11px; padding: 2px; }
+.seg button { border: 0; background: none; padding: 4px 11px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(23,32,43,.08), 0 0 0 1px var(--rule); }
+.seg .sw { width: 22px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, oklch(.68 .14 230), oklch(.68 .14 7), oklch(.68 .14 145), oklch(.68 .14 283)); }
+.seg .sw.mono { background: linear-gradient(90deg, var(--ink), var(--rule-2)); }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 12px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chips button { flex: none; border: 0; padding: 0; background: none; border-radius: 8px; }
+.chips button .chip { transition: background-color 150ms ease, color 150ms ease; }
+.chips button.on .chip { background: var(--ink); color: var(--paper); box-shadow: none; }
+.tl { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; position: relative; }
 .tl-in { display: flex; width: max-content; }
-.tl-col { flex: none; width: var(--colw); border-right: 1px solid var(--line); }
-.tl-col.mon { border-left: 2px solid var(--line-2); }
-.tl-col.today { background: color-mix(in srgb, var(--accent) 7%, transparent); }
-.tl-col.collapsed { width: 34px; }
-.tl-head { height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid var(--line); position: relative; }
-.tl-head .m { position: absolute; top: 3px; left: 6px; font-size: 11px; font-weight: 800; color: var(--accent); }
-.tl-head .d { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tl-col { flex: none; width: var(--colw); border-right: 1px solid var(--rule); }
+.tl-col.mon { border-left: 1.5px solid var(--rule-2); }
+.tl-col.today { background: color-mix(in srgb, var(--hl) 14%, transparent); }
+.tl-col.collapsed { width: 34px; background: repeating-linear-gradient(-45deg, transparent 0 5px, var(--sunk) 5px 10px); }
+.tl-head { height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-bottom: 1px solid var(--rule); position: relative; }
+.tl-head .m { position: absolute; top: 4px; left: 7px; font-size: 11px; font-weight: 800; color: var(--accent); }
+.tl-head .d { font-size: 15px; font-weight: 800; }
 .tl-head .w { font-size: 11.5px; font-weight: 600; color: var(--muted); }
-.tl-col.today .tl-head { background: var(--accent); color: var(--accent-ink); }
-.tl-col.today .tl-head .w, .tl-col.today .tl-head .m { color: var(--accent-ink); }
-.tl-side { position: sticky; left: 0; z-index: 5; width: 36px; background: var(--surface); border-right: 1px solid var(--line); flex: none; }
+.tl-side { position: sticky; left: 0; z-index: 5; width: 38px; background: var(--surface); border-right: 1px solid var(--rule); flex: none; }
 .tl-side .tl-head { font-size: 11px; color: var(--faint); font-weight: 700; }
-.tl-p { height: var(--rowh); display: grid; place-items: center; border-bottom: 1px solid var(--line); font-weight: 800; color: var(--faint); font-size: 15px; }
-.tl-cell { height: var(--rowh); border-bottom: 1px solid var(--line); padding: 3px; }
-.tl-cell:last-child { border-bottom: 0; }
-.tl-cell > button, .tl-cell > div { width: 100%; height: 100%; border: 0; border-radius: 9px; padding: 4px 5px 4px 7px; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 2px; text-align: left; position: relative; overflow: hidden; }
-.tl-cell .has { background: color-mix(in srgb, var(--cc) calc(var(--tint) + 4%), var(--surface)); border-left: 4px solid var(--cc); }
-.tl-cell .has:hover { filter: brightness(.97); }
-.tl-cell .chip { font-size: 12.5px; min-width: 0; padding: 1px 6px; border-radius: 6px; }
-.tl-cell .t { font-size: 11px; line-height: 1.28; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
-.tl-cell .t.done { color: var(--ink); font-weight: 650; }
+.tl-p { height: var(--rowh); display: grid; place-items: center; border-bottom: 1px solid var(--rule); font-weight: 800; color: var(--faint); font-size: 15px; }
+.tl-p:last-child, .tl-cell:last-child { border-bottom: 0; }
+.tl-cell { height: var(--rowh); border-bottom: 1px solid var(--rule); padding: 3px; }
+.tl-cell > button, .tl-cell > div { width: 100%; height: 100%; border: 0; border-radius: 10px; padding: 5px 6px; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; position: relative; overflow: hidden; }
+.tl-cell .has { background: var(--k-bg); box-shadow: inset 0 0 0 1px var(--k-line); }
+.tl-cell .has.plan { box-shadow: none; outline: 1.5px dashed var(--k-line); outline-offset: -1.5px; }
+.tl-cell .r1 { display: flex; align-items: center; gap: 4px; width: 100%; }
+.tl-cell .chip { font-size: 12px; min-width: 0; padding: 0 5px; border-radius: 5px; box-shadow: inset 0 0 0 1px var(--rule-2); }
+.tl-cell .step { min-width: 18px; height: 18px; font-size: 11px; padding: 0 4px; border-radius: 9px; }
+.tl-cell .t { font-size: 11px; line-height: 1.3; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; }
+.tl-cell .plan .t { color: var(--muted); }
 .tl-cell .t.todo { color: var(--warn); font-weight: 800; }
 .tl-cell .t.ev { color: var(--event); font-weight: 700; }
-.tl-cell .chg { box-shadow: inset 0 0 0 2px var(--chg); }
-.tl-cell .rib { position: absolute; top: 0; right: 0; background: var(--chg); color: #fff; font-size: 9.5px; font-weight: 800; padding: 1px 5px 2px 6px; border-bottom-left-radius: 7px; }
-.tl-cell .gone { background-color: var(--chg-soft); box-shadow: inset 0 0 0 2px var(--chg); align-items: center; justify-content: center; }
-.tl-cell .gone s { font-weight: 800; color: var(--chg); font-size: 13px; }
-.tl-cell .gone span { font-size: 10.5px; font-weight: 800; color: var(--chg); }
-.tl-cell .blocked { filter: saturate(.25); opacity: .8; }
-.tl-cell .dim { opacity: .18; }
-.tl-cell .ok { position: absolute; right: 4px; bottom: 3px; color: var(--ok); }
-.tl-cell .ok svg { width: 14px; height: 14px; }
+.tl-cell .chg { box-shadow: inset 0 0 0 2px var(--red); outline: 0; }
+.tl-cell .rib { position: absolute; top: 0; right: 0; background: var(--red); color: #fff; font-size: 9.5px; font-weight: 800; padding: 1px 5px 2px 6px; border-bottom-left-radius: 7px; }
+.tl-cell .gone { background: var(--red-soft); box-shadow: inset 0 0 0 1.5px var(--red); align-items: center; justify-content: center; }
+.tl-cell .gone s { font-weight: 800; color: var(--red); font-size: 13px; text-decoration-thickness: 2px; }
+.tl-cell .gone span { font-size: 10.5px; font-weight: 800; color: var(--red); }
+.tl-cell .blocked { opacity: .55; }
+.tl-cell .dim { opacity: .15; }
+.tl-cell .ok { position: absolute; right: 5px; top: 5px; color: var(--k-bar); }
+.tl-cell .ok svg { width: 14px; height: 14px; stroke-width: 3; }
 .tl-v { writing-mode: vertical-rl; font-size: 12px; font-weight: 700; color: var(--event); padding: 10px 0; margin: 0 auto; letter-spacing: .05em; height: calc(var(--rowh) * 7); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend { display: flex; gap: 8px 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 12px; align-items: center; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
-.legend i { width: 18px; height: 12px; border-radius: 3px; display: inline-block; }
+.legend i { width: 20px; height: 13px; border-radius: 4px; display: inline-block; }
 
-/* 학급 카드 */
-.class-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
-.class-card { padding: 14px; display: flex; flex-direction: column; gap: 9px; border-top: 5px solid var(--cc); }
-.class-card .head { display: flex; align-items: center; gap: 8px; }
-.class-card .head .exam { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 650; }
-.class-card .head .exam b { color: var(--ink); font-size: 16px; }
-.bar { height: 7px; border-radius: 9px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
-.bar > i { display: block; height: 100%; background: var(--cc); border-radius: 9px; }
-.kv { font-size: 13.5px; display: grid; grid-template-columns: 40px 1fr; gap: 3px 8px; margin: 0; }
-.kv dt { color: var(--faint); font-weight: 650; }
-.kv dd { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.class-card textarea { width: 100%; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 13px; resize: vertical; min-height: 38px; }
-.mini-list { font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; border-top: 1px dashed var(--line); padding-top: 8px; }
+/* 학급 */
+.class-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr)); }
+.class-card { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.class-card .head { display: flex; align-items: center; gap: 10px; }
+.class-card .big { font-size: 30px; font-weight: 850; letter-spacing: -.04em; line-height: 1; }
+.class-card .big small { font-size: 14px; font-weight: 600; color: var(--muted); letter-spacing: 0; margin-left: 2px; }
+.class-card .exam { margin-left: auto; text-align: right; font-size: 12px; color: var(--muted); font-weight: 600; line-height: 1.25; }
+.class-card .exam b { display: block; color: var(--ink); font-size: 18px; font-weight: 850; }
+.bar { height: 8px; border-radius: 4px; background: var(--sunk); box-shadow: inset 0 0 0 1px var(--rule); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--k-bar); border-radius: 4px; }
+.kv { font-size: 13.5px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 8px; margin: 0; align-items: center; }
+.kv dt { color: var(--faint); font-weight: 650; font-size: 12.5px; }
+.kv dd { margin: 0; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.kv dd span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.class-card textarea { width: 100%; border: 1px solid var(--rule); background: var(--sunk); border-radius: 10px; padding: 8px 10px; font-size: 13px; resize: vertical; min-height: 38px; }
+.mini-list { font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; border-top: 1px dashed var(--rule-2); padding-top: 10px; }
 .mini-list div { display: flex; gap: 8px; }
-.mini-list span:first-child { color: var(--faint); width: 80px; flex: none; font-variant-numeric: tabular-nums; }
+.mini-list span:first-child { color: var(--faint); width: 76px; flex: none; }
 .mini-list span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 설정 */
 .settings { display: grid; gap: 14px; }
 @media (min-width: 900px) { .settings { grid-template-columns: 1fr 1fr; align-items: start; } }
-.panel { padding: 16px; }
+.panel.pad { padding: 18px; }
 .panel h3 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.02em; }
-.panel p.desc { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
-.panel textarea.plan { width: 100%; min-height: 260px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.7; resize: vertical; }
-.grade-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+.panel p.desc { margin: 0 0 14px; font-size: 13px; color: var(--muted); max-width: 60ch; }
+.panel textarea.plan-text { width: 100%; min-height: 280px; border: 1px solid var(--rule); background: var(--sunk); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.75; resize: vertical; }
+.grade-tabs { margin-bottom: 10px; }
 .code { display: flex; gap: 8px; }
-.field { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 14px; min-width: 0; }
+.field { border: 1px solid var(--rule); background: var(--sunk); border-radius: 10px; padding: 8px 10px; font-size: 14px; min-width: 0; }
 .code .field { flex: 1; font-family: ui-monospace, monospace; font-size: 12px; }
 ol.steps { margin: 8px 0 0; padding-left: 20px; font-size: 13px; color: var(--muted); }
-ol.steps li { margin: 3px 0; }
-ol.steps code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; font-size: 12px; color: var(--ink); }
+ol.steps li { margin: 4px 0; }
+ol.steps code { background: var(--sunk); border: 1px solid var(--rule); border-radius: 6px; padding: 1px 5px; font-size: 12px; color: var(--ink); }
 .ev-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .ev-form .wide { grid-column: 1 / -1; }
-.ev-list { margin-top: 12px; display: flex; flex-direction: column; max-height: 260px; overflow-y: auto; border-top: 1px solid var(--line); }
-.ev-list .row { display: flex; align-items: center; gap: 8px; padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 13px; }
-.ev-list .row .d { width: 70px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.ev-list { margin-top: 14px; display: flex; flex-direction: column; max-height: 270px; overflow-y: auto; border-top: 1px solid var(--rule); }
+.ev-list .row { display: flex; align-items: center; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--rule); font-size: 13px; }
+.ev-list .row .d { width: 70px; color: var(--muted); flex: none; }
 .ev-list .row .ti { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ev-list .row button { border: 0; background: none; color: var(--faint); padding: 2px; }
+.ev-list .row button { border: 0; background: none; color: var(--faint); padding: 4px; border-radius: 6px; }
 
 /* 기록 시트 */
-dialog.sheet { border: 0; padding: 0; background: var(--surface); color: var(--ink); width: min(100%, 460px); max-width: 100%; max-height: 92dvh; border-radius: 22px 22px 0 0; margin: auto auto 0; box-shadow: 0 -8px 40px rgba(0,0,0,.18); }
-@media (min-width: 600px) { dialog.sheet { border-radius: 22px; margin: auto; } }
-dialog.sheet::backdrop { background: rgba(15, 18, 26, .4); }
-.sheet-in { padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 13px; border-top: 6px solid var(--cc); border-radius: inherit; }
-.sheet-head { display: flex; align-items: center; gap: 10px; }
+dialog.sheet { border: 0; padding: 0; background: var(--surface); color: var(--ink); width: min(100%, 470px); max-width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; margin: auto auto 0; box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
+dialog.sheet[open] { animation: sheet-up 280ms var(--ease); }
+dialog.sheet::backdrop { background: rgba(10, 16, 14, .42); animation: fade 200ms ease; }
+@media (min-width: 600px) { dialog.sheet { border-radius: 24px; margin: auto; } dialog.sheet[open] { animation-name: sheet-pop; } }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }
+@keyframes sheet-pop { from { transform: scale(.96); opacity: 0; } }
+@keyframes fade { from { opacity: 0; } }
+.sheet-in { padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+.sheet-head { display: flex; align-items: center; gap: 11px; }
 .sheet-head .meta { font-size: 13px; color: var(--muted); font-weight: 600; }
 .sheet-head .x { margin-left: auto; }
-.plan-box { background: color-mix(in srgb, var(--cc) var(--tint), var(--surface)); border-radius: 14px; padding: 12px 14px; }
-.plan-box .lbl { font-size: 12px; color: var(--muted); font-weight: 750; }
-.plan-box .val { font-size: 17px; font-weight: 800; margin-top: 2px; letter-spacing: -.01em; }
-.plan-box .prev { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+.plan-box { background: var(--k-bg); border: 1.5px solid var(--k-line); border-radius: 16px; padding: 13px 15px; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; }
+.plan-box .step { grid-row: span 2; }
+.plan-box .lbl { font-size: 12px; color: var(--muted); font-weight: 700; }
+.plan-box .val { font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+.plan-box .prev { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--k-line); }
 .quick { display: grid; gap: 8px; }
-.quick .btn { justify-content: flex-start; padding: 13px 14px; text-align: left; }
+.quick .btn { justify-content: flex-start; padding: 13px 15px; text-align: left; border-radius: 14px; }
 .quick .btn small { margin-left: auto; font-weight: 500; opacity: .8; font-size: 12.5px; }
-.manual { display: grid; gap: 8px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.manual { display: grid; gap: 8px; border-top: 1px dashed var(--rule-2); padding-top: 12px; }
 .manual summary { font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; }
 .manual label { font-size: 12px; font-weight: 700; color: var(--faint); }
 .manual select, .manual textarea { width: 100%; }
 .manual .acts { display: flex; gap: 8px; }
 .manual .acts .btn.primary { margin-left: auto; }
-.queue-note { font-size: 12px; color: var(--warn); font-weight: 700; }
+.queue-note { font-size: 12.5px; color: var(--warn); font-weight: 700; background: var(--warn-soft); padding: 7px 11px; border-radius: 10px; }
 
-.empty { padding: 28px 18px; text-align: center; color: var(--muted); font-size: 14px; }
+.empty { padding: 30px 20px; text-align: center; color: var(--muted); font-size: 14px; }
 .empty b { color: var(--ink); display: block; font-size: 16px; margin-bottom: 4px; }
 .login { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
-.login .card { padding: 32px 26px; max-width: 380px; width: 100%; text-align: center; }
-.login h1 { font-size: 24px; margin: 14px 0 6px; letter-spacing: -.03em; }
-.login p { color: var(--muted); font-size: 14px; margin: 0 0 22px; }
-.logo { width: 52px; height: 52px; border-radius: 16px; background: var(--accent); color: var(--accent-ink); display: inline-grid; place-items: center; }
-.logo svg { width: 28px; height: 28px; }
-.toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 650; z-index: 50; box-shadow: 0 6px 24px rgba(0,0,0,.2); white-space: nowrap; }
+.login .panel { padding: 36px 28px 30px; max-width: 380px; width: 100%; text-align: center; }
+.login h1 { font-size: 26px; margin: 16px 0 8px; letter-spacing: -.04em; }
+.login p { color: var(--muted); font-size: 14px; margin: 0 0 24px; }
+.login .mark { width: 56px; height: 56px; border-radius: 17px; background: var(--accent); color: var(--accent-ink); display: inline-grid; place-items: center; }
+.login .mark svg { width: 30px; height: 30px; }
+.toast { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 12px; font-size: 14px; font-weight: 700; z-index: 50; box-shadow: 0 8px 28px rgba(0,0,0,.22); white-space: nowrap; animation: toast-in 220ms var(--ease); }
+@keyframes toast-in { from { transform: translate(-50%, 10px); opacity: 0; } }
 @media (min-width: 900px) { .toast { bottom: 28px; } }
+@media (prefers-reduced-motion: reduce) {
+  dialog.sheet[open], .toast { animation: fade 150ms ease; }
+  .btn:active, .icon-btn:active, .ticket:active, .tl-cell > button:active, .seg button:active, nav.tabs button:active, .chips button:active { transform: none; }
+}
 </style>
 </head>
 <body>
@@ -279,8 +338,9 @@ const BELL = [null, ["09:00", "09:45"], ["09:55", "10:40"], ["10:50", "11:35"], 
 const PERIODS = [1, 2, 3, 4, 5, 6, 7];
 const WD = ["일", "월", "화", "수", "목", "금", "토"];
 const YEAR_END = "2027-02-26";
-// 이웃한 반끼리 확실히 다른 색이 되도록 순서를 섞은 진한 색 (흰 글씨 대비 확보)
-const PALETTE = ["#2563eb", "#ea580c", "#16a34a", "#9333ea", "#dc2626", "#0e7490", "#a16207", "#db2777", "#78350f", "#475569", "#4d7c0f", "#1e3a8a"];
+// 차시 n → 색상각. 황금비씩 돌려서 이웃한 차시끼리 확실히 다른 색.
+// 빨강·주황(시간표 변경·기록 필요 표시색)은 빼고 노랑~초록~파랑~보라~분홍(80°~335°)만 씀
+const hue = step => Math.round(80 + ((step * 0.618034 + 0.45) % 1) * 255);
 
 // ---------- 날짜 ----------
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -334,10 +394,10 @@ function useModel({ meta, lessons, events }) {
     const syncedAt = meta.timetable?.syncedAt?.toDate?.() || null;
     const plans = meta.plans || {};
     const notes = meta.notes || {};
+    const tinted = meta.prefs?.colorMode !== "mono";
 
     const classes = [...new Set(Object.values(tt?.base || {}).flatMap(d => Object.values(d).map(x => x.c)))]
       .sort((a, b) => gradeOf(a) - gradeOf(b) || +a.split("-")[1] - +b.split("-")[1]);
-    const color = Object.fromEntries(classes.map((c, i) => [c, PALETTE[i % PALETTE.length]]));
     const firstDay = Object.keys(tt?.days || {}).sort()[0];
 
     const eventsByDate = {};
@@ -387,7 +447,24 @@ function useModel({ meta, lessons, events }) {
     const progress = c => Math.max(0, ...(byClass[c] || []).map(l => l.step || 0));
     const lastLesson = c => [...(byClass[c] || [])].reverse().find(l => !l.skip);
     const planOf = c => plans[gradeOf(c)] || [];
+    const planName = (c, step) => planOf(c)[step - 1] || `${step}차시`;
     const stepTitle = (c, step) => step ? `${step}. ${planOf(c)[step - 1] || `${step}차시`}` : "";
+    const firstLesson = Object.keys(lessons).sort()[0]?.slice(0, 10);
+
+    // 칸마다 차시: 기록한 수업은 기록 그대로, 아직인 수업은 앞 기록 +1, +2 … 로 이어서 예상
+    // (기록을 쓰기 시작한 날 전, 학사일정으로 빠진 수업은 차시 없음)
+    const stepOf = {};
+    const startFrom = firstLesson || iso(new Date());
+    const run = {};
+    for (let d = firstDay; d && d <= YEAR_END; d = addDays(d, 1)) for (const s of slotsFor(d)) {
+      if (!s.c) continue;
+      const k = slotKey(d, s.p), l = lessons[k];
+      if (l) { stepOf[k] = l.skip ? 0 : l.step || 0; continue; }
+      if (s.event || d < startFrom) continue;
+      const b = stepBefore(s.c, k);
+      const r = run[s.c]?.[0] === b ? run[s.c] : (run[s.c] = [b, 0]);
+      stepOf[k] = b + ++r[1];
+    }
 
     const nextExam = (grade, from) => events.filter(e => isExam(e) && e.date >= from && targetGrades(e.title).includes(grade)).sort((a, b) => a.date < b.date ? -1 : 1)[0];
     const lessonsUntil = (c, from, until) => {
@@ -397,7 +474,6 @@ function useModel({ meta, lessons, events }) {
     };
 
     // 끝났는데 기록 안 한 수업: 처음 기록을 남긴 날 이후, 최근 2주까지만 (쓰기 전 수업까지 밀린 걸로 치지 않음)
-    const firstLesson = Object.keys(lessons).sort()[0]?.slice(0, 10);
     const pending = now => {
       const today = iso(now), out = [];
       const start = [addDays(today, -14), firstLesson || today].sort()[1];
@@ -416,7 +492,7 @@ function useModel({ meta, lessons, events }) {
       return out;
     };
 
-    return { tt, syncedAt, plans, notes, classes, color, firstDay, slotsFor, dayOff, byClass, stepBefore, progress, lastLesson, planOf, stepTitle, nextExam, lessonsUntil, pending, changesFrom, lessons, events };
+    return { tt, syncedAt, plans, notes, tinted, classes, firstDay, slotsFor, dayOff, byClass, stepBefore, stepOf, progress, lastLesson, planOf, planName, stepTitle, nextExam, lessonsUntil, pending, changesFrom, lessons, events };
   }, [meta, lessons, events]);
 }
 
@@ -436,8 +512,11 @@ const ICONS = {
 };
 const Icon = ({ n }) => html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${ICONS[n]} /></svg>`;
 const chgLabel = s => s.from ? `${s.from}→${s.p}교시 이동` : s.was ? `${s.was} → ${s.c}` : "추가";
-const cc = (m, c) => `--cc:${m.color[c] || "#64748b"}`;
-const Chip = ({ c, m, lg, ghost }) => html`<span class=${"chip" + (lg ? " lg" : "") + (ghost ? " ghost" : "")} style=${cc(m, c)}>${c}</span>`;
+const Chip = ({ c, lg, solid, gone }) => html`<span class=${"chip" + (lg ? " lg" : "") + (solid ? " solid" : "") + (gone ? " gone" : "")}>${c}</span>`;
+// 차시 색 입히기: k(무채색 바탕) + tint(차시 색) + plan(아직 안 한 수업 = 점선·연하게)
+const kc = (m, step, planned) => `k${step && m.tinted ? " tint" : ""}${planned ? " plan" : ""}`;
+const kh = step => step ? `--h:${hue(step)}` : "";
+const Step = ({ n, lg }) => n ? html`<span class=${"step" + (lg ? " lg" : "")} title=${`${n}차시`}>${n}</span>` : null;
 
 // ---------- 앱 ----------
 function App() {
@@ -451,12 +530,12 @@ function App() {
 function Login() {
   const [err, setErr] = useState("");
   const go = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => setErr(e.message));
-  return html`<div class="login"><div class="card">
-    <div class="logo"><${Icon} n="book" /></div>
+  return html`<div class="login"><div class="panel">
+    <div class="mark"><${Icon} n="book" /></div>
     <h1>고덕중 진도표</h1>
     <p>컴시간 시간표가 자동으로 들어오고,<br />수업이 끝나면 한 번 눌러 진도를 남겨요.</p>
-    <button class="btn primary" style="width:100%;padding:12px" onClick=${go}>Google 계정으로 시작</button>
-    ${err && html`<p style="color:var(--chg);margin:12px 0 0;font-size:13px">${err}</p>`}
+    <button class="btn primary" style="width:100%;padding:13px" onClick=${go}>Google 계정으로 시작</button>
+    ${err && html`<p style="color:var(--red);margin:12px 0 0;font-size:13px">${err}</p>`}
   </div></div>`;
 }
 
@@ -481,7 +560,7 @@ function Main({ user }) {
     // 밀린 기록 모드면 다음 밀린 수업을 바로 띄움
     const next = sheet?.queue && rec !== null && pending.find(s => slotKey(s.date, s.p) !== k);
     setSheet(next ? { slot: next, queue: true } : null);
-    setToast(rec === null ? "기록을 지웠어요" : next ? `${slot.c} 완료 · 다음 밀린 수업` : `${slot.c} 기록 완료`);
+    setToast(rec === null ? "기록을 지웠어요" : next ? `${slot.c} 기록함 · 다음 밀린 수업` : `${slot.c} 기록함`);
   };
   const saveMeta = (id, val) => setDoc(ref(user, "meta", id), val, { merge: true });
 
@@ -491,14 +570,15 @@ function Main({ user }) {
 
   return html`<div class="app">
     <header class="top">
-      <div class="brand">진도표<small>${m.tt ? `${m.tt.teacher} 선생님 · ${m.tt.subject}` : "고덕중학교"}</small></div>
+      <div class="brand"><div class="mark"><${Icon} n="book" /></div>
+        <div style="min-width:0"><b>진도표</b><small>${m.tt ? `${m.tt.teacher} 선생님, ${m.tt.subject}` : "고덕중학교"}</small></div></div>
       <div class="sync" title=${m.syncedAt ? `마지막 동기화 ${m.syncedAt.toLocaleString("ko-KR")}` : ""}>
-        ${m.tt ? html`<i class=${stale ? "old" : ""}></i><span>컴시간 ${m.tt.savedAt.slice(5, 16).replace("-", "/")} 기준</span>` : html`<i class="old"></i>시간표 연동 전`}
+        ${m.tt ? html`<i class=${stale ? "old" : ""}></i><span>컴시간 ${m.tt.savedAt.slice(5, 16).replace("-", "/")}</span>` : html`<i class="old"></i>시간표 연동 전`}
       </div>
-      <nav class="tabs">${tabs.map(([k, label, ic]) => html`<button class=${tab === k ? "on" : ""} onClick=${() => setTab(k)}><${Icon} n=${ic} />${label}${k === "today" && pending.length > 0 && html`<span class="badge">${pending.length}</span>`}</button>`)}</nav>
+      <nav class="tabs">${tabs.map(([k, label, ic]) => html`<button class=${tab === k ? "on" : ""} aria-current=${tab === k ? "page" : null} onClick=${() => setTab(k)}><${Icon} n=${ic} />${label}${k === "today" && pending.length > 0 && html`<span class="badge">${pending.length}</span>`}</button>`)}</nav>
     </header>
     ${!data.ready ? html`<div class="empty">불러오는 중…</div>`
-      : !m.tt && tab !== "settings" ? html`<div class="card empty"><b>아직 시간표가 없어요</b>설정 탭의 'PC 연동' 안내대로 알림이 PC에서 한 번만 연결하면 자동으로 들어옵니다.<br /><br /><button class="btn primary" onClick=${() => setTab("settings")}>연동하러 가기</button></div>`
+      : !m.tt && tab !== "settings" ? html`<div class="panel empty"><b>아직 시간표가 없어요</b>설정 탭의 'PC 연동' 안내대로 알림이 PC에서 한 번만 연결하면 자동으로 들어옵니다.<br /><br /><button class="btn primary" onClick=${() => setTab("settings")}>연동하러 가기</button></div>`
       : tab === "today" ? html`<${Today} ...${ctx} />`
       : tab === "year" ? html`<${Year} ...${ctx} />`
       : tab === "classes" ? html`<${Classes} ...${ctx} />`
@@ -516,10 +596,11 @@ function slotState(m, s, now) {
   if (atTime(s.date, BELL[s.p][0]) <= now) return "now";
   return "later";
 }
-function slotText(m, s) {
+// 칸에 보일 차시 번호와 이름
+function slotInfo(m, s) {
   const l = m.lessons[slotKey(s.date, s.p)];
-  if (l) return l.skip ? `수업 못함${l.note ? " · " + l.note : ""}` : `${m.stepTitle(s.c, l.step) || "기록됨"}${l.note ? " · " + l.note : ""}`;
-  return m.stepTitle(s.c, m.stepBefore(s.c, slotKey(s.date, s.p)) + 1);
+  const step = m.stepOf[slotKey(s.date, s.p)] || 0;
+  return { l, step, planned: !l, name: l?.skip ? "수업 못함" : step ? m.planName(s.c, step) : "", note: l?.note || "" };
 }
 
 function Today({ m, now, open, setTab, pending }) {
@@ -542,60 +623,63 @@ function Today({ m, now, open, setTab, pending }) {
 
   return html`<div class="today-layout">
     <section onTouchStart=${onTouchStart} onTouchEnd=${onTouchEnd}>
-      ${pending.length > 0 && html`<button class="banner todo" onClick=${() => open(pending[0], true)}>
-        <${Icon} n="alert" /><span>기록 안 한 수업 <b>${pending.length}</b>개</span><span class="go">차례로 기록하기</span></button>`}
+      ${pending.length > 0 && html`<button class="banner" onClick=${() => open(pending[0], true)}>
+        <${Icon} n="alert" /><span>기록 안 한 수업 <b>${pending.length}</b>개</span><span class="go">차례로 기록하기<${Icon} n="right" /></span></button>`}
       <div class="daybar">
-        <h2>${isToday ? "오늘" : mdw(date)}<span>${isToday ? mdw(date) : ""}</span></h2>
+        <h2><small>${isToday ? mdw(date) : WD[fromIso(date).getDay()] + "요일"}</small>${isToday ? "오늘" : md(date)}</h2>
         <div class="spacer"></div>
         ${!isToday && html`<button class="btn sm" onClick=${() => setDate(todayIso)}>오늘로</button>`}
         <button class="icon-btn" aria-label="이전 날" onClick=${() => setDate(nextSchoolDay(date, -1))}><${Icon} n="left" /></button>
         <button class="icon-btn" aria-label="다음 날" onClick=${() => setDate(nextSchoolDay(date, 1))}><${Icon} n="right" /></button>
       </div>
-      ${m.dayOff(date) ? html`<div class="card empty"><b>${m.dayOff(date).title}</b>학사일정상 수업이 없는 날이에요.</div>`
-        : lastP === 0 ? html`<div class="card empty"><b>수업 없는 날</b></div>`
+      ${m.dayOff(date) ? html`<div class="panel empty"><b>${m.dayOff(date).title}</b>학사일정상 수업이 없는 날이에요.</div>`
+        : lastP === 0 ? html`<div class="panel empty"><b>수업 없는 날</b></div>`
         : html`<div class="periods">${slots.filter(s => s.p <= lastP).map(s => {
-          if (!s.c && s.removed) return html`<div class="period card removed hatch" style=${cc(m, s.removed)}>
-            <div class="no">${s.p}<small>${BELL[s.p][0]}</small></div>
-            <div class="main"><div class="row1"><${Chip} c=${s.removed} m=${m} ghost /><span class="tag chg">${s.to ? `${s.to}교시로 이동` : "빠짐"}</span></div><div class="what">${s.to ? `이 수업은 ${s.to}교시로 옮겨졌어요` : "컴시간에서 이 수업이 빠졌어요"}</div></div></div>`;
-          if (!s.c) return html`<div class="period card free"><div class="no">${s.p}</div><div class="what">공강</div></div>`;
-          const st = slotState(m, s, now);
-          return html`<button class=${`period card ${st} ${s.changed ? "chg" : ""}`} style=${cc(m, s.c)} onClick=${() => open(s)}>
-            <div class="no">${s.p}<small>${BELL[s.p][0]}</small></div>
-            <div class="main">
-              <div class="row1"><${Chip} c=${s.c} m=${m} />
+          const when = html`<div class="when"><b>${s.p}</b><small>${BELL[s.p][0]}</small></div>`;
+          if (!s.c && s.removed) return html`<div class="ticket removed">${when}
+            <div class="body"><div class="row1"><${Chip} c=${s.removed} gone /><span class="tag chg">${s.to ? `${s.to}교시로 이동` : "빠짐"}</span></div>
+            <div class="name">${s.to ? `이 수업은 ${s.to}교시로 옮겨졌어요` : "컴시간에서 이 수업이 빠졌어요"}</div></div></div>`;
+          if (!s.c) return html`<div class="ticket free"><div class="when"><b>${s.p}</b></div><div class="body">공강</div></div>`;
+          const st = slotState(m, s, now), i = slotInfo(m, s);
+          return html`<button class=${`ticket ${kc(m, i.step, i.planned)} ${st} ${s.changed ? "chg" : ""}`} style=${kh(i.step)} onClick=${() => open(s)}>
+            ${when}
+            <div class="body">
+              <div class="row1"><${Chip} c=${s.c} /><${Step} n=${i.step} />
                 ${s.changed && html`<span class="tag chg"><${Icon} n="swap" />${chgLabel(s)}</span>`}
                 ${s.event && html`<span class="tag event">${s.event.title}</span>`}
                 ${st === "done" && html`<span class="status done"><${Icon} n="check" />기록함</span>`}
                 ${st === "todo" && html`<span class="status todo"><${Icon} n="pen" />기록하기</span>`}
-                ${st === "now" && html`<span class="status now"><${Icon} n="dot" />수업 중</span>`}
+                ${st === "now" && html`<span class="status now">수업 중</span>`}
               </div>
-              <div class="what">${st === "done" ? html`<b>${slotText(m, s)}</b>` : s.event ? "학사일정으로 수업 없음" : html`이번 차시 <b>${slotText(m, s)}</b>`}</div>
+              ${s.event ? html`<div class="name dim">학사일정으로 수업 없음</div>`
+                : i.name ? html`<div class="name">${i.name}${i.note && html`<small> · ${i.note}</small>`}</div>`
+                : html`<div class="name dim">차시 기록 전</div>`}
             </div>
           </button>`;
         })}</div>`}
     </section>
     <section>
-      <div class="section-title" style="margin-top:2px">시간표 변경 <span class="tag chg">${changes.length}</span><span style="font-weight:500;color:var(--faint)">앞으로 2주</span></div>
-      ${changes.length === 0 ? html`<div class="card empty" style="padding:16px">바뀐 시간표가 없어요</div>`
-        : html`<div class="card chg-list">${changes.map(s => html`<button class="row" style="border:0;border-bottom:1px solid var(--line);background:none;text-align:left;width:100%" onClick=${() => setDate(s.date)}>
+      <div class="h-row"><h3>시간표 변경</h3><span class=${"count" + (changes.length ? " red" : "")}>${changes.length}</span><span class="sub">앞으로 2주</span></div>
+      ${changes.length === 0 ? html`<div class="panel empty" style="padding:18px">바뀐 시간표가 없어요</div>`
+        : html`<div class="panel list">${changes.map(s => html`<button class="list-row" onClick=${() => setDate(s.date)}>
           <span class="when">${mdw(s.date)} ${s.p ? `${s.p}교시` : ""}</span>
-          ${s.allOff ? html`<span class="tag chg">하루 수업 전부 빠짐</span>` : s.removed ? html`<${Chip} c=${s.removed} m=${m} ghost /><span class="tag chg">${s.to ? `${s.to}교시로 이동` : "빠짐"}</span>`
-            : s.was ? html`<s>${s.was}</s><span class="arrow">→</span><${Chip} c=${s.c} m=${m} />${s.from && html`<span class="tag chg">${s.from}교시에서</span>`}`
-            : html`<${Chip} c=${s.c} m=${m} /><span class="tag chg">${s.from ? `${s.from}교시에서 이동` : "추가"}</span>`}
+          ${s.allOff ? html`<span class="tag chg">하루 수업 전부 빠짐</span>` : s.removed ? html`<${Chip} c=${s.removed} gone /><span class="tag chg">${s.to ? `${s.to}교시로 이동` : "빠짐"}</span>`
+            : s.was ? html`<s>${s.was}</s><${Icon} n="right" /><${Chip} c=${s.c} />${s.from && html`<span class="tag chg">${s.from}교시에서</span>`}`
+            : html`<${Chip} c=${s.c} /><span class="tag chg">${s.from ? `${s.from}교시에서 이동` : "추가"}</span>`}
         </button>`)}</div>`}
-      <div class="section-title">학급별 진도<button class="btn sm ghost" onClick=${() => setTab("classes")}>자세히</button></div>
-      <div class="card">${m.classes.map(c => {
+      <div class="h-row"><h3>학급별 진도</h3><button class="btn sm ghost" onClick=${() => setTab("classes")}>자세히</button></div>
+      <div class="panel list">${m.classes.map(c => {
         const total = m.planOf(c).length, p = m.progress(c);
-        return html`<div class="mini-prog"><${Chip} c=${c} m=${m} />
-          <div class="t">${p ? m.stepTitle(c, p) : html`<span style="color:var(--faint)">아직 기록 없음</span>`}</div>
-          ${total > 0 && html`<span class="n">${p}/${total}</span>`}</div>`;
+        return html`<div class=${kc(m, p)} style=${kh(p)}><${Chip} c=${c} /><${Step} n=${p} />
+          <div class="t">${p ? m.planName(c, p) : html`<span style="color:var(--faint)">아직 기록 없음</span>`}</div>
+          ${total > 0 && html`<div class="minibar"><i style=${`width:${Math.min(100, p / total * 100)}%`}></i></div><span class="n">${p}/${total}</span>`}</div>`;
       })}</div>
     </section>
   </div>`;
 }
 
 // 연간 진도표: 학기 전체를 가로로. 마우스 휠(위/아래)로 좌우 이동, 모바일은 손가락으로 밀기.
-function Year({ m, now, open }) {
+function Year({ m, now, open, saveMeta }) {
   const todayIso = iso(now);
   const scroller = useRef();
   const [only, setOnly] = useState(null); // 특정 반만 강조
@@ -605,7 +689,7 @@ function Year({ m, now, open }) {
     return out;
   }, [m.firstDay]);
   const narrow = typeof innerWidth !== "undefined" && innerWidth < 600;
-  const colw = narrow ? 92 : 124, rowh = narrow ? 62 : 70;
+  const colw = narrow ? 96 : 128, rowh = narrow ? 64 : 72;
 
   const centerOn = (date, smooth) => {
     const el = scroller.current?.querySelector(`[data-d="${date}"]`) || scroller.current?.querySelector(`[data-d^="${date.slice(0, 7)}"]`);
@@ -628,15 +712,18 @@ function Year({ m, now, open }) {
     <div class="tl-bar">
       <h2>진도표</h2><span class="hint">${narrow ? "옆으로 밀어서 이동" : "마우스 휠로 좌우 이동"}</span>
       <div class="spacer"></div>
+      <div class="seg" role="group" aria-label="칸 색">
+        <button class=${m.tinted ? "on" : ""} aria-pressed=${m.tinted} onClick=${() => saveMeta("prefs", { colorMode: "step" })}><i class="sw"></i>차시별 색</button>
+        <button class=${m.tinted ? "" : "on"} aria-pressed=${!m.tinted} onClick=${() => saveMeta("prefs", { colorMode: "mono" })}><i class="sw mono"></i>무채색</button>
+      </div>
       <button class="icon-btn" aria-label="이전 주" onClick=${() => page(-1)}><${Icon} n="left" /></button>
       <button class="btn sm" onClick=${() => centerOn(todayIso, true)}>오늘</button>
       <button class="icon-btn" aria-label="다음 주" onClick=${() => page(1)}><${Icon} n="right" /></button>
     </div>
-    <div class="filter">
-      <button class="all" onClick=${() => setOnly(null)}>전체</button>
-      ${m.classes.map(c => html`<button class=${!only || only === c ? "on" : ""} onClick=${() => setOnly(only === c ? null : c)}><${Chip} c=${c} m=${m} /></button>`)}
+    <div class="chips" role="group" aria-label="반 골라 보기">
+      ${m.classes.map(c => html`<button class=${only === c ? "on" : ""} aria-pressed=${only === c} onClick=${() => setOnly(only === c ? null : c)}><${Chip} c=${c} /></button>`)}
     </div>
-    <div class="card tl" ref=${scroller} style=${`--colw:${colw}px;--rowh:${rowh}px`}>
+    <div class="panel tl" ref=${scroller} style=${`--colw:${colw}px;--rowh:${rowh}px`}>
       <div class="tl-in">
         <div class="tl-side"><div class="tl-head">교시</div>${PERIODS.map(p => html`<div class="tl-p">${p}</div>`)}</div>
         ${days.map((d, i) => {
@@ -655,47 +742,49 @@ function Year({ m, now, open }) {
       </div>
     </div>
     <div class="legend">
-      <span><i style="box-shadow:inset 0 0 0 2px var(--chg)"></i>시간표 변경(컴시간)</span>
-      <span><i class="hatch" style="background-color:var(--chg-soft);box-shadow:inset 0 0 0 2px var(--chg)"></i>수업 빠짐</span>
+      ${m.tinted && html`<span><b style="color:var(--ink)">같은 색 = 같은 차시</b></span>`}
+      <span><i class=${kc(m, 3)} style=${kh(3) + ";background:var(--k-bg);box-shadow:inset 0 0 0 1px var(--k-line)"}></i>기록함</span>
+      <span><i class=${kc(m, 3, true)} style=${kh(3) + ";background:var(--k-bg);outline:1.5px dashed var(--k-line);outline-offset:-1.5px"}></i>앞으로 할 수업(예상 차시)</span>
+      <span><i style="box-shadow:inset 0 0 0 2px var(--red)"></i>시간표 변경</span>
+      <span><i style="background:var(--red-soft);box-shadow:inset 0 0 0 1.5px var(--red)"></i>수업 빠짐</span>
       <span style="color:var(--warn);font-weight:700">기록 필요</span>
-      <span style="color:var(--ok)"><${Icon} n="check" />기록함</span>
       <span><i style="background:var(--event-soft)"></i>학사일정(수업 없음)</span>
     </div>
   </div>`;
 }
 function renderCell(m, s, now, open, only) {
-  if (!s.c && s.removed) return html`<div class=${"gone hatch" + (only && only !== s.removed ? " dim" : "")}><s>${s.removed}</s><span>${s.to ? `→${s.to}교시` : "빠짐"}</span></div>`;
+  if (!s.c && s.removed) return html`<div class=${"gone" + (only && only !== s.removed ? " dim" : "")}><s>${s.removed}</s><span>${s.to ? `→${s.to}교시` : "빠짐"}</span></div>`;
   if (!s.c) return null;
-  const st = slotState(m, s, now);
-  const cls = `has ${s.changed ? "chg" : ""} ${st === "blocked" ? "blocked" : ""} ${only && only !== s.c ? "dim" : ""}`;
-  return html`<button class=${cls} style=${cc(m, s.c)} onClick=${() => open(s)} title=${s.changed ? chgLabel(s) : ""}>
+  const st = slotState(m, s, now), i = slotInfo(m, s);
+  const cls = `has ${kc(m, i.step, i.planned)} ${s.changed ? "chg" : ""} ${st === "blocked" ? "blocked" : ""} ${only && only !== s.c ? "dim" : ""}`;
+  return html`<button class=${cls} style=${kh(i.step)} onClick=${() => open(s)} title=${[s.changed && chgLabel(s), i.step && m.stepTitle(s.c, i.step)].filter(Boolean).join("\n")}>
     ${s.changed && html`<span class="rib">${s.from ? `${s.from}→${s.p}` : s.was ? "변경" : "추가"}</span>`}
-    <${Chip} c=${s.c} m=${m} />
-    <span class=${"t " + (st === "done" ? "done" : st === "todo" ? "todo" : st === "blocked" ? "ev" : "")}>
-      ${st === "blocked" ? s.event.title : st === "todo" ? "기록 필요" : slotText(m, s)}
+    <span class="r1"><${Chip} c=${s.c} />${st !== "blocked" && html`<${Step} n=${i.step} />`}</span>
+    <span class=${"t " + (st === "todo" ? "todo" : st === "blocked" ? "ev" : "")}>
+      ${st === "blocked" ? s.event.title : st === "todo" ? "기록 필요" : i.name}
     </span>
-    ${st === "done" && html`<span class="ok"><${Icon} n="check" /></span>`}
+    ${st === "done" && !s.changed && html`<span class="ok"><${Icon} n="check" /></span>`}
   </button>`;
 }
 
 function Classes({ m, now, saveMeta }) {
   const today = iso(now);
   return html`<div>
-    <div class="section-title">학급 ${m.classes.length}개</div>
+    <div class="h-row"><h3>학급</h3><span class="count">${m.classes.length}</span></div>
     <div class="class-grid">${m.classes.map(c => {
       const total = m.planOf(c).length, p = m.progress(c), last = m.lastLesson(c);
       const exam = m.nextExam(gradeOf(c), today);
       const left = exam ? m.lessonsUntil(c, today, exam.date) : null;
       const recent = [...(m.byClass[c] || [])].reverse().slice(0, 4);
-      return html`<div class="card class-card" style=${cc(m, c)}>
-        <div class="head"><${Chip} c=${c} m=${m} lg />
-          <span style="font-size:13px;color:var(--muted);font-weight:650">${p}${total ? ` / ${total}차시` : "차시"}</span>
-          ${exam && html`<span class="exam" title=${exam.title}>시험까지 <b>${left}</b>회</span>`}
+      return html`<div class=${"panel class-card " + kc(m, p)} style=${kh(p)}>
+        <div class="head"><${Chip} c=${c} lg solid />
+          <span class="big">${p}<small>${total ? ` / ${total}차시` : "차시"}</small></span>
+          ${exam && html`<span class="exam" title=${exam.title}><b>${left}회</b>시험까지</span>`}
         </div>
         ${total > 0 && html`<div class="bar"><i style=${`width:${Math.min(100, p / total * 100)}%`}></i></div>`}
         <dl class="kv">
-          <dt>지난</dt><dd>${last ? `${md(last.date)} · ${m.stepTitle(c, last.step) || "-"}` : "-"}</dd>
-          <dt>다음</dt><dd><b>${m.stepTitle(c, p + 1)}</b></dd>
+          <dt>지난</dt><dd>${last ? html`<span>${md(last.date)} ${m.stepTitle(c, last.step) || "-"}</span>` : "-"}</dd>
+          <dt>다음</dt><dd class=${kc(m, p + 1, true)} style=${kh(p + 1)}><${Step} n=${p + 1} /><span><b>${m.planName(c, p + 1)}</b></span></dd>
         </dl>
         <textarea placeholder="학급 메모 (예: 실험 보고서 미제출 3명)" value=${m.notes[c] || ""}
           onBlur=${e => e.target.value !== (m.notes[c] || "") && saveMeta("notes", { [c]: e.target.value })}></textarea>
@@ -715,28 +804,30 @@ function RecordSheet({ slot, queue, m, onSave, onClose }) {
   const [step, setStep] = useState(existing ? existing.step || prev + 1 : prev + 1);
   const [note, setNote] = useState(existing?.note || "");
   const maxStep = Math.max(plan.length, prev + 1, step) + 3;
+  const shown = existing ? (existing.skip ? 0 : existing.step) : prev + 1;
 
   return html`<dialog class="sheet" ref=${dlg} onClose=${onClose} onClick=${e => e.target === dlg.current && dlg.current.close()}>
-    <div class="sheet-in" style=${cc(m, slot.c)}>
-      <div class="sheet-head"><${Chip} c=${slot.c} m=${m} lg />
+    <div class="sheet-in">
+      <div class="sheet-head"><${Chip} c=${slot.c} lg solid />
         <div><div style="font-weight:800">${mdw(slot.date)} ${slot.p}교시</div>
-          <div class="meta">${slot.s}${slot.changed ? html` · <span style="color:var(--chg);font-weight:800">${slot.from ? `${slot.from}교시에서 옮겨온 수업` : slot.was ? `시간표 변경 (원래 ${slot.was})` : "추가된 수업"}</span>` : ""}</div></div>
+          <div class="meta">${slot.s}${slot.changed ? html`, <span style="color:var(--red);font-weight:800">${slot.from ? `${slot.from}교시에서 옮겨온 수업` : slot.was ? `시간표 변경 (원래 ${slot.was})` : "추가된 수업"}</span>` : ""}</div></div>
         <button class="icon-btn x" aria-label="닫기" onClick=${() => dlg.current.close()}><${Icon} n="x" /></button>
       </div>
-      ${queue > 0 && html`<div class="queue-note">밀린 기록 ${queue}개 남음 · 저장하면 다음 수업이 바로 열려요</div>`}
-      ${slot.event && html`<div class="tag event" style="align-self:flex-start;font-size:13px;padding:5px 10px">${slot.event.title} — 학사일정상 수업 없음</div>`}
-      <div class="plan-box">
+      ${queue > 0 && html`<div class="queue-note">밀린 기록 ${queue}개 남음. 저장하면 다음 수업이 바로 열려요</div>`}
+      ${slot.event && html`<div class="tag event" style="align-self:flex-start;font-size:13px;padding:5px 10px">${slot.event.title}: 학사일정상 수업 없음</div>`}
+      <div class=${"plan-box " + kc(m, shown, !existing)} style=${kh(shown)}>
+        <${Step} n=${shown} lg />
         <div class="lbl">${existing ? "기록된 진도" : "이번 시간 계획"}</div>
-        <div class="val">${existing ? (existing.skip ? "수업 못함" : m.stepTitle(slot.c, existing.step)) : m.stepTitle(slot.c, prev + 1)}</div>
+        <div class="val">${existing?.skip ? "수업 못함" : m.planName(slot.c, shown)}</div>
         <div class="prev">지난 시간: ${prev ? m.stepTitle(slot.c, prev) : "기록 없음"}</div>
       </div>
       <div class="quick">
         <button class="btn primary" onClick=${() => onSave(slot, { step: prev + 1, note })}><${Icon} n="check" />계획대로 했어요<small>${prev + 1}차시</small></button>
-        ${prev > 0 && html`<button class="btn" onClick=${() => onSave(slot, { step: prev, note })}>진도 못 나감 · 이어서 했어요<small>${prev}차시 계속</small></button>`}
+        ${prev > 0 && html`<button class="btn" onClick=${() => onSave(slot, { step: prev, note })}>진도 못 나감, 이어서 했어요<small>${prev}차시 계속</small></button>`}
         <button class="btn" onClick=${() => onSave(slot, { skip: true, step: 0, note })}>수업 못함<small>행사·자습 등</small></button>
       </div>
       <details class="manual" open=${!!existing}>
-        <summary>차시 직접 고르기 · 메모</summary>
+        <summary>차시 직접 고르기, 메모</summary>
         <label for="step">차시</label>
         <select id="step" class="field" value=${step} onChange=${e => setStep(+e.target.value)}>
           ${Array.from({ length: maxStep }, (_, i) => i + 1).map(n => html`<option value=${n}>${m.stepTitle(slot.c, n)}</option>`)}
@@ -744,7 +835,7 @@ function RecordSheet({ slot, queue, m, onSave, onClose }) {
         <label for="note">메모</label>
         <textarea id="note" class="field" rows="2" placeholder="예: 실험 못 끝냄, 다음 시간 마무리" value=${note} onInput=${e => setNote(e.target.value)}></textarea>
         <div class="acts">
-          ${existing && html`<button class="btn ghost" style="color:var(--chg)" onClick=${() => onSave(slot, null)}>기록 지우기</button>`}
+          ${existing && html`<button class="btn ghost" style="color:var(--red)" onClick=${() => onSave(slot, null)}>기록 지우기</button>`}
           <button class="btn primary" onClick=${() => onSave(slot, { step, note })}>저장</button>
         </div>
       </details>
@@ -766,11 +857,11 @@ function Settings({ m, user, saveMeta, setToast }) {
   const copy = async () => { await navigator.clipboard.writeText(user.refreshToken); setToast("연동 코드를 복사했어요"); };
 
   return html`<div class="settings">
-    <div class="card panel">
+    <div class="panel pad">
       <h3>차시 계획</h3>
       <p class="desc">한 줄에 한 차시씩 적어 주세요. 학년 내 모든 반이 같은 계획을 따라가며, 각 반이 어디까지 했는지는 자동으로 계산돼요. 엑셀·한글에서 복사해 붙여넣어도 돼요.</p>
-      ${grades.length > 1 && html`<div class="grade-tabs">${grades.map(x => html`<button class=${"btn sm" + (x === g ? " primary" : "")} onClick=${() => { setG(x); setDraft(null); }}>${x}학년</button>`)}</div>`}
-      <textarea class="plan" value=${text} onInput=${e => setDraft(e.target.value)}
+      ${grades.length > 1 && html`<div class="seg grade-tabs">${grades.map(x => html`<button class=${x === g ? "on" : ""} onClick=${() => { setG(x); setDraft(null); }}>${x}학년</button>`)}</div>`}
+      <textarea class="plan-text" value=${text} onInput=${e => setDraft(e.target.value)}
         placeholder=${"예)\nⅠ-1. 물질의 구성 – 원소\nⅠ-2. 원소 기호 익히기\nⅠ-3. 원자와 분자 모형 만들기 (실험)\n…"}></textarea>
       <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
         <span style="font-size:12.5px;color:var(--muted)">${text.split("\n").filter(s => s.trim()).length}차시</span>
@@ -779,23 +870,23 @@ function Settings({ m, user, saveMeta, setToast }) {
     </div>
     <div style="display:grid;gap:14px">
       <${EventsPanel} m=${m} user=${user} setToast=${setToast} />
-      <div class="card panel">
+      <div class="panel pad">
         <h3>PC 연동 (알림이 → 진도표)</h3>
-        <p class="desc">${m.tt ? html`마지막 동기화 ${m.syncedAt ? m.syncedAt.toLocaleString("ko-KR") : "-"} · ${m.tt.source}` : "알림이가 깔린 학교 PC에서 한 번만 연결하면, 컴시간 시간표가 바뀔 때마다 자동으로 반영돼요."}</p>
+        <p class="desc">${m.tt ? html`마지막 동기화 ${m.syncedAt ? m.syncedAt.toLocaleString("ko-KR") : "-"} (${m.tt.source})` : "알림이가 깔린 학교 PC에서 한 번만 연결하면, 컴시간 시간표가 바뀔 때마다 자동으로 반영돼요."}</p>
         <ol class="steps">
           <li>아래 <b>연동 코드 복사</b></li>
           <li>알림이 PC의 진도표 폴더에서 <code>PC연동.bat</code> 더블클릭 → 붙여넣기</li>
           <li>이후엔 PC가 켜져 있는 동안 20분마다 자동 동기화</li>
         </ol>
-        <div class="code" style="margin-top:12px">
+        <div class="code" style="margin-top:14px">
           <input class="field" readonly type=${showCode ? "text" : "password"} value=${user.refreshToken} aria-label="연동 코드" />
           <button class="btn sm" onClick=${() => setShowCode(!showCode)}>${showCode ? "숨기기" : "보기"}</button>
           <button class="btn sm primary" onClick=${copy}>복사</button>
         </div>
         <p class="desc" style="margin:10px 0 0;font-size:12px">이 코드는 비밀번호처럼 다뤄 주세요. 다른 사람에게 공유하지 마세요.</p>
       </div>
-      <div class="card panel" style="display:flex;align-items:center;gap:10px">
-        <div style="flex:1;font-size:13.5px"><b>${user.displayName}</b><div style="color:var(--muted);font-size:12.5px">${user.email}</div></div>
+      <div class="panel pad" style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;font-size:13.5px;min-width:0"><b>${user.displayName}</b><div style="color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis">${user.email}</div></div>
         <button class="btn sm" onClick=${() => signOut(auth)}>로그아웃</button>
       </div>
     </div>
@@ -857,7 +948,7 @@ function EventsPanel({ m, user, setToast }) {
       console.error(err);
     }
   };
-  return html`<div class="card panel">
+  return html`<div class="panel pad">
     <h3>학사일정</h3>
     <p class="desc">시험·휴업·행사(수업제외)는 수업에서 빠지고, '시험까지 남은 수업' 계산에 쓰여요.</p>
     <div class="ev-form">
@@ -878,7 +969,7 @@ function EventsPanel({ m, user, setToast }) {
       <button aria-label="삭제" onClick=${() => deleteDoc(doc(col(), e.id))}><${Icon} n="trash" /></button>
     </div>`)}</div>
     <input type="file" accept=".xlsx,.xls" hidden ref=${input} onChange=${upload} />
-    <button class="btn sm ghost" style="margin-top:8px" onClick=${() => input.current.click()}>학사일정 엑셀로 전체 다시 올리기</button>
+    <button class="btn sm ghost" style="margin-top:10px" onClick=${() => input.current.click()}>학사일정 엑셀로 전체 다시 올리기</button>
   </div>`;
 }
 
