@@ -34,34 +34,48 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .big .what { font-size: 27px; line-height: 1.3; min-width: 0; }
 .big .what small { display: block; font-family: var(--sans); font-size: 14px; color: var(--muted); margin-top: 6px; }
 
-.week { grid-column: 2; grid-row: 1 / 3; align-self: start; }
-.week table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
-.week th { font-size: 13px; font-weight: 500; color: #8d999f; height: 28px; }
-.week th.p { width: 30px; text-align: right; padding-right: 6px; font-weight: 600; font-size: 14px; line-height: 1.1; }
-.week th.p small { display: block; font-size: 9.5px; font-weight: 400; color: var(--faint); }
-.week th.today { color: var(--hl-ink); background: var(--hl); border-radius: 7px; font-weight: 700; }
-.week th small.off { display: block; font-size: 10px; color: var(--todo); font-weight: 500; line-height: 1.1; }
-/* 주 넘기기 (2분 동안 안 누르면 이번 주로 돌아옴) */
-.wnav { display: flex; align-items: center; gap: 6px; margin: 0 4px 2px 38px; font-size: 13px; color: var(--muted); }
+/* 연속 날짜 띠: 진도표 앱처럼 학기 전체가 옆으로 이어짐. 잡고 끌기·휠·‹ › 로 이동, 2분 안 건드리면 오늘로 */
+.week { grid-column: 2; grid-row: 1 / 3; align-self: start; min-width: 0; }
+.wnav { display: flex; align-items: center; gap: 6px; margin: 0 2px 6px 38px; font-size: 13px; color: var(--muted); }
 .wnav button { border: 0; background: rgba(255,255,255,.07); color: var(--ink); border-radius: 8px; min-width: 34px; height: 30px; padding: 0 10px; font-size: 15px; transition: transform 120ms var(--ease); }
 .wnav button:active { transform: scale(.95); }
 .wnav .range { min-width: 112px; text-align: center; font-weight: 600; color: var(--ink); }
 .wnav .home { margin-left: auto; background: var(--hl); color: var(--hl-ink); font-weight: 700; font-size: 13px; }
-.week th[data-day] { cursor: pointer; border-radius: 7px; }
-.week th.sel { box-shadow: inset 0 0 0 1.5px var(--hl); color: var(--ink); }
-.railcap { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); margin-bottom: -10px; }
-.railcap b { color: var(--hl); font-weight: 600; }
-.week td { height: 41px; padding: 0; border-radius: 8px; background: var(--cell); }
-.week td.today { background: rgba(255,225,90,.08); }
-.week td button { width: 100%; height: 100%; border: 0; border-radius: 8px; background: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 4px; position: relative; }
-.week td b { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
-.week td i { font-style: normal; font-size: 12px; color: #8d999f; }
-.red { color: var(--red) !important; }
+.tlw { display: flex; }
+.pcol, .col { display: flex; flex-direction: column; gap: 4px; flex: none; }
+.pcol { width: 38px; padding-right: 6px; }
+.pcol .hd { height: 30px; }
+.pcol .p { height: 41px; display: grid; place-content: center end; text-align: right; font-weight: 600; font-size: 14px; color: #8d999f; line-height: 1.1; }
+.pcol .p small { display: block; font-size: 9.5px; font-weight: 400; color: var(--faint); }
+/* 가장자리는 흐리게 사라지게 (더 있다는 표시) */
+.scroller { position: relative; flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; cursor: grab;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent); mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent); }
+.scroller::-webkit-scrollbar { display: none; }
+.scroller.drag { cursor: grabbing; }
+.scroller.drag button { pointer-events: none; }
+.track { display: flex; gap: 4px; width: max-content; padding: 0 12px; }
+.col { width: 104px; }
+.col.mon { margin-left: 8px; }
+.col .hd { height: 30px; display: grid; place-items: center; position: relative; font-size: 13px; color: #8d999f; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.col .hd .m { position: absolute; left: 2px; top: -3px; font-size: 10.5px; font-weight: 700; color: var(--hl); }
+.col.today .hd { background: var(--hl); color: var(--hl-ink); font-weight: 700; }
+.col.sel .hd { box-shadow: inset 0 0 0 1.5px var(--hl); color: var(--ink); }
+.col .c { height: 41px; border-radius: 8px; background: var(--cell); }
+.col.today .c { background: rgba(255,225,90,.08); }
+.col .c button { width: 100%; height: 100%; border: 0; border-radius: 8px; background: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 4px; position: relative; }
+.col .c b { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+.col .c i { font-style: normal; font-size: 12px; color: #8d999f; }
+.col.off { width: 30px; }
+.col.off .hd { font-size: 11px; }
+.col.off .v { flex: 1; writing-mode: vertical-rl; display: grid; place-items: center; font-size: 11.5px; color: var(--todo); letter-spacing: .05em; border-radius: 8px; background: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(255,255,255,.03) 5px 10px); overflow: hidden; }
+.red { color: var(--red) !important; } /* 컴시간에서 바뀐 수업: 반 글씨만 빨간색 */
 .week .past { opacity: .42; }
 .week .todo { opacity: 1; box-shadow: inset 0 0 0 1.5px var(--todo); }
-.week .now { background: var(--now); color: var(--hl-ink); }
-.week .now i { color: #4a535a; }
+.col .c button.now { background: var(--now); color: var(--hl-ink); }
+.col .c button.now i { color: #4a535a; }
 .week .ev { opacity: .3; }
+.railcap { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); margin-bottom: -10px; }
+.railcap b { color: var(--hl); font-weight: 600; }
 .cap { display: flex; justify-content: space-between; font-size: 12px; color: #7f8b91; margin-top: 6px; padding-left: 38px; }
 .cap b { color: var(--red); font-weight: 600; }
 
@@ -112,7 +126,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 <body>
 <div id="screen"></div>
 <script type="module">
-import { FB_CONFIG, APP_ID, BELL, PERIODS, WD, iso, fromIso, addDays, isWeekend, md, atTime, slotKey, nextSchoolDay, buildModel, slotInfo, lessonDoc } from "./model.js";
+import { FB_CONFIG, APP_ID, BELL, PERIODS, WD, YEAR_END, iso, fromIso, addDays, isWeekend, md, atTime, slotKey, nextSchoolDay, buildModel, slotInfo, lessonDoc } from "./model.js";
 
 // ---------- 연결: 진도표 앱의 'PC 연동 코드'(로그인 갱신 토큰)로 접속 ----------
 // 바탕화면 프로그램 안에서는 구글 로그인이 막혀서, 알림이 연동 키트와 같은 방식(REST)을 씀
@@ -218,6 +232,7 @@ const stepText = (i, s) => s.event ? s.event.title : i.l?.skip ? "수업 못함"
 
 // 그리다 오류가 나면 빈 화면 대신 무엇이 문제인지 보여 줌
 function draw() {
+  if (drag?.moved) return; // 끄는 중에는 다시 그리지 않음 (30초 뒤 다시 그림)
   try { drawBoard(); }
   catch (e) {
     console.error(e);
@@ -231,10 +246,8 @@ function drawBoard() {
   const m = buildModel(data), now = new Date(), today = iso(now);
   if (!m.tt) { screen.innerHTML = `<div class="setup"><div class="box"><h1>${problem ? "연결하는 중…" : "시간표를 기다리는 중"}</h1><p>${problem === "net" ? "인터넷 연결을 확인하고 있어요." : "알림이 PC 에서 시간표가 아직 올라오지 않았어요. 알림이 연동 키트가 한 번 돌면 자동으로 나타나요."}</p></div></div>`; return; }
 
-  // 보여 줄 날: 주말이면 다음 주, 아니면 이번 주 월~금 (‹ › 로 weekOff 주만큼 옮김)
+  // 기준 날: 주말이면 다음 수업일. 날짜 띠는 학기 첫날부터 학년 끝까지 이어짐
   const schoolDay = isWeekend(today) ? nextSchoolDay(today) : today;
-  const mon = addDays(addDays(schoolDay, 1 - fromIso(schoolDay).getDay()), 7 * weekOff);
-  const days = [0, 1, 2, 3, 4].map(i => addDays(mon, i));
   const todaySlots = m.slotsFor(schoolDay);
   const railDay = selDay || schoolDay, railSlots = m.slotsFor(railDay); // 아래 하루 줄: 요일을 누르면 그날
   const pending = m.pending(now).reverse(); // 최근 것부터
@@ -270,16 +283,25 @@ function drawBoard() {
 
   const fl = s => flashKeys.has(slotKey(s.date, s.p)) ? " flash" : "";
   const cell = (date, s) => {
-    const t = date === schoolDay ? "today" : "";
-    if (!s?.c) return `<td class="${t}"></td>`; // 빠진 수업·공강은 빈칸
+    if (!s?.c) return `<div class="c"></div>`; // 빠진 수업·공강은 빈칸
     const st = state(m, s, now), i = slotInfo(m, s);
     const cls = st === "now" ? "now" : st === "todo" ? "todo past" : st === "ev" ? "ev" : atTime(date, BELL[s.p][1]) <= now ? "past" : "";
-    return `<td class="${t}"><button class="${cls}${fl(s)}" data-k="${slotKey(date, s.p)}" title="${esc(stepText(i, s))}"><b class="${s.changed ? "red" : ""}">${s.c}</b><i>${i.l?.skip || s.event ? "–" : i.step || ""}</i></button></td>`;
+    return `<div class="c"><button class="${cls}${fl(s)}" data-k="${slotKey(date, s.p)}" title="${esc(stepText(i, s))}"><b class="${s.changed ? "red" : ""}">${s.c}</b><i>${i.l?.skip || s.event ? "–" : i.step || ""}</i></button></div>`;
   };
-  const cols = days.map(d => ({ d, slots: m.slotsFor(d), off: m.dayOff(d) }));
-  const week = `<div class="wnav"><button data-nav="-1" aria-label="이전 주">‹</button><span class="range">${md(days[0])} – ${md(days[4])}</span><button data-nav="1" aria-label="다음 주">›</button>${weekOff || selDay ? `<button class="home" data-nav="0">오늘로</button>` : ""}</div>
-    <table><thead><tr><th class="p"></th>${cols.map(({ d, off }) => `<th class="${d === schoolDay ? "today" : ""} ${d === selDay ? "sel" : ""}" data-day="${d}" title="${esc(off?.title || "")}">${WD[fromIso(d).getDay()]} ${fromIso(d).getDate()}${off ? `<small class="off">${esc(off.title.replace(/\(.*?\)/g, "").trim()).slice(0, 8)}</small>` : ""}</th>`).join("")}</tr></thead>
-    <tbody>${PERIODS.map(p => `<tr><th class="p">${p}<small>${BELL[p][0]}</small></th>${cols.map(({ d, slots, off }) => off ? `<td></td>` : cell(d, slots[p - 1])).join("")}</tr>`).join("")}</tbody></table>
+  const start = m.firstDay && m.firstDay < schoolDay ? m.firstDay : addDays(schoolDay, -28);
+  const days = [];
+  for (let d = start; d <= YEAR_END; d = addDays(d, 1)) if (!isWeekend(d)) days.push(d);
+  const col = (d, i) => {
+    const dt = fromIso(d), off = m.dayOff(d), month = i === 0 || days[i - 1].slice(0, 7) !== d.slice(0, 7);
+    const cls = `col${dt.getDay() === 1 && i ? " mon" : ""}${d === schoolDay ? " today" : ""}${d === selDay ? " sel" : ""}${off ? " off" : ""}`;
+    const hd = `<div class="hd" data-day="${d}" title="${esc(off?.title || "")}">${month ? `<span class="m">${dt.getMonth() + 1}월</span>` : ""}${off ? dt.getDate() : `${WD[dt.getDay()]} ${dt.getDate()}`}</div>`;
+    if (off) return `<div class="${cls}" data-col="${d}">${hd}<div class="v">${esc(off.title.replace(/\(.*?\)/g, "").trim())}</div></div>`;
+    const slots = m.slotsFor(d);
+    return `<div class="${cls}" data-col="${d}">${hd}${PERIODS.map(p => cell(d, slots[p - 1])).join("")}</div>`;
+  };
+  const week = `<div class="wnav"><button data-nav="-1" aria-label="앞 날짜로">‹</button><span class="range"></span><button data-nav="1" aria-label="뒤 날짜로">›</button><button class="home" data-nav="0"${tlScroll === null && !selDay ? " hidden" : ""}>오늘로</button></div>
+    <div class="tlw"><div class="pcol"><div class="hd"></div>${PERIODS.map(p => `<div class="p">${p}<small>${BELL[p][0]}</small></div>`).join("")}</div>
+      <div class="scroller"><div class="track">${days.map(col).join("")}</div></div></div>
     <div class="cap"><span>작은 숫자 = 차시</span><span><b>빨간 반</b> 바뀐 수업, 빈칸 빠진 수업</span></div>`;
 
   const rail = PERIODS.map(p => {
@@ -306,6 +328,7 @@ function drawBoard() {
     <div class="sync">${sync}</div>
   </div>`;
   flashKeys.clear();
+  mountTimeline(schoolDay);
 }
 
 function drawSetup(err = "") {
@@ -331,14 +354,58 @@ function drawSetup(err = "") {
 // ---------- 칸을 눌러 기록 (휴대폰과 같은 3가지) ----------
 let pop = null;
 const closePop = () => { pop?.remove(); pop = null; };
-let weekOff = 0, selDay = null, navAt = 0;
+// ---------- 날짜 띠 이동: 잡고 끌기(놓으면 관성) · 휠 · ‹ › · 오늘로. 2분 안 건드리면 오늘로 ----------
+// tlScroll: 사용자가 옮겨 둔 위치(null 이면 오늘 기준). 화면을 다시 그려도 이 위치를 지킴
+let tlScroll = null, quietUntil = 0, selDay = null, navAt = 0, zoom = 1, glide = 0, drag = null, eatClick = false;
+const tlEl = () => screen.querySelector(".scroller");
+const todayLeft = (tl, d) => { const c = tl.querySelector(`[data-col="${d}"]`); return c ? Math.max(0, c.offsetLeft - c.offsetWidth - 16) : 0; };
+function mountTimeline(schoolDay) {
+  const tl = tlEl();
+  if (!tl) return;
+  cancelAnimationFrame(glide);
+  quietUntil = Date.now() + 200; // 위치를 되돌리는 건 사용자 조작으로 치지 않음
+  tl.dataset.today = schoolDay;
+  tl.scrollLeft = tlScroll ?? todayLeft(tl, schoolDay);
+  showRange(tl);
+  // 터치 화면 등 그 밖의 스크롤도 기억 (휠·끌기·버튼은 moved() 가 바로 기억)
+  tl.addEventListener("scroll", () => { if (Date.now() > quietUntil) moved(tl); }, { passive: true });
+}
+// 사용자가 옮긴 위치를 기억: 다시 그려도 그대로, '오늘로' 버튼 보이기, 보이는 날짜 범위 갱신
+function moved(tl, pos = tl.scrollLeft) {
+  tlScroll = Math.max(0, Math.min(pos, tl.scrollWidth - tl.clientWidth)); navAt = Date.now();
+  screen.querySelector(".wnav .home")?.removeAttribute("hidden");
+  showRange(tl, tlScroll);
+}
+// 지금 보이는 날짜 범위 (예: 10/19 – 10/23)
+function showRange(tl, pos = tl.scrollLeft) {
+  const a = pos + 20, b = pos + tl.clientWidth - 20;
+  let first, last;
+  for (const c of tl.querySelectorAll(".col[data-col]:not(.off)")) {
+    if (!first && c.offsetLeft + c.offsetWidth > a) first = c.dataset.col;
+    if (c.offsetLeft < b) last = c.dataset.col;
+  }
+  const el = screen.querySelector(".wnav .range");
+  if (el && first) el.textContent = `${md(first)} – ${md(last)}`;
+}
+
 screen.addEventListener("click", e => {
-  // 주 넘기기 · 요일 고르기
+  if (eatClick) { eatClick = false; e.stopPropagation(); return; } // 끌고 난 뒤의 클릭은 무시
+  // ‹ › · 오늘로 · 요일 고르기
   const nav = e.target.closest("[data-nav]"), day = e.target.closest("[data-day]");
   if (nav || day) {
     e.stopPropagation(); closePop(); navAt = Date.now();
-    if (nav) { const n = +nav.dataset.nav; if (n) weekOff += n; else { weekOff = 0; selDay = null; } }
-    else selDay = day.dataset.day === selDay ? null : day.dataset.day;
+    const tl = tlEl();
+    if (nav) {
+      const n = +nav.dataset.nav;
+      if (n && tl) { const to = tl.scrollLeft + n * 5 * 108; quietUntil = Date.now() + 700; tl.scrollTo({ left: to, behavior: "smooth" }); moved(tl, to); }
+      else {
+        tlScroll = null; selDay = null; quietUntil = Date.now() + 900;
+        tl?.scrollTo({ left: todayLeft(tl, tl.dataset.today), behavior: "smooth" });
+        setTimeout(draw, 600);
+      }
+      return;
+    }
+    selDay = day.dataset.day === selDay ? null : day.dataset.day;
     return draw();
   }
   const b = e.target.closest("[data-k]");
@@ -376,26 +443,58 @@ screen.addEventListener("click", e => {
 document.addEventListener("click", closePop);
 document.addEventListener("keydown", e => e.key === "Escape" && closePop());
 
-// 마우스 휠로 주 넘기기: 아래로 굴리면 다음 주, 위로 굴리면 이전 주 (진도표 앱과 같은 방향).
-// 터치패드는 한 번 쓸어도 이벤트가 수십 개 오므로, 모아서 한 칸 넘긴 뒤 0.35초는 쉼
-let wheelSum = 0, wheelAt = 0;
+// 마우스 휠: 진도표 앱처럼 연속으로 옆 이동 (아래로 굴리면 미래). Lively 실제 바탕화면은 휠을 안 넘겨줘서 끌기를 씀
 screen.addEventListener("wheel", e => {
-  if (!code || problem === "auth") return;
-  e.preventDefault();
-  const now = Date.now();
-  if (now - wheelAt < 350) return;
-  wheelSum += Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-  if (Math.abs(wheelSum) < 40) return;
-  weekOff += Math.sign(wheelSum); wheelSum = 0; wheelAt = navAt = now;
-  closePop(); draw();
+  const tl = tlEl();
+  if (!tl) return;
+  e.preventDefault(); cancelAnimationFrame(glide);
+  tl.scrollLeft += (Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX) * 1.2;
+  moved(tl);
 }, { passive: false });
+
+// 잡고 끌기: 손(마우스)을 1:1 로 따라오고, 놓으면 그 속도로 미끄러지다 멈춤
+screen.addEventListener("pointerdown", e => {
+  const tl = e.target.closest(".scroller");
+  if (!tl || e.button > 0) return;
+  cancelAnimationFrame(glide);
+  drag = { tl, x: e.clientX, sl: tl.scrollLeft, id: e.pointerId, moved: false, hist: [] };
+});
+addEventListener("pointermove", e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = (e.clientX - drag.x) / zoom;
+  if (!drag.moved) {
+    if (Math.abs(dx) < 6) return; // 살짝 떨린 클릭은 클릭으로
+    drag.moved = true; drag.tl.classList.add("drag");
+    try { drag.tl.setPointerCapture(drag.id); } catch { }
+  }
+  drag.tl.scrollLeft = drag.sl - dx;
+  moved(drag.tl);
+  drag.hist.push([e.timeStamp, drag.tl.scrollLeft]);
+  while (drag.hist.length > 2 && e.timeStamp - drag.hist[0][0] > 80) drag.hist.shift();
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag;
+  drag = null; d.tl.classList.remove("drag");
+  if (!d.moved) return;
+  eatClick = true; setTimeout(() => { eatClick = false; }, 0);
+  d.hist.push([e.timeStamp, d.tl.scrollLeft]);
+  while (d.hist.length > 2 && e.timeStamp - d.hist[0][0] > 80) d.hist.shift(); // 멈췄다 놓으면 속도 0
+  const [a, b] = [d.hist[0], d.hist[d.hist.length - 1]];
+  let v = b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) : 0; // px/ms
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) v = 0;
+  const step = () => { if (Math.abs(v) < 0.02) return; d.tl.scrollLeft += v * 16; moved(d.tl); v *= 0.95; glide = requestAnimationFrame(step); };
+  glide = requestAnimationFrame(step);
+}
+addEventListener("pointerup", endDrag);
+addEventListener("pointercancel", endDrag);
 
 // 1280×720 을 화면에 꽉 차게 (남는 쪽은 가운데 정렬).
 // Lively 는 처음에 창 크기를 0 으로 알려 줄 때가 있어서, 0 이면 1배로 두고 크기가 잡히는 대로 다시 맞춤
 function fit() {
   const w = document.documentElement.clientWidth || innerWidth, h = document.documentElement.clientHeight || innerHeight;
-  if (!w || !h) { screen.style.transform = ""; return; }
-  const z = Math.min(w / 1280, h / 720);
+  if (!w || !h) { screen.style.transform = ""; zoom = 1; return; }
+  const z = zoom = Math.min(w / 1280, h / 720);
   screen.style.transform = `translate(${(w - 1280 * z) / 2}px, ${(h - 720 * z) / 2}px) scale(${z})`;
 }
 addEventListener("resize", fit);
@@ -410,8 +509,8 @@ setInterval(() => code && problem !== "auth" && run(loadNew), 15000);
 setInterval(() => code && problem !== "auth" && run(loadMeta), 5 * 60000);
 setInterval(() => code && problem !== "auth" && run(loadAll), 30 * 60000);
 setInterval(() => {
-  if ((weekOff || selDay) && Date.now() - navAt > 120000) { weekOff = 0; selDay = null; } // 2분 지나면 이번 주·오늘로
-  if (!pop) draw();
+  if ((tlScroll !== null || selDay) && Date.now() - navAt > 120000) { tlScroll = null; selDay = null; } // 2분 지나면 오늘로
+  if (!pop && !drag) draw();
 }, 30000);
 addEventListener("online", () => code && run(loadNew));
 document.addEventListener("visibilitychange", () => !document.hidden && code && run(loadNew));
