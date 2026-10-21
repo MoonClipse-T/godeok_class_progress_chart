@@ -24,7 +24,7 @@ body { background: radial-gradient(120vw 100vh at 78% 40%, #24303a, var(--bg) 70
 button { font: inherit; color: inherit; cursor: pointer; }
 #screen { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: top left; }
 
-.board { position: absolute; inset: 0; padding: 40px 44px 62px 140px; display: grid; grid-template-columns: minmax(0, 1fr) 580px; grid-template-rows: auto 1fr auto auto auto; column-gap: 30px; row-gap: 16px; }
+.board { position: absolute; inset: 0; padding: 40px 44px 62px 140px; display: grid; grid-template-columns: minmax(0, 1fr) 580px; grid-template-rows: auto 1fr auto auto auto auto; column-gap: 30px; row-gap: 16px; }
 .label { grid-column: 1; font-size: 14px; color: var(--muted); display: flex; gap: 14px; align-items: baseline; }
 .label b { color: var(--hl); font-weight: 600; }
 .big { grid-column: 1; grid-row: 2; align-self: center; display: flex; align-items: baseline; gap: 22px; font-family: var(--serif); min-width: 0; }
@@ -41,7 +41,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .week th.p small { display: block; font-size: 9.5px; font-weight: 400; color: var(--faint); }
 .week th.today { color: var(--hl-ink); background: var(--hl); border-radius: 7px; font-weight: 700; }
 .week th small.off { display: block; font-size: 10px; color: var(--todo); font-weight: 500; line-height: 1.1; }
-.week td { height: 44px; padding: 0; border-radius: 8px; background: var(--cell); }
+/* 주 넘기기 (2분 동안 안 누르면 이번 주로 돌아옴) */
+.wnav { display: flex; align-items: center; gap: 6px; margin: 0 4px 2px 38px; font-size: 13px; color: var(--muted); }
+.wnav button { border: 0; background: rgba(255,255,255,.07); color: var(--ink); border-radius: 8px; min-width: 34px; height: 30px; padding: 0 10px; font-size: 15px; transition: transform 120ms var(--ease); }
+.wnav button:active { transform: scale(.95); }
+.wnav .range { min-width: 112px; text-align: center; font-weight: 600; color: var(--ink); }
+.wnav .home { margin-left: auto; background: var(--hl); color: var(--hl-ink); font-weight: 700; font-size: 13px; }
+.week th[data-day] { cursor: pointer; border-radius: 7px; }
+.week th.sel { box-shadow: inset 0 0 0 1.5px var(--hl); color: var(--ink); }
+.railcap { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); margin-bottom: -10px; }
+.railcap b { color: var(--hl); font-weight: 600; }
+.week td { height: 41px; padding: 0; border-radius: 8px; background: var(--cell); }
 .week td.today { background: rgba(255,225,90,.08); }
 .week td button { width: 100%; height: 100%; border: 0; border-radius: 8px; background: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 4px; position: relative; }
 .week td b { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
@@ -221,11 +231,12 @@ function drawBoard() {
   const m = buildModel(data), now = new Date(), today = iso(now);
   if (!m.tt) { screen.innerHTML = `<div class="setup"><div class="box"><h1>${problem ? "연결하는 중…" : "시간표를 기다리는 중"}</h1><p>${problem === "net" ? "인터넷 연결을 확인하고 있어요." : "알림이 PC 에서 시간표가 아직 올라오지 않았어요. 알림이 연동 키트가 한 번 돌면 자동으로 나타나요."}</p></div></div>`; return; }
 
-  // 보여 줄 날: 주말이면 다음 주, 아니면 이번 주 월~금
+  // 보여 줄 날: 주말이면 다음 주, 아니면 이번 주 월~금 (‹ › 로 weekOff 주만큼 옮김)
   const schoolDay = isWeekend(today) ? nextSchoolDay(today) : today;
-  const mon = addDays(schoolDay, 1 - fromIso(schoolDay).getDay());
+  const mon = addDays(addDays(schoolDay, 1 - fromIso(schoolDay).getDay()), 7 * weekOff);
   const days = [0, 1, 2, 3, 4].map(i => addDays(mon, i));
   const todaySlots = m.slotsFor(schoolDay);
+  const railDay = selDay || schoolDay, railSlots = m.slotsFor(railDay); // 아래 하루 줄: 요일을 누르면 그날
   const pending = m.pending(now).reverse(); // 최근 것부터
 
   // 지금 수업 / 다음 수업
@@ -266,12 +277,13 @@ function drawBoard() {
     return `<td class="${t}"><button class="${cls}${fl(s)}" data-k="${slotKey(date, s.p)}" title="${esc(stepText(i, s))}"><b class="${s.changed ? "red" : ""}">${s.c}</b><i>${i.l?.skip || s.event ? "–" : i.step || ""}</i></button></td>`;
   };
   const cols = days.map(d => ({ d, slots: m.slotsFor(d), off: m.dayOff(d) }));
-  const week = `<table><thead><tr><th class="p"></th>${cols.map(({ d, off }) => `<th class="${d === schoolDay ? "today" : ""}" title="${esc(off?.title || "")}">${WD[fromIso(d).getDay()]} ${fromIso(d).getDate()}${off ? `<small class="off">${esc(off.title).slice(0, 8)}</small>` : ""}</th>`).join("")}</tr></thead>
+  const week = `<div class="wnav"><button data-nav="-1" aria-label="이전 주">‹</button><span class="range">${md(days[0])} – ${md(days[4])}</span><button data-nav="1" aria-label="다음 주">›</button>${weekOff || selDay ? `<button class="home" data-nav="0">오늘로</button>` : ""}</div>
+    <table><thead><tr><th class="p"></th>${cols.map(({ d, off }) => `<th class="${d === schoolDay ? "today" : ""} ${d === selDay ? "sel" : ""}" data-day="${d}" title="${esc(off?.title || "")}">${WD[fromIso(d).getDay()]} ${fromIso(d).getDate()}${off ? `<small class="off">${esc(off.title.replace(/\(.*?\)/g, "").trim()).slice(0, 8)}</small>` : ""}</th>`).join("")}</tr></thead>
     <tbody>${PERIODS.map(p => `<tr><th class="p">${p}<small>${BELL[p][0]}</small></th>${cols.map(({ d, slots, off }) => off ? `<td></td>` : cell(d, slots[p - 1])).join("")}</tr>`).join("")}</tbody></table>
     <div class="cap"><span>작은 숫자 = 차시</span><span><b>빨간 반</b> 바뀐 수업, 빈칸 빠진 수업</span></div>`;
 
   const rail = PERIODS.map(p => {
-    const s = todaySlots[p - 1];
+    const s = railSlots[p - 1];
     if (!s?.c) return `<div class="empty"><span class="p">${p}교시</span></div>`;
     const st = state(m, s, now), i = slotInfo(m, s);
     const cls = st === "now" ? "now" : st === "todo" ? "todo past" : atTime(s.date, BELL[p][1]) <= now ? "past" : "";
@@ -288,6 +300,7 @@ function drawBoard() {
     <div class="label">${label}</div>
     <div class="big">${big}</div>
     <div class="week">${week}</div>
+    <div class="railcap">${railDay === today ? "<b>오늘</b> 수업" : `<b>${md(railDay)} ${WD[fromIso(railDay).getDay()]}요일</b> 수업${m.dayOff(railDay) ? `, ${esc(m.dayOff(railDay).title)}` : ""}`}</div>
     <div class="rail">${rail}</div>
     <div class="notes">${notes}</div>
     <div class="sync">${sync}</div>
@@ -318,7 +331,16 @@ function drawSetup(err = "") {
 // ---------- 칸을 눌러 기록 (휴대폰과 같은 3가지) ----------
 let pop = null;
 const closePop = () => { pop?.remove(); pop = null; };
+let weekOff = 0, selDay = null, navAt = 0;
 screen.addEventListener("click", e => {
+  // 주 넘기기 · 요일 고르기
+  const nav = e.target.closest("[data-nav]"), day = e.target.closest("[data-day]");
+  if (nav || day) {
+    e.stopPropagation(); closePop(); navAt = Date.now();
+    if (nav) { const n = +nav.dataset.nav; if (n) weekOff += n; else { weekOff = 0; selDay = null; } }
+    else selDay = day.dataset.day === selDay ? null : day.dataset.day;
+    return draw();
+  }
   const b = e.target.closest("[data-k]");
   if (!b) return;
   e.stopPropagation(); closePop();
@@ -373,7 +395,10 @@ if (code) run(loadAll);
 setInterval(() => code && problem !== "auth" && run(loadNew), 15000);
 setInterval(() => code && problem !== "auth" && run(loadMeta), 5 * 60000);
 setInterval(() => code && problem !== "auth" && run(loadAll), 30 * 60000);
-setInterval(() => !pop && draw(), 30000);
+setInterval(() => {
+  if ((weekOff || selDay) && Date.now() - navAt > 120000) { weekOff = 0; selDay = null; } // 2분 지나면 이번 주·오늘로
+  if (!pop) draw();
+}, 30000);
 addEventListener("online", () => code && run(loadNew));
 document.addEventListener("visibilitychange", () => !document.hidden && code && run(loadNew));
 </script>
