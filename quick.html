@@ -81,6 +81,7 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "
 let user, data = { meta: {}, lessons: {}, events: [] }, got = 0; // user: undefined = 로그인 확인 중, null = 로그인 안 됨
 let pick = null;     // 직접 고른 수업(오늘 목록에서 누름). 없으면 가장 최근에 끝난 기록 전 수업
 let toast = "";
+let unsent = false;  // 휴대폰에만 있고 아직 서버(→ 바탕화면)에 안 올라간 기록이 있음
 
 onAuthStateChanged(auth, u => {
   user = u;
@@ -88,20 +89,26 @@ onAuthStateChanged(auth, u => {
   const base = ["artifacts", APP_ID, "users", u.uid];
   const ready = () => { got++; draw(); };
   onSnapshot(collection(db, ...base, "meta"), s => { const m = {}; s.forEach(x => m[x.id] = x.data()); data.meta = m; ready(); }, ready);
-  onSnapshot(collection(db, ...base, "lessons"), s => { const m = {}; s.forEach(x => m[x.id] = x.data()); data.lessons = m; ready(); }, ready);
+  // 메타데이터 변화까지 받아서, 서버가 받았는지(hasPendingWrites)를 화면에 보여 줌
+  onSnapshot(collection(db, ...base, "lessons"), { includeMetadataChanges: true }, s => { const m = {}; s.forEach(x => m[x.id] = x.data()); data.lessons = m; unsent = s.metadata.hasPendingWrites; ready(); }, ready);
   onSnapshot(collection(db, ...base, "events"), s => { data.events = s.docs.map(x => ({ id: x.id, ...x.data() })); ready(); }, ready);
 });
 
-function say(t) { toast = t; draw(); setTimeout(() => { if (toast === t) { toast = ""; draw(); } }, 2000); }
+function say(t, stay = false) { toast = t; draw(); if (!stay) setTimeout(() => { if (toast === t) { toast = ""; draw(); } }, 2000); }
 
 async function save(slot, rec) {
   const k = slotKey(slot.date, slot.p);
   pick = null;
   const ref = doc(db, "artifacts", APP_ID, "users", user.uid, "lessons", k);
-  // 오프라인이어도 바로 다음 화면으로 (Firestore 가 연결되면 올려 줌)
-  if (rec === null) { deleteDoc(ref); say("기록을 지웠어요"); return; }
-  setDoc(ref, lessonDoc(slot, rec));
-  say(rec.skip ? `${slot.c} 수업 못함 기록함` : `${slot.c} ${rec.step}차시 기록함`);
+  // 화면은 바로 다음으로 넘기되, '기록함'은 서버가 받은 뒤에 알림.
+  // (예전엔 바로 '기록함'이라 해서, 곧장 화면을 닫으면 기록이 휴대폰에만 남고 바탕화면에 안 갔음)
+  const write = rec === null ? deleteDoc(ref) : setDoc(ref, lessonDoc(slot, rec));
+  const done = rec === null ? "기록을 지웠어요" : rec.skip ? `${slot.c} 수업 못함 기록함` : `${slot.c} ${rec.step}차시 기록함`;
+  say("올리는 중… 잠깐만 열어 두세요", true);
+  const slow = setTimeout(() => say("인터넷이 느려요. 올라갈 때까지 열어 두세요", true), 5000);
+  try { await write; say(done); }
+  catch (e) { console.warn(e); say("저장 못 했어요. 다시 눌러 주세요", true); }
+  finally { clearTimeout(slow); }
 }
 
 function draw() {
@@ -149,7 +156,9 @@ function draw() {
     return `<button data-k="${k}"><span class="p">${s.p}교시</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${esc(l?.skip ? "수업 못함" : i.step ? `${i.step}차시 ${i.name}` : i.name)}</span>${st}</button>`;
   }).join("") : `<span class="empty">${day ? "오늘은 수업이 없어요" : "주말이에요"}</span>`}</div>`;
 
-  app.innerHTML = top + body + list + (toast ? `<div class="toast" role="status">${esc(toast)}</div>` : "");
+  // 지난번에 못 올라간 기록이 있으면 (화면을 열면 자동으로 올라감) 다 올라갈 때까지 알려 줌
+  const status = toast || (unsent ? "안 올라간 기록을 올리는 중…" : "");
+  app.innerHTML = top + body + list + (status ? `<div class="toast" role="status">${esc(status)}</div>` : "");
 
   app.querySelectorAll("[data-r]").forEach(b => b.onclick = () => {
     const note = document.getElementById("note")?.value.trim() || "";

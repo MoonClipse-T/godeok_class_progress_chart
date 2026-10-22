@@ -208,12 +208,15 @@ async function loadAll() {
   bumpAt();
 }
 // 새 기록만 가져오기 (휴대폰에서 기록한 것이 여기로 옴). 바뀐 문서 수만큼만 읽어서 하루 종일 켜 둬도 가벼움
+// at 은 기록한 기기의 시계라서, 휴대폰 시계가 PC 보다 몇 분 늦으면 'lastAt 보다 새 것'에서 빠짐 → 10분 앞부터 다시 보고, 이미 있는 것은 거름
+const SKEW = 10 * 60000;
 async function loadNew() {
   const rows = await api(":runQuery", { method: "POST", body: JSON.stringify({ structuredQuery: {
     from: [{ collectionId: "lessons" }],
-    where: { fieldFilter: { field: { fieldPath: "at" }, op: "GREATER_THAN", value: { integerValue: String(lastAt) } } },
+    where: { fieldFilter: { field: { fieldPath: "at" }, op: "GREATER_THAN", value: { integerValue: String(Math.max(0, lastAt - SKEW)) } } },
   } }) });
-  const got = rows.filter(r => r.document).map(r => [docId(r.document), fields(r.document.fields)]);
+  const got = rows.filter(r => r.document).map(r => [docId(r.document), fields(r.document.fields)])
+    .filter(([k, l]) => data.lessons[k]?.at !== l.at);
   for (const [k, l] of got) { data.lessons[k] = l; flashKeys.add(k); }
   bumpAt();
   return got.length;
