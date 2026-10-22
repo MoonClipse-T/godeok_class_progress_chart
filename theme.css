@@ -23,6 +23,9 @@
   --hematite: #c0352a;                       /* 적철석: 컴시간에서 바뀐 수업 */
   --sage: #2c7448; --sage-soft: #e2f1e6;     /* 기록함 */
   --amethyst: #6346b5; --amethyst-soft: #ece7fb;  /* 학사일정 */
+  /* 진도 색(바탕화면에서 진도 글자별로 칠함): 진한 글자가 읽히는 옅은 색 8가지 */
+  --tag0: #dcd8fb; --tag1: #cde4fb; --tag2: #cfeedd; --tag3: #fbe1c0;
+  --tag4: #f8d2de; --tag5: #e3eec0; --tag6: #cdeaec; --tag7: #ecdcf6;
   --stripe: rgba(28,32,51,.06);
   --backdrop: rgba(20,22,45,.38);
   --halo: 0 0 2px rgba(255,255,255,.95), 0 0 6px rgba(255,255,255,.9), 0 0 12px rgba(255,255,255,.65);

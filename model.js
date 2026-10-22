@@ -157,8 +157,9 @@ export function buildModel({ meta, lessons, events }) {
 export function slotInfo(m, s) {
   const l = m.lessons[slotKey(s.date, s.p)];
   const v = m.stepOf[slotKey(s.date, s.p)] || 0, step = Math.max(0, v), over = v < 0;
-  return { l, step, over, planned: !l, name: l?.skip ? "수업 못함" : step ? m.planName(s.c, step) : over ? "계획 끝" : "", note: l?.note || "" };
+  return { l, step, over, planned: !l, name: l?.skip ? "수업 못함" : l?.topic || (step ? m.planName(s.c, step) : over ? "계획 끝" : ""), note: l?.note || "" };
 }
 
-// 기록 한 건 (index·desk·quick 모두 같은 모양으로 저장)
-export const lessonDoc = (slot, rec) => ({ date: slot.date, p: slot.p, c: slot.c, step: rec.step || 0, note: rec.note || "", skip: !!rec.skip, at: Date.now() });
+// 기록 한 건 (index·desk·quick 모두 같은 모양으로 저장). topic: 바탕화면에서 직접 쓴 진도, color: 직접 고른 색 번호(--tag0~7)
+export const lessonDoc = (slot, rec) => ({ date: slot.date, p: slot.p, c: slot.c, step: rec.step || 0, note: rec.note || "", skip: !!rec.skip, at: Date.now(),
+  ...(rec.topic ? { topic: rec.topic } : {}), ...(Number.isInteger(rec.color) ? { color: rec.color } : {}) });

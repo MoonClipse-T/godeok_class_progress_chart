@@ -773,7 +773,7 @@ function RecordSheet({ slot, queue, m, onSave, onClose }) {
       <div class=${"plan-box " + kc(m, shown, !existing)} style=${kh(shown)}>
         <${Step} n=${shown} lg />
         <div class="lbl">${existing ? "기록된 진도" : "이번 시간 계획"}</div>
-        <div class="val">${existing?.skip ? "수업 못함" : m.planName(slot.c, shown)}</div>
+        <div class="val">${existing?.skip ? "수업 못함" : existing?.topic || m.planName(slot.c, shown)}</div>
         <div class="prev">지난 시간: ${prev ? m.stepTitle(slot.c, prev) : "기록 없음"}</div>
       </div>
       <div class="quick">
