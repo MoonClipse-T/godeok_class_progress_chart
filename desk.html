@@ -14,6 +14,8 @@ body { -webkit-font-smoothing: antialiased; user-select: none; }
 /* 지도 위에 바로 놓인 글자: 지도 라벨처럼 흰 테두리 */
 .label, .big, .railcap, .notes, .sync, .cap, .wnav .range, .pcol, .col .hd { text-shadow: var(--halo); }
 .col.today .hd { text-shadow: none; }
+/* 풀밭·버섯 집 사진 위에서 줄글이 묻히지 않게 흐린 유리 띠에 올림 */
+.label, .railcap, .notes, .sync { justify-self: start; width: fit-content; max-width: 100%; background: rgba(255,255,255,.78); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-radius: 9px; padding: 4px 10px; text-shadow: none; }
 button { font: inherit; color: inherit; cursor: pointer; }
 #screen { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: top left; }
 
@@ -78,6 +80,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .railcap b { color: var(--hl); font-weight: 600; }
 .cap { display: flex; justify-content: space-between; font-size: 12px; color: var(--faint); margin-top: 6px; padding-left: 38px; }
 .cap b { color: var(--red); font-weight: 600; }
+.cap { background: rgba(255,255,255,.78); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-radius: 9px; padding: 4px 10px; margin-left: 38px; text-shadow: none; }
 
 .rail { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
 .rail > * { border: 0; background: var(--cell); border-radius: 10px; padding: 9px 10px 10px; text-align: left; display: grid; gap: 3px; min-height: 76px; align-content: start; min-width: 0; }

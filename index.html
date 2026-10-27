@@ -18,6 +18,10 @@
 html, body { margin: 0; }
 /* 지도 위에 바로 놓인 글자: 지도 라벨처럼 흰 테두리 */
 header.top .brand, header.top .sync, .h-row, .daybar h2, .tl-bar h2, .tl-bar .hint, .legend, .ticket.free { text-shadow: var(--halo); }
+/* 사진 바탕 위의 작은 글자·단추는 흐린 유리 띠에 올려 읽히게 */
+.brand small, .daybar h2 small, .tl-bar .hint, .h-row .sub, .legend { width: fit-content; background: var(--tint); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-radius: 7px; padding: 1px 7px; text-shadow: none; }
+.legend { padding: 6px 10px; border-radius: 10px; }
+.chips button:not(.on) .chip { background: var(--tint); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 body { font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum"; }
 /* 자간은 크기별로: 큰 제목은 좁게(각 규칙에서), 12px 이하 작은 글씨는 살짝 넓게 */
 .tl-cell .t, .tl-head .w, .ticket .when small, .tag, .count, .legend, .h-row .sub, .tl-bar .hint, nav.tabs button { letter-spacing: .01em; }

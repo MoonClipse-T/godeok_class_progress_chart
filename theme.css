@@ -1,26 +1,25 @@
 /* 진도표 공용 색·글꼴 — 바탕화면(desk) · 앱(index) · 휴대폰 기록(quick)이 같이 씀.
-   별자리 지도(성도): 밝은 종이에 천구 좌표선·은하수·황도·별자리(starchart.svg). 2026-10-21 시안 5가지 중 사용자가 고름.
-   글꼴: 큰 글씨·반 이름은 천문 도감 같은 고운바탕(--display), 본문은 Noto Sans KR.
-   강조색은 하나(성운 남보라): 오늘 · 수업 중 · 주요 버튼.
-   글자 대비(흰 칸 기준): 본문 16.1, 흐린 글자 6.0, 남보라 7.4, 적철석 5.5, 호박 5.3.
-   바탕 위에 바로 놓이는 글자는 지도 라벨처럼 흰 테두리(--halo)를 둘러 읽히게 함 */
-@import url("https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap");
+   실사 헤네시스: 해 질 녘 버섯 집 마을 사진(henesys.jpg, AI 생성 사진, 원작 그림 아님). 2026-10-27 사용자가 고름.
+   글꼴: 큰 글씨·반 이름은 동글동글한 주아(--display), 본문은 Noto Sans KR.
+   강조색은 하나(버섯 지붕 주황): 오늘 · 수업 중 · 주요 버튼. 컴시간에서 바뀐 반은 주황과 헷갈리지 않게 진홍.
+   사진이 복잡해서 칸·판은 흰색을 조금 더 진하게, 바탕 위에 바로 놓이는 글자는 흰 테두리(--halo)를 두껍게 */
+@import url("https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;600;700&display=swap");
 
 :root {
-  --paper: #f4f5fb;               /* 성도 종이 */
+  --paper: #cfe3f2;               /* 사진이 늦게 뜰 때 보이는 하늘색 */
   --solid: #ffffff;
-  --slate: rgba(255,255,255,.9);  /* 판(패널): 바탕이 살짝 비침 */
-  --cell: rgba(255,255,255,.9);   /* 시간표 칸: 별자리 이름이 칸 글자와 겹쳐 보이지 않게 */
-  --tint: rgba(255,255,255,.62);  /* 바탕 위 작은 단추·띠 */
+  --slate: rgba(255,255,255,.92); /* 판(패널): 바탕이 살짝 비침 */
+  --cell: rgba(255,255,255,.88);  /* 시간표 칸: 사진 위에서도 글자가 또렷하게 */
+  --tint: rgba(255,255,255,.78);  /* 바탕 위 작은 단추·띠 */
   --granite: #eef0f8; --granite-2: #e2e5f2;  /* 입력칸·눌림 */
   --seam: #d7dbea; --seam-2: #c3c8dd;        /* 구분선 */
   --ink: #1c2033; --muted: #454a62; --faint: #5d6279;
-  --water: #4b45b8; --water-hover: #3c37a0; --water-soft: #e4e3f7;  /* 하나뿐인 강조색: 성운 남보라 */
-  --today-tint: rgba(75,69,184,.09);
-  --cell-line: rgba(75,69,184,.14);          /* 칸 테두리: 별자리 선 위에서도 칸 경계가 보이게 */
-  --now-sub: rgba(255,255,255,.84);          /* 수업 중(남보라 칸) 안의 작은 글자 */
+  --water: #b84e14; --water-hover: #9c4210; --water-soft: #fde6d6;  /* 하나뿐인 강조색: 버섯 지붕 주황 */
+  --today-tint: rgba(184,78,20,.09);
+  --cell-line: rgba(140,90,40,.2);           /* 칸 테두리: 풀밭·하늘 위에서도 칸 경계가 보이게 */
+  --now-sub: rgba(255,255,255,.86);          /* 수업 중(주황 칸) 안의 작은 글자 */
   --amber: #a15a06; --amber-soft: #fbefd9;   /* 호박: 기록 전 */
-  --hematite: #c0352a;                       /* 적철석: 컴시간에서 바뀐 수업 */
+  --hematite: #b42335;                       /* 진홍: 컴시간에서 바뀐 수업 (주황 강조색과 구별) */
   --sage: #2c7448; --sage-soft: #e2f1e6;     /* 기록함 */
   --amethyst: #6346b5; --amethyst-soft: #ece7fb;  /* 학사일정 */
   /* 진도 색(바탕화면에서 진도 글자별로 칠함): 진한 글자가 읽히는 옅은 색 8가지 */
@@ -28,9 +27,9 @@
   --tag4: #f8d2de; --tag5: #e3eec0; --tag6: #cdeaec; --tag7: #ecdcf6;
   --stripe: rgba(28,32,51,.06);
   --backdrop: rgba(20,22,45,.38);
-  --halo: 0 0 2px rgba(255,255,255,.95), 0 0 6px rgba(255,255,255,.9), 0 0 12px rgba(255,255,255,.65);
+  --halo: 0 0 2px rgba(255,255,255,.95), 0 0 7px rgba(255,255,255,.9), 0 0 16px rgba(255,255,255,.75);
   --sans: "Noto Sans KR", -apple-system, "Malgun Gothic", system-ui, sans-serif;
-  --display: "Gowun Batang", "Batang", serif;
+  --display: "Jua", "Malgun Gothic", sans-serif;
   --ease: cubic-bezier(.23, 1, .32, 1);
   color-scheme: light;
 
@@ -44,10 +43,10 @@
   --event: var(--amethyst); --event-soft: var(--amethyst-soft);
   --serif: var(--display); --font: var(--sans);
 }
-/* 바탕은 html 에: 내용이 짧아도 화면 끝까지 깔림 */
-html { background: url(starchart.svg) center / cover fixed, var(--paper); }
+/* 바탕은 html 에: 내용이 짧아도 화면 끝까지 깔림. 세로 화면(휴대폰)에서도 버섯 집이 보이게 왼쪽 30% 기준 */
+html { background: url(henesys.jpg) 30% center / cover fixed, var(--paper); font-synthesis: none; } /* 주아는 굵기가 하나뿐이라 가짜 굵게를 막음 */
 body { color: var(--ink); font-family: var(--sans); }
-/* 남보라 '수업 중' 칸 안의 바뀐 수업은 밝은 빨강으로 (남보라 위 진한 빨강은 안 보임) */
+/* 주황 '수업 중' 칸 안의 바뀐 수업은 밝은 분홍으로 (주황 위 진홍은 안 보임) */
 .now .red, .red.now { color: #ffd6cf !important; }
-/* 남보라 '수업 중' 칸 안의 차시 번호 동그라미는 흰색 */
+/* 주황 '수업 중' 칸 안의 차시 번호 동그라미는 흰색 */
 .now .step { background: transparent !important; color: #fff !important; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.85) !important; }
