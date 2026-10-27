@@ -63,6 +63,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .col .c b { font-family: var(--display); font-size: 19px; font-weight: 700; letter-spacing: -.01em; line-height: 1.05; } /* 반 이름은 큰 글씨와 같은 고운바탕 */
 .col .c i { font-style: normal; font-size: 10.5px; line-height: 1.2; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .col .c button.tag b { font-size: 16px; }
+.col .c i.memo, .rail .s.memo, .big .what small.memo { color: var(--warn); } /* 지난 시간 메모 */
+.big .what small.memo { font-size: 15px; font-weight: 600; }
 /* 진도 글자별 색: 같은 글자 = 같은 색 */
 .col .c button.tag, .rail .tag { background: var(--tag); }
 /* 여러 칸 고르기(Ctrl+클릭) */
@@ -122,6 +124,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pop .acts button { width: auto; flex: 1; justify-content: center; }
 .pop .acts .save { background: var(--hl); color: #fff; font-weight: 700; flex: 1.4; }
 .pop .acts .save:hover { background: var(--water-hover); }
+.pop input.note { font-size: 13px; padding: 6px 10px; }
+.pop .memo { color: var(--warn); }
 .pop .hint { font-size: 11px; color: #8a939a; padding: 6px 8px 2px; }
 
 /* 처음 연결 */
@@ -140,7 +144,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 <body>
 <div id="screen"></div>
 <script type="module">
-import { FB_CONFIG, APP_ID, BELL, PERIODS, WD, YEAR_END, iso, fromIso, addDays, isWeekend, md, atTime, slotKey, nextSchoolDay, buildModel, slotInfo, lessonDoc } from "./model.js";
+import { FB_CONFIG, APP_ID, BELL, PERIODS, WD, YEAR_END, iso, fromIso, addDays, isWeekend, md, atTime, slotKey, nextSchoolDay, buildModel, slotInfo, lessonDoc, lastBefore, stepFor } from "./model.js";
 
 // ---------- 연결: 진도표 앱의 'PC 연동 코드'(로그인 갱신 토큰)로 접속 ----------
 // 바탕화면 프로그램 안에서는 구글 로그인이 막혀서, 알림이 연동 키트와 같은 방식(REST)을 씀
@@ -246,8 +250,10 @@ function state(m, s, now) {
   return "later";
 }
 const stepText = (i, s) => s.event ? s.event.title : i.name;
-// 기록의 진도 글자: 직접 쓴 글자, 없으면 차시 계획 이름
-const topicOf = (m, l) => l.skip ? "" : l.topic || (l.step ? m.planName(l.c, l.step) : "");
+// 기록의 진도 글자: 직접 쓴 글자만 (차시 계획 이름은 안 씀)
+const topicOf = (m, l) => l.skip ? "" : l.topic || "";
+// 지난 수업 메모 한 줄 (그 반 바로 다음 수업에 보임)
+const memoText = i => i.memo ? `✎ ${i.memo.note}` : "";
 // 진도 글자 → 색 번호(0~7). 같은 글자 = 같은 색, 새 글자는 나온 순서대로 다음 색. 직접 고른 색이 있으면 가장 최근에 고른 색
 function tagColors(m) {
   const auto = new Map(), pick = new Map();
@@ -305,7 +311,9 @@ function drawBoard() {
   if (off) { label = `<b>${md(schoolDay)} ${WD[fromIso(schoolDay).getDay()]}요일</b><span>수업 없는 날</span>`; big = `<div class="cls calm">${esc(off.title)}</div>`; }
   else if (focus) {
     const i = slotInfo(m, focus);
-    big = `<div class="cls ${focus.changed ? "red" : ""}">${focus.c}</div><div class="what">${esc(stepText(i, focus)) || "진도 계획 전"}${after ? `<small>다음 시간: ${after.p}교시 ${after.c}</small>` : ""}</div>`;
+    const last = lastBefore(m, focus.c, slotKey(focus.date, focus.p));
+    const what = stepText(i, focus) || (last?.topic ? `지난 시간: ${last.topic}` : "");
+    big = `<div class="cls ${focus.changed ? "red" : ""}">${focus.c}</div><div class="what">${esc(what)}${i.memo ? `<small class="memo">${esc(memoText(i))}</small>` : ""}${after ? `<small>다음 시간: ${after.p}교시 ${after.c}</small>` : ""}</div>`;
   } else {
     const nd = nextSchoolDay(today), first = m.slotsFor(nd).find(s => s.c);
     big = first ? `<div class="cls calm">내일 ${first.p}교시 <span class="${first.changed ? "red" : ""}">${first.c}</span></div>` : `<div class="cls calm">내일 수업 없음</div>`;
@@ -322,7 +330,8 @@ function drawBoard() {
   const cell = (date, s) => {
     if (!s?.c) return `<div class="c"></div>`; // 빠진 수업·공강은 빈칸
     const st = state(m, s, now), i = slotInfo(m, s), { t, k, cls, style } = look(s, st, i);
-    return `<div class="c"><button class="${cls}" data-k="${k}"${style} title="${esc(stepText(i, s))}"><b class="${s.changed ? "red" : ""}">${s.c}</b>${t ? `<i>${esc(t)}</i>` : i.l?.skip ? "<i>수업 못함</i>" : ""}</button></div>`;
+    const tip = [stepText(i, s), memoText(i)].filter(Boolean).join(" · ");
+    return `<div class="c"><button class="${cls}" data-k="${k}"${style} title="${esc(tip)}"><b class="${s.changed ? "red" : ""}">${s.c}</b>${t ? `<i>${esc(t)}</i>` : i.l?.skip ? "<i>수업 못함</i>" : i.memo ? `<i class="memo">${esc(memoText(i))}</i>` : ""}</button></div>`;
   };
   const start = m.firstDay && m.firstDay < schoolDay ? m.firstDay : addDays(schoolDay, -28);
   const days = [];
@@ -344,7 +353,7 @@ function drawBoard() {
     const s = railSlots[p - 1];
     if (!s?.c) return `<div class="empty"><span class="p">${p}교시</span></div>`;
     const st = state(m, s, now), i = slotInfo(m, s), { k, cls, style } = look(s, st, i);
-    return `<button class="${cls}" data-k="${k}"${style}><span class="p">${p}교시 ${BELL[p][0]}</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${st === "todo" ? "기록 전" : esc(stepText(i, s))}</span></button>`;
+    return `<button class="${cls}" data-k="${k}"${style}><span class="p">${p}교시 ${BELL[p][0]}</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${st === "todo" ? "기록 전" : esc(stepText(i, s))}</span>${i.memo ? `<span class="s memo">${esc(memoText(i))}</span>` : ""}</button>`;
   }).join("");
 
   const nd = nextSchoolDay(schoolDay), ndSlots = m.slotsFor(nd).filter(s => s.c);
@@ -404,34 +413,38 @@ function openPop(anchor) {
   const m = buildModel(data), colorOf = tagColors(m);
   const slots = [...picked].sort().map(k => slotOf(m, k)).filter(s => s?.c);
   if (!slots.length) return closePop();
-  const f = slots[0], ex = m.lessons[slotKey(f.date, f.p)], fi = slotInfo(m, f), plan = fi.step ? m.planName(f.c, fi.step) : "";
-  draft ||= { text: ex ? topicOf(m, ex) : plan, color: Number.isInteger(ex?.color) ? ex.color : null };
+  const f = slots[0], ex = m.lessons[slotKey(f.date, f.p)], fi = slotInfo(m, f), last = lastBefore(m, f.c, slotKey(f.date, f.p));
+  draft ||= { text: ex ? topicOf(m, ex) : "", color: Number.isInteger(ex?.color) ? ex.color : null, note: ex?.note || "" };
   // 전에 쓴 진도 글자를 골라 넣을 수 있게 (같은 글자 = 같은 색)
   const topics = [...new Set(Object.keys(m.lessons).sort().reverse().map(k => topicOf(m, m.lessons[k])).filter(Boolean))].slice(0, 40);
   const anyRec = slots.some(s => m.lessons[slotKey(s.date, s.p)]);
   const head = slots.length === 1
-    ? `${md(f.date)}(${WD[fromIso(f.date).getDay()]}) ${f.p}교시 <b>${f.c}</b><br>${ex ? `기록: ${esc(topicOf(m, ex) || "수업 못함")}` : `계획: ${esc(plan || "없음")}`}`
+    ? `${md(f.date)}(${WD[fromIso(f.date).getDay()]}) ${f.p}교시 <b>${f.c}</b><br>지난 시간: ${esc(last?.topic || "기록 없음")}${fi.memo ? `<br><span class="memo">${esc(memoText(fi))}</span>` : ""}`
     : `<b>${slots.length}칸</b> · ${slots.slice(0, 6).map(s => `${WD[fromIso(s.date).getDay()]}${s.p} ${s.c}`).join(", ")}${slots.length > 6 ? ` 외 ${slots.length - 6}` : ""}`;
   const auto = draft.text.trim() ? colorOf(draft.text.trim()) : null; // '자동'이면 지금 이 색
   pop = document.createElement("div");
   pop.className = "pop";
   pop.innerHTML = `<div class="t">${head}</div>
     <input list="topics" value="${esc(draft.text)}" placeholder="진도 (예: 광합성 실험)" autocomplete="off">
+    ${slots.length === 1 ? `<input class="note" value="${esc(draft.note)}" placeholder="메모 (다음 ${f.c} 수업에 보여요)" autocomplete="off">` : ""}
     <datalist id="topics">${topics.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
     <div class="sw"><button class="auto${draft.color === null ? " on" : ""}" data-color="" title="같은 글자는 같은 색으로">자동</button>${[0, 1, 2, 3, 4, 5, 6, 7].map(n => `<button data-color="${n}" style="--tag:var(--tag${n})" class="${draft.color === n ? "on" : ""}" aria-label="색 ${n + 1}"${auto === n ? ` title="자동이면 이 색"` : ""}></button>`).join("")}</div>
     <div class="acts"><button class="save" data-r="save">저장</button><button data-r="skip">수업 못함</button>${anyRec ? `<button data-r="del" class="del">지우기</button>` : ""}</div>
     ${slots.length === 1 ? `<div class="hint">Ctrl+클릭으로 여러 칸에 한 번에 입력</div>` : ""}`;
   pop.style.visibility = "hidden";
   screen.appendChild(pop);
+  // 다른 창이 열린 채로 칸을 누르면 closePop 이 화면을 다시 그려서 누른 칸이 화면에서 빠짐 → 위치가 0,0(왼쪽 위)으로 잡히던 문제. 새로 그린 같은 칸을 다시 찾음
+  if (!anchor.isConnected) anchor = screen.querySelector(`${anchor.closest(".rail") ? ".rail" : ".track"} [data-k="${anchor.dataset.k}"]`) || anchor;
   const sr = screen.getBoundingClientRect(), br = anchor.getBoundingClientRect(), z = sr.width / 1280, w = pop.offsetWidth, h = pop.offsetHeight;
   let x = (br.left - sr.left) / z, y = (br.bottom - sr.top) / z + 6, o = "top left";
   if (x + w > 1270) { x = (br.right - sr.left) / z - w; o = "top right"; }
   if (y + h > 710) { y = (br.top - sr.top) / z - h - 6; o = o.replace("top", "bottom"); }
-  pop.style.cssText = `left:${x}px;top:${Math.max(6, y)}px;--o:${o}`;
-  const input = pop.querySelector("input");
+  pop.style.cssText = `left:${Math.max(6, x)}px;top:${Math.max(6, y)}px;--o:${o}`;
+  const input = pop.querySelector("input"), noteIn = pop.querySelector("input.note");
   input.addEventListener("input", () => { draft.text = input.value; });
+  noteIn?.addEventListener("input", () => { draft.note = noteIn.value; });
   // 한글 입력 중의 Enter 는 글자 확정이라 저장하지 않음
-  input.addEventListener("keydown", ev => { if (ev.key === "Enter" && !ev.isComposing) { ev.preventDefault(); saveAll("save"); } });
+  for (const el of [input, noteIn]) el?.addEventListener("keydown", ev => { if (ev.key === "Enter" && !ev.isComposing) { ev.preventDefault(); saveAll("save"); } });
   pop.addEventListener("click", ev => {
     ev.stopPropagation(); // 창 안을 눌러도 닫히지 않게
     const c = ev.target.closest("[data-color]");
@@ -442,27 +455,22 @@ function openPop(anchor) {
     }
     const r = ev.target.closest("[data-r]")?.dataset.r;
     if (r) return saveAll(r);
-    input.focus(); // 빈 곳을 눌러도 바로 이어서 쓰고 Enter 로 저장
+    if (!ev.target.closest("input")) input.focus(); // 빈 곳을 눌러도 바로 이어서 쓰고 Enter 로 저장
   });
   input.focus(); input.select();
 }
 
 // 고른 칸 전부에 저장. 화면은 바로, 저장은 뒤에서. (반짝임은 휴대폰 등 다른 곳에서 들어온 기록에만)
 async function saveAll(kind) {
-  const keys = [...picked].sort(), text = draft.text.trim(), color = draft.color, jobs = [];
+  const keys = [...picked].sort(), text = draft.text.trim(), color = draft.color, memo = keys.length === 1 ? draft.note.trim() : null, jobs = [];
   pop?.remove(); pop = null; draft = null; picked.clear();
   for (const k of keys) {
     if (kind === "del") { if (data.lessons[k]) { delete data.lessons[k]; jobs.push(() => api(`/lessons/${k}`, { method: "DELETE" })); } continue; }
     const m = buildModel(data), s = slotOf(m, k); // 같은 반 여러 칸이면 앞 칸 기록을 보고 다음 칸을 정하므로 매번 다시 계산
     if (!s?.c) continue;
-    const note = m.lessons[k]?.note;
+    const note = memo ?? m.lessons[k]?.note; // 여러 칸이면 칸마다 있던 메모 그대로
     let rec = { skip: true, note };
-    if (kind === "save") {
-      // 화면에는 글자만. 차시 번호(진도표 앱 진행률용)는 알아서: 앞 시간과 같은 글자면 이어서, 다르면 다음 차시
-      const prev = m.stepBefore(s.c, k), last = (m.byClass[s.c] || []).filter(l => l.k < k && !l.skip).pop();
-      const same = text && last && topicOf(m, last) === text;
-      rec = { step: same ? last.step || prev : prev + 1, topic: text, color, note };
-    }
+    if (kind === "save") rec = { step: stepFor(m, s.c, k, text), topic: text, color, note };
     const doc = data.lessons[k] = lessonDoc(s, rec);
     jobs.push(() => api(`/lessons/${k}`, { method: "PATCH", body: JSON.stringify({ fields: Object.fromEntries(Object.entries(doc).map(([a, v]) => [a, enc(v)])) }) }));
   }

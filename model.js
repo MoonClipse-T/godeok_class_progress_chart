@@ -113,9 +113,13 @@ export function buildModel({ meta, lessons, events }) {
   const stepOf = {};
   const startFrom = firstLesson || iso(new Date());
   const run = {};
+  // 수업에 남긴 메모는 그 반의 바로 다음 수업에 보여 줌 (학사일정으로 빠진 수업은 건너뜀)
+  const memoFor = {}, carry = {};
   for (let d = firstDay; d && d <= YEAR_END; d = addDays(d, 1)) for (const s of slotsFor(d)) {
     if (!s.c) continue;
     const k = slotKey(d, s.p), l = lessons[k];
+    if (!s.event && carry[s.c]) { memoFor[k] = carry[s.c]; delete carry[s.c]; }
+    if (l?.note) carry[s.c] = { note: l.note, date: d, p: s.p };
     if (l) { stepOf[k] = l.skip ? 0 : l.step || 0; continue; }
     if (s.event || d < startFrom) continue;
     const b = stepBefore(s.c, k);
@@ -150,14 +154,24 @@ export function buildModel({ meta, lessons, events }) {
     return out;
   };
 
-  return { tt, syncedAt, plans, notes, tinted, classes, firstDay, slotsFor, dayOff, byClass, stepBefore, stepOf, progress, lastLesson, planOf, planName, stepTitle, nextExam, lessonsUntil, pending, changesFrom, lessons, events };
+  return { tt, syncedAt, plans, notes, tinted, classes, firstDay, slotsFor, dayOff, byClass, stepBefore, stepOf, memoFor, progress, lastLesson, planOf, planName, stepTitle, nextExam, lessonsUntil, pending, changesFrom, lessons, events };
 }
 
 // 칸에 보일 차시 번호와 이름
 export function slotInfo(m, s) {
   const l = m.lessons[slotKey(s.date, s.p)];
   const v = m.stepOf[slotKey(s.date, s.p)] || 0, step = Math.max(0, v), over = v < 0;
-  return { l, step, over, planned: !l, name: l?.skip ? "수업 못함" : l?.topic || (step ? m.planName(s.c, step) : over ? "계획 끝" : ""), note: l?.note || "" };
+  // 이름은 기록한 수업만 (아직인 수업에 미리 계획한 차시 이름을 채우지 않음). memo: 그 반 지난 수업에 남긴 메모
+  const name = !l ? "" : l.skip ? "수업 못함" : l.topic || (l.step ? m.planName(s.c, l.step) : "");
+  return { l, step, over, planned: !l, name, note: l?.note || "", memo: m.memoFor[slotKey(s.date, s.p)] };
+}
+
+// 그 반 바로 앞 수업(수업 못함 제외)
+export const lastBefore = (m, c, k) => (m.byClass[c] || []).filter(l => l.k < k && !l.skip).pop();
+// 진도 글자로 저장할 때 차시 번호(진도표 앱 진행률용)는 알아서: 앞 시간과 같은 글자면 이어서, 다르면 다음 차시
+export function stepFor(m, c, k, text) {
+  const prev = m.stepBefore(c, k), last = lastBefore(m, c, k);
+  return text && last?.topic === text ? last.step || prev : prev + 1;
 }
 
 // 기록 한 건 (index·desk·quick 모두 같은 모양으로 저장). topic: 바탕화면에서 직접 쓴 진도, color: 직접 고른 색 번호(--tag0~7)

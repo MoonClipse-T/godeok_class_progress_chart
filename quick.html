@@ -40,6 +40,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .choices button:active { transform: scale(.97); }
 .memo summary { font-size: 14px; color: var(--muted); cursor: pointer; padding: 4px 0; }
 .memo textarea { width: 100%; margin-top: 8px; min-height: 70px; resize: vertical; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 16px/1.5 var(--sans); padding: 10px 12px; }
+.plan small.memo { color: var(--warn); font-weight: 600; }
+.topic { width: 100%; min-height: 56px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: 18px var(--sans); padding: 0 16px; }
+.topic:focus { outline: none; border-color: var(--hl); box-shadow: 0 0 0 3px var(--water-soft); }
 .more { font-size: 13.5px; color: var(--todo); }
 
 .done { display: grid; gap: 8px; padding: 6px 0; }
@@ -72,7 +75,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { FB_CONFIG, APP_ID, BELL, WD, iso, fromIso, md, atTime, slotKey, isWeekend, buildModel, slotInfo, lessonDoc } from "./model.js";
+import { FB_CONFIG, APP_ID, BELL, WD, iso, fromIso, md, atTime, slotKey, isWeekend, buildModel, slotInfo, lessonDoc, lastBefore, stepFor } from "./model.js";
 
 const fbApp = initializeApp(FB_CONFIG);
 const auth = getAuth(fbApp);
@@ -84,6 +87,7 @@ let user, data = { meta: {}, lessons: {}, events: [] }, got = 0; // user: undefi
 let pick = null;     // 직접 고른 수업(오늘 목록에서 누름). 없으면 가장 최근에 끝난 기록 전 수업
 let toast = "";
 let unsent = false;  // 휴대폰에만 있고 아직 서버(→ 바탕화면)에 안 올라간 기록이 있음
+let typed = null;    // 쓰는 중인 진도·메모 { k, topic, note } (새 기록이 들어와 화면을 다시 그려도 지워지지 않게)
 
 onAuthStateChanged(auth, u => {
   user = u;
@@ -100,12 +104,12 @@ function say(t, stay = false) { toast = t; draw(); if (!stay) setTimeout(() => {
 
 async function save(slot, rec) {
   const k = slotKey(slot.date, slot.p);
-  pick = null;
+  pick = null; typed = null;
   const ref = doc(db, "artifacts", APP_ID, "users", user.uid, "lessons", k);
   // 화면은 바로 다음으로 넘기되, '기록함'은 서버가 받은 뒤에 알림.
   // (예전엔 바로 '기록함'이라 해서, 곧장 화면을 닫으면 기록이 휴대폰에만 남고 바탕화면에 안 갔음)
   const write = rec === null ? deleteDoc(ref) : setDoc(ref, lessonDoc(slot, rec));
-  const done = rec === null ? "기록을 지웠어요" : rec.skip ? `${slot.c} 수업 못함 기록함` : `${slot.c} ${rec.step}차시 기록함`;
+  const done = rec === null ? "기록을 지웠어요" : rec.skip ? `${slot.c} 수업 못함 기록함` : `${slot.c} ${rec.topic} 기록함`;
   say("올리는 중… 잠깐만 열어 두세요", true);
   const slow = setTimeout(() => say("인터넷이 느려요. 올라갈 때까지 열어 두세요", true), 5000);
   try { await write; say(done); }
@@ -129,20 +133,26 @@ function draw() {
   const top = `<div class="top"><span><b>${md(today)} ${WD[now.getDay()]}요일</b></span><span>${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}</span></div>`;
   let body;
   if (target) {
-    const k = slotKey(target.date, target.p), existing = m.lessons[k], prev = m.stepBefore(target.c, k), i = slotInfo(m, target);
+    const k = slotKey(target.date, target.p), existing = m.lessons[k], last = lastBefore(m, target.c, k), i = slotInfo(m, target);
+    const t = typed?.k === k ? typed : { topic: existing?.topic || "", note: existing?.note || "" };
+    // 전에 쓴 진도 글자를 골라 넣을 수 있게 (이 반 것 먼저)
+    const topics = [...new Set([...(m.byClass[target.c] || [])].reverse().map(l => l.topic).concat(Object.values(m.lessons).map(l => l.topic)).filter(Boolean))].slice(0, 40);
     const ended = atTime(target.date, BELL[target.p][1]) <= now;
     body = `
       <div class="when"><b>${target.date === today ? "오늘" : `${md(target.date)}(${WD[fromIso(target.date).getDay()]})`} ${target.p}교시</b><span>${BELL[target.p][0]}–${BELL[target.p][1]}${ended ? "" : ", 아직 수업 전"}</span></div>
       <div class="cls ${target.changed ? "red" : ""}">${target.c}</div>
-      <div class="plan">${existing ? `기록: ${existing.skip ? "수업 못함" : esc(m.stepTitle(target.c, existing.step))}` : `${prev + 1}차시 ${esc(m.planName(target.c, prev + 1))}`}
-        <small>지난 시간: ${prev ? esc(m.stepTitle(target.c, prev)) : "기록 없음"}${target.changed ? `, <span class="red">컴시간에서 바뀐 수업</span>` : ""}</small></div>
+      <div class="plan">${existing ? `기록: ${existing.skip ? "수업 못함" : esc(existing.topic || "진도 안 씀")}` : "어디까지 했나요?"}
+        <small>지난 시간: ${esc(last?.topic || "기록 없음")}${target.changed ? `, <span class="red">컴시간에서 바뀐 수업</span>` : ""}</small>
+        ${i.memo ? `<small class="memo">✎ ${esc(i.memo.note)}</small>` : ""}</div>
+      <input class="topic" id="topic" list="topics" value="${esc(t.topic)}" placeholder="진도 (예: 광합성 실험)" autocomplete="off" enterkeyhint="done">
+      <datalist id="topics">${topics.map(x => `<option value="${esc(x)}">`).join("")}</datalist>
       <div class="choices">
-        <button class="main" data-r="next">계획대로 했어요<small>${prev + 1}차시</small></button>
-        ${prev > 0 ? `<button data-r="same">이어서 했어요<small>${prev}차시 계속</small></button>` : ""}
+        <button class="main" data-r="save">저장</button>
+        ${last?.topic ? `<button data-r="same">지난 시간 진도 이어서<small>${esc(last.topic)}</small></button>` : ""}
         <button data-r="skip">수업 못함<small>행사·자습 등</small></button>
         ${existing ? `<button class="del" data-r="del">기록 지우기</button>` : ""}
       </div>
-      <details class="memo"${existing?.note ? " open" : ""}><summary>메모 남기기</summary><textarea id="note" placeholder="예: 실험 못 끝냄, 다음 시간 마무리">${esc(existing?.note || "")}</textarea></details>
+      <details class="memo"${t.note ? " open" : ""}><summary>메모 남기기 (다음 ${target.c} 수업에 보여요)</summary><textarea id="note" placeholder="예: 실험 못 끝냄, 다음 시간 마무리">${esc(t.note)}</textarea></details>
       ${!pick && pending.length > 1 ? `<div class="more">기록 전 수업이 ${pending.length - 1}개 더 있어요. 이 수업을 기록하면 이어서 나와요.</div>` : ""}
       ${pick ? `<button class="back" id="back">← 오늘 수업 목록</button>` : ""}`;
   } else {
@@ -155,19 +165,26 @@ function draw() {
   const list = `<div class="h">오늘 수업</div><div class="list">${rows.length ? rows.map(s => {
     const k = slotKey(s.date, s.p), l = m.lessons[k], i = slotInfo(m, s);
     const st = l ? `<span class="st ok">✓</span>` : atTime(s.date, BELL[s.p][1]) <= now ? `<span class="st todo">기록 전</span>` : atTime(s.date, BELL[s.p][0]) <= now ? `<span class="st now">수업 중</span>` : `<span class="st"></span>`;
-    return `<button data-k="${k}"><span class="p">${s.p}교시</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${esc(l?.skip ? "수업 못함" : i.step ? `${i.step}차시 ${i.name}` : i.name)}</span>${st}</button>`;
+    return `<button data-k="${k}"><span class="p">${s.p}교시</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${esc(i.name || (i.memo ? `✎ ${i.memo.note}` : ""))}</span>${st}</button>`;
   }).join("") : `<span class="empty">${day ? "오늘은 수업이 없어요" : "주말이에요"}</span>`}</div>`;
 
   // 지난번에 못 올라간 기록이 있으면 (화면을 열면 자동으로 올라감) 다 올라갈 때까지 알려 줌
   const status = toast || (unsent ? "안 올라간 기록을 올리는 중…" : "");
   app.innerHTML = top + body + list + (status ? `<div class="toast" role="status">${esc(status)}</div>` : "");
 
-  app.querySelectorAll("[data-r]").forEach(b => b.onclick = () => {
-    const note = document.getElementById("note")?.value.trim() || "";
-    const k = slotKey(target.date, target.p), prev = m.stepBefore(target.c, k);
-    const r = b.dataset.r;
-    save(target, r === "del" ? null : r === "next" ? { step: prev + 1, note } : r === "same" ? { step: prev, note } : { skip: true, note });
-  });
+  const topicIn = document.getElementById("topic"), noteIn = document.getElementById("note");
+  if (target) {
+    const k = slotKey(target.date, target.p), keep = () => { typed = { k, topic: topicIn.value, note: noteIn.value }; };
+    topicIn.oninput = noteIn.oninput = keep;
+    const go = r => {
+      const note = noteIn.value.trim(), text = r === "same" ? lastBefore(m, target.c, k).topic : topicIn.value.trim();
+      if (r === "save" && !text) { topicIn.focus(); return say("어디까지 했는지 써 주세요"); }
+      save(target, r === "del" ? null : r === "skip" ? { skip: true, note } : { step: stepFor(m, target.c, k, text), topic: text, note });
+    };
+    app.querySelectorAll("[data-r]").forEach(b => b.onclick = () => go(b.dataset.r));
+    // 한글 입력 중의 Enter 는 글자 확정이라 저장하지 않음
+    topicIn.onkeydown = ev => { if (ev.key === "Enter" && !ev.isComposing) { ev.preventDefault(); go("save"); } };
+  }
   app.querySelectorAll("[data-k]").forEach(b => b.onclick = () => {
     const [date, p] = [b.dataset.k.slice(0, 10), +b.dataset.k.slice(11)];
     pick = m.slotsFor(date)[p - 1]; draw(); scrollTo({ top: 0 });
@@ -182,7 +199,7 @@ function nextText(m, now) {
 }
 
 draw();
-setInterval(() => { if (!document.hidden && !document.activeElement?.matches("textarea")) draw(); }, 30000);
+setInterval(() => { if (!document.hidden && !document.activeElement?.matches("textarea, input")) draw(); }, 30000);
 document.addEventListener("visibilitychange", () => !document.hidden && draw());
 </script>
 </body>
