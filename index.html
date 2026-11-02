@@ -283,8 +283,11 @@ dialog.sheet::backdrop { background: var(--backdrop); opacity: var(--p, 1); }
 .manual select, .manual textarea, .manual input { width: 100%; }
 .manual label small { font-weight: 500; }
 .manual .ask { font-size: 12.5px; color: var(--warn); font-weight: 600; }
-.plan-box .memo, .ticket .memo, .has .memo, .class-card .memo { color: var(--warn); font-weight: 600; }
-.plan-box .memo { display: block; margin-top: 4px; }
+.has .memo { color: var(--warn); font-weight: 600; } /* 지난 시간에 쓴 내용 */
+.plan-box .val { white-space: pre-wrap; }
+.ticket .name.prev { white-space: normal; }
+.ticket .name.prev small { display: block; font-size: 12px; font-weight: 600; color: var(--warn); }
+.ticket.now .name.prev small { color: var(--now-sub); }
 .manual .acts { display: flex; gap: 8px; }
 .manual .acts .btn.primary { margin-left: auto; }
 .queue-note { font-size: 12.5px; color: var(--warn); font-weight: 600; background: var(--warn-soft); padding: 7px 11px; border-radius: 10px; }
@@ -315,7 +318,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-import { FB_CONFIG, APP_ID, BELL, PERIODS, WD, YEAR_END, iso, fromIso, addDays, isWeekend, md, mdw, atTime, gradeOf, slotKey, nextSchoolDay, buildModel, slotInfo, lessonDoc, lastBefore, stepFor } from "./model.js";
+import { FB_CONFIG, APP_ID, BELL, PERIODS, WD, YEAR_END, iso, fromIso, addDays, isWeekend, md, mdw, atTime, gradeOf, slotKey, nextSchoolDay, buildModel, slotInfo, lessonDoc, textOf, stepFor } from "./model.js";
 
 const fbApp = initializeApp(FB_CONFIG);
 const auth = getAuth(fbApp);
@@ -569,9 +572,9 @@ function Today({ m, now, open, setTab, pending }) {
                 ${st === "now" && html`<span class="status now">수업 중</span>`}
               </div>
               ${s.event ? html`<div class="name dim">학사일정으로 수업 없음</div>`
-                : i.name ? html`<div class="name">${i.name}${i.note && html`<small> · ${i.note}</small>`}</div>`
+                : i.name ? html`<div class="name">${i.name}</div>`
+                : i.memo ? html`<div class="name prev"><small>지난 시간</small>${i.memo.text}</div>`
                 : html`<div class="name dim">기록 전</div>`}
-              ${i.memo && html`<div class="name dim memo">✎ ${i.memo.note}</div>`}
             </div>
           </button>`;
         })}</div>`}
@@ -675,10 +678,10 @@ function renderCell(m, s, now, open, only) {
   if (!s.c) return null; // 공강·빠진 수업은 빈칸
   const st = slotState(m, s, now), i = slotInfo(m, s), step = i.planned ? 0 : i.step; // 아직인 수업은 차시 없이 빈칸
   const cls = `has ${kc(m, step, i.planned)} ${st === "now" || st === "todo" ? st : ""} ${st === "blocked" ? "blocked" : ""} ${only && only !== s.c ? "dim" : ""}`;
-  return html`<button class=${cls} style=${kh(step)} onClick=${() => open(s)} title=${[s.changed && chgLabel(s), i.name, i.memo && `✎ ${i.memo.note}`].filter(Boolean).join("\n")}>
+  return html`<button class=${cls} style=${kh(step)} onClick=${() => open(s)} title=${[s.changed && chgLabel(s), i.name, i.memo && `지난 시간: ${i.memo.text}`].filter(Boolean).join("\n")}>
     <span class="r1"><${Chip} c=${s.c} red=${s.changed} />${st !== "blocked" && html`<${Step} n=${step} />`}</span>
     <span class=${"t " + (st === "todo" ? "todo" : st === "blocked" ? "ev" : "")}>
-      ${st === "blocked" ? s.event.title : st === "todo" ? "기록 필요" : i.name || (i.memo && html`<span class="memo">✎ ${i.memo.note}</span>`)}
+      ${st === "blocked" ? s.event.title : st === "todo" ? "기록 필요" : i.name || (i.memo && html`<span class="memo">↩ ${i.memo.text}</span>`)}
     </span>
     ${st === "done" && html`<span class="ok"><${Icon} n="check" /></span>`}
   </button>`;
@@ -700,12 +703,11 @@ function Classes({ m, now, saveMeta }) {
         </div>
         ${total > 0 && html`<div class="bar"><i style=${`width:${Math.min(100, p / total * 100)}%`}></i></div>`}
         <dl class="kv">
-          <dt>지난</dt><dd>${last ? html`<span>${md(last.date)} ${last.topic || m.stepTitle(c, last.step) || "-"}</span>` : "-"}</dd>
-          ${last?.note && html`<dt>메모</dt><dd><span class="memo">✎ ${last.note}</span></dd>`}
+          <dt>지난</dt><dd>${last ? html`<span>${md(last.date)} ${textOf(last) || m.stepTitle(c, last.step) || "-"}</span>` : "-"}</dd>
         </dl>
         <textarea placeholder="학급 메모 (예: 실험 보고서 미제출 3명)" value=${m.notes[c] || ""}
           onBlur=${e => e.target.value !== (m.notes[c] || "") && saveMeta("notes", { [c]: e.target.value })}></textarea>
-        ${recent.length > 0 && html`<div class="mini-list">${recent.map(l => html`<div><span>${md(l.date)} ${l.p}교시</span><span>${l.skip ? "수업 못함" : l.topic || m.stepTitle(c, l.step)}${l.note ? " · " + l.note : ""}</span></div>`)}</div>`}
+        ${recent.length > 0 && html`<div class="mini-list">${recent.map(l => html`<div><span>${md(l.date)} ${l.p}교시</span><span>${l.skip ? "수업 못함" : textOf(l) || m.stepTitle(c, l.step)}</span></div>`)}</div>`}
       </div>`;
     })}</div>
   </div>`;
@@ -761,14 +763,12 @@ function RecordSheet({ slot, queue, m, onSave, onClose }) {
   };
   grab.onPointerCancel = grab.onPointerUp;
   const k = slotKey(slot.date, slot.p);
-  const existing = m.lessons[k], last = lastBefore(m, slot.c, k), memo = slotInfo(m, slot).memo;
-  const [topic, setTopic] = useState(existing?.topic || "");
-  const [note, setNote] = useState(existing?.note || "");
+  const existing = m.lessons[k], memo = slotInfo(m, slot).memo;
+  const [text, setText] = useState(textOf(existing));
   const [ask, setAsk] = useState(false);
-  // 진도는 글자로 직접. 차시 번호(진행률용)는 알아서: 지난 시간과 같은 글자면 이어서, 다르면 다음 차시
-  const saveTopic = text => { text = text.trim(); if (!text) return setAsk(true); save({ step: stepFor(m, slot.c, k, text), topic: text, note: note.trim() }); };
-  // 전에 쓴 진도 글자를 골라 넣을 수 있게 (이 반 것 먼저)
-  const topics = [...new Set([...(m.byClass[slot.c] || [])].reverse().map(l => l.topic).concat(Object.values(m.lessons).map(l => l.topic)).filter(Boolean))].slice(0, 40);
+  // 진도·메모는 한 칸(topic). 예전에 따로 있던 메모(note)는 이 칸에 합쳐 보여 줬으니 비움.
+  // 차시 번호(진행률용)는 알아서: 지난 시간과 같은 글자면 이어서, 다르면 다음 차시
+  const saveText = () => { const t = text.trim(); if (!t) return setAsk(true); save({ step: stepFor(m, slot.c, k, t), topic: t }); };
 
   return html`<dialog class="sheet" ref=${dlg} onClose=${onClose} onCancel=${e => { e.preventDefault(); exit(); }} onClick=${e => e.target === dlg.current && exit()}>
     <div class="sheet-in">
@@ -781,24 +781,19 @@ function RecordSheet({ slot, queue, m, onSave, onClose }) {
       ${queue > 0 && html`<div class="queue-note">밀린 기록 ${queue}개 남음. 저장하면 다음 수업이 바로 열려요</div>`}
       ${slot.event && html`<div class="tag event" style="align-self:flex-start;font-size:13px;padding:5px 10px">${slot.event.title}: 학사일정상 수업 없음</div>`}
       <div class=${"plan-box " + kc(m, 0, !existing)}>
-        <div class="lbl">${existing ? "기록된 진도" : "어디까지 했나요?"}</div>
-        <div class="val">${existing ? (existing.skip ? "수업 못함" : existing.topic || "진도 안 씀") : ""}</div>
-        <div class="prev">지난 시간: ${last?.topic || "기록 없음"}${memo && html`<span class="memo">✎ ${memo.note}</span>`}</div>
+        <div class="lbl">지난 시간</div>
+        <div class="val">${memo?.text || "기록 없음"}</div>
+        ${existing?.skip && html`<div class="prev">이 수업은 '수업 못함'으로 기록돼 있어요</div>`}
       </div>
       <div class="manual">
-        <label for="topic">진도</label>
-        <input id="topic" class="field" list="topics" autocomplete="off" enterkeyhint="done" placeholder="예: 광합성 실험" value=${topic}
-          onInput=${e => { setTopic(e.target.value); setAsk(false); }}
-          onKeyDown=${e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); saveTopic(topic); } }} />
-        <datalist id="topics">${topics.map(t => html`<option value=${t} />`)}</datalist>
+        <label for="topic">이번 시간 <small>진도·메모, 다음 ${slot.c} 수업에 크게 보여요</small></label>
+        <textarea id="topic" class="field" rows="3" placeholder="예: 광합성 실험, 보고서 다음 시간에 걷기" value=${text}
+          onInput=${e => { setText(e.target.value); setAsk(false); }}></textarea>
         ${ask && html`<div class="ask">어디까지 했는지 써 주세요</div>`}
-        <label for="note">메모 <small>다음 ${slot.c} 수업에 보여요</small></label>
-        <textarea id="note" class="field" rows="2" placeholder="예: 실험 못 끝냄, 다음 시간 마무리" value=${note} onInput=${e => setNote(e.target.value)}></textarea>
       </div>
       <div class="quick">
-        <button class="btn primary" onClick=${() => saveTopic(topic)}><${Icon} n="check" />저장</button>
-        ${last?.topic && html`<button class="btn" onClick=${() => saveTopic(last.topic)}>지난 시간 진도 이어서<small>${last.topic}</small></button>`}
-        <button class="btn" onClick=${() => save({ skip: true, step: 0, note: note.trim() })}>수업 못함<small>행사·자습 등</small></button>
+        <button class="btn primary" onClick=${saveText}><${Icon} n="check" />저장</button>
+        <button class="btn" onClick=${() => save({ skip: true, step: 0 })}>수업 못함<small>행사·자습 등</small></button>
         ${existing && html`<button class="btn ghost" style="color:var(--red)" onClick=${() => save(null)}>기록 지우기</button>`}
       </div>
     </div>
