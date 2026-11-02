@@ -140,7 +140,7 @@ function draw() {
       <div class="cls ${target.changed ? "red" : ""}">${target.c}</div>
       <div class="plan"><small class="lbl">지난 시간${target.changed ? `, <span class="red">컴시간에서 바뀐 수업</span>` : ""}</small>${esc(i.memo?.text || "기록 없음")}</div>
       ${existing?.skip ? `<div class="more">이 수업은 '수업 못함'으로 기록돼 있어요</div>` : ""}
-      <textarea class="topic" id="topic" rows="3" placeholder="진도·메모 (다음 ${target.c} 수업에 크게 보여요)">${esc(text)}</textarea>
+      <textarea class="topic" id="topic" rows="3" placeholder="진도·메모 (다음 ${target.c} 수업을 누르면 보여요)">${esc(text)}</textarea>
       <div class="choices">
         <button class="main" data-r="save">저장</button>
         <button data-r="skip">수업 못함<small>행사·자습 등</small></button>
@@ -158,7 +158,7 @@ function draw() {
   const list = `<div class="h">오늘 수업</div><div class="list">${rows.length ? rows.map(s => {
     const k = slotKey(s.date, s.p), l = m.lessons[k], i = slotInfo(m, s);
     const st = l ? `<span class="st ok">✓</span>` : atTime(s.date, BELL[s.p][1]) <= now ? `<span class="st todo">기록 전</span>` : atTime(s.date, BELL[s.p][0]) <= now ? `<span class="st now">수업 중</span>` : `<span class="st"></span>`;
-    return `<button data-k="${k}"><span class="p">${s.p}교시</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${esc(i.name || (i.memo ? `↩ ${i.memo.text}` : ""))}</span>${st}</button>`;
+    return `<button data-k="${k}"><span class="p">${s.p}교시</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${esc(i.name)}</span>${st}</button>`;
   }).join("") : `<span class="empty">${day ? "오늘은 수업이 없어요" : "주말이에요"}</span>`}</div>`;
 
   // 지난번에 못 올라간 기록이 있으면 (화면을 열면 자동으로 올라감) 다 올라갈 때까지 알려 줌

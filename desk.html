@@ -63,8 +63,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .col .c b { font-family: var(--display); font-size: 19px; font-weight: 700; letter-spacing: -.01em; line-height: 1.05; } /* 반 이름은 큰 글씨와 같은 고운바탕 */
 .col .c i { font-style: normal; font-size: 10.5px; line-height: 1.2; color: var(--muted); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .col .c button.tag b { font-size: 16px; }
-.col .c i.memo, .rail .s.memo { color: var(--warn); font-weight: 600; } /* 지난 시간에 쓴 내용 */
-.big .what small.lbl { margin: 0 0 4px; font-weight: 600; color: var(--warn); }
 /* 진도 글자별 색: 같은 글자 = 같은 색 */
 .col .c button.tag, .rail .tag { background: var(--tag); }
 /* 여러 칸 고르기(Ctrl+클릭) */
@@ -125,7 +123,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pop .acts .save { background: var(--hl); color: #fff; font-weight: 700; flex: 1.4; }
 .pop .acts .save:hover { background: var(--water-hover); }
 .pop .prev { display: block; margin-top: 6px; }
-.pop .prev b { display: block; font-size: 15px; color: #17202b; line-height: 1.35; white-space: pre-wrap; }
+.pop .prev b { display: block; font-size: 17px; font-weight: 700; margin-top: 2px; color: #17202b; line-height: 1.35; white-space: pre-wrap; }
 .pop .hint { font-size: 11px; color: #8a939a; padding: 6px 8px 2px; }
 
 /* 처음 연결 */
@@ -252,7 +250,7 @@ function state(m, s, now) {
 const stepText = (i, s) => s.event ? s.event.title : i.name;
 // 기록에 쓴 내용(진도·메모 한 칸). 차시 계획 이름은 안 씀
 const topicOf = (m, l) => textOf(l);
-// 그 반 지난 시간에 쓴 내용 (바로 다음 수업에 크게 보임)
+// 그 반 지난 시간에 쓴 내용 (칸을 눌렀을 때 뜨는 창에만 보임)
 const memoText = i => i.memo?.text || "";
 // 진도 글자 → 색 번호(0~7). 같은 글자 = 같은 색, 새 글자는 나온 순서대로 다음 색. 직접 고른 색이 있으면 가장 최근에 고른 색
 function tagColors(m) {
@@ -311,8 +309,7 @@ function drawBoard() {
   if (off) { label = `<b>${md(schoolDay)} ${WD[fromIso(schoolDay).getDay()]}요일</b><span>수업 없는 날</span>`; big = `<div class="cls calm">${esc(off.title)}</div>`; }
   else if (focus) {
     const i = slotInfo(m, focus);
-    const own = stepText(i, focus), prev = memoText(i);
-    const what = own ? esc(own) : prev ? `<small class="lbl">지난 시간</small>${esc(prev)}` : "";
+    const what = esc(stepText(i, focus));
     big = `<div class="cls ${focus.changed ? "red" : ""}">${focus.c}</div><div class="what">${what}${after ? `<small>다음 시간: ${after.p}교시 ${after.c}</small>` : ""}</div>`;
   } else {
     const nd = nextSchoolDay(today), first = m.slotsFor(nd).find(s => s.c);
@@ -330,8 +327,7 @@ function drawBoard() {
   const cell = (date, s) => {
     if (!s?.c) return `<div class="c"></div>`; // 빠진 수업·공강은 빈칸
     const st = state(m, s, now), i = slotInfo(m, s), { t, k, cls, style } = look(s, st, i);
-    const tip = [stepText(i, s), i.memo && `지난 시간: ${memoText(i)}`].filter(Boolean).join("\n");
-    return `<div class="c"><button class="${cls}" data-k="${k}"${style} title="${esc(tip)}"><b class="${s.changed ? "red" : ""}">${s.c}</b>${t ? `<i>${esc(t)}</i>` : i.l?.skip ? "<i>수업 못함</i>" : i.memo ? `<i class="memo">↩ ${esc(memoText(i))}</i>` : ""}</button></div>`;
+    return `<div class="c"><button class="${cls}" data-k="${k}"${style} title="${esc(stepText(i, s))}"><b class="${s.changed ? "red" : ""}">${s.c}</b>${t ? `<i>${esc(t)}</i>` : i.l?.skip ? "<i>수업 못함</i>" : ""}</button></div>`;
   };
   const start = m.firstDay && m.firstDay < schoolDay ? m.firstDay : addDays(schoolDay, -28);
   const days = [];
@@ -353,7 +349,7 @@ function drawBoard() {
     const s = railSlots[p - 1];
     if (!s?.c) return `<div class="empty"><span class="p">${p}교시</span></div>`;
     const st = state(m, s, now), i = slotInfo(m, s), { k, cls, style } = look(s, st, i);
-    return `<button class="${cls}" data-k="${k}"${style}><span class="p">${p}교시 ${BELL[p][0]}</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${st === "todo" ? "기록 전" : esc(stepText(i, s))}</span>${i.memo && !i.name ? `<span class="s memo">↩ ${esc(memoText(i))}</span>` : ""}</button>`;
+    return `<button class="${cls}" data-k="${k}"${style}><span class="p">${p}교시 ${BELL[p][0]}</span><span class="c ${s.changed ? "red" : ""}">${s.c}</span><span class="s">${st === "todo" ? "기록 전" : esc(stepText(i, s))}</span></button>`;
   }).join("");
 
   const nd = nextSchoolDay(schoolDay), ndSlots = m.slotsFor(nd).filter(s => s.c);
@@ -425,7 +421,7 @@ function openPop(anchor) {
   pop = document.createElement("div");
   pop.className = "pop";
   pop.innerHTML = `<div class="t">${head}</div>
-    <input list="topics" value="${esc(draft.text)}" placeholder="진도·메모 (다음 ${f.c} 수업에 크게 보여요)" autocomplete="off">
+    <input list="topics" value="${esc(draft.text)}" placeholder="진도·메모 (다음 ${f.c} 수업을 누르면 보여요)" autocomplete="off">
     <datalist id="topics">${topics.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
     <div class="sw"><button class="auto${draft.color === null ? " on" : ""}" data-color="" title="같은 글자는 같은 색으로">자동</button>${[0, 1, 2, 3, 4, 5, 6, 7].map(n => `<button data-color="${n}" style="--tag:var(--tag${n})" class="${draft.color === n ? "on" : ""}" aria-label="색 ${n + 1}"${auto === n ? ` title="자동이면 이 색"` : ""}></button>`).join("")}</div>
     <div class="acts"><button class="save" data-r="save">저장</button><button data-r="skip">수업 못함</button>${anyRec ? `<button data-r="del" class="del">지우기</button>` : ""}</div>

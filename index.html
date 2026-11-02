@@ -283,11 +283,7 @@ dialog.sheet::backdrop { background: var(--backdrop); opacity: var(--p, 1); }
 .manual select, .manual textarea, .manual input { width: 100%; }
 .manual label small { font-weight: 500; }
 .manual .ask { font-size: 12.5px; color: var(--warn); font-weight: 600; }
-.has .memo { color: var(--warn); font-weight: 600; } /* 지난 시간에 쓴 내용 */
 .plan-box .val { white-space: pre-wrap; }
-.ticket .name.prev { white-space: normal; }
-.ticket .name.prev small { display: block; font-size: 12px; font-weight: 600; color: var(--warn); }
-.ticket.now .name.prev small { color: var(--now-sub); }
 .manual .acts { display: flex; gap: 8px; }
 .manual .acts .btn.primary { margin-left: auto; }
 .queue-note { font-size: 12.5px; color: var(--warn); font-weight: 600; background: var(--warn-soft); padding: 7px 11px; border-radius: 10px; }
@@ -573,7 +569,6 @@ function Today({ m, now, open, setTab, pending }) {
               </div>
               ${s.event ? html`<div class="name dim">학사일정으로 수업 없음</div>`
                 : i.name ? html`<div class="name">${i.name}</div>`
-                : i.memo ? html`<div class="name prev"><small>지난 시간</small>${i.memo.text}</div>`
                 : html`<div class="name dim">기록 전</div>`}
             </div>
           </button>`;
@@ -678,10 +673,10 @@ function renderCell(m, s, now, open, only) {
   if (!s.c) return null; // 공강·빠진 수업은 빈칸
   const st = slotState(m, s, now), i = slotInfo(m, s), step = i.planned ? 0 : i.step; // 아직인 수업은 차시 없이 빈칸
   const cls = `has ${kc(m, step, i.planned)} ${st === "now" || st === "todo" ? st : ""} ${st === "blocked" ? "blocked" : ""} ${only && only !== s.c ? "dim" : ""}`;
-  return html`<button class=${cls} style=${kh(step)} onClick=${() => open(s)} title=${[s.changed && chgLabel(s), i.name, i.memo && `지난 시간: ${i.memo.text}`].filter(Boolean).join("\n")}>
+  return html`<button class=${cls} style=${kh(step)} onClick=${() => open(s)} title=${[s.changed && chgLabel(s), i.name].filter(Boolean).join("\n")}>
     <span class="r1"><${Chip} c=${s.c} red=${s.changed} />${st !== "blocked" && html`<${Step} n=${step} />`}</span>
     <span class=${"t " + (st === "todo" ? "todo" : st === "blocked" ? "ev" : "")}>
-      ${st === "blocked" ? s.event.title : st === "todo" ? "기록 필요" : i.name || (i.memo && html`<span class="memo">↩ ${i.memo.text}</span>`)}
+      ${st === "blocked" ? s.event.title : st === "todo" ? "기록 필요" : i.name}
     </span>
     ${st === "done" && html`<span class="ok"><${Icon} n="check" /></span>`}
   </button>`;
@@ -786,7 +781,7 @@ function RecordSheet({ slot, queue, m, onSave, onClose }) {
         ${existing?.skip && html`<div class="prev">이 수업은 '수업 못함'으로 기록돼 있어요</div>`}
       </div>
       <div class="manual">
-        <label for="topic">이번 시간 <small>진도·메모, 다음 ${slot.c} 수업에 크게 보여요</small></label>
+        <label for="topic">이번 시간 <small>진도·메모, 다음 ${slot.c} 수업을 누르면 보여요</small></label>
         <textarea id="topic" class="field" rows="3" placeholder="예: 광합성 실험, 보고서 다음 시간에 걷기" value=${text}
           onInput=${e => { setText(e.target.value); setAsk(false); }}></textarea>
         ${ask && html`<div class="ask">어디까지 했는지 써 주세요</div>`}
