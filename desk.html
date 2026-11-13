@@ -155,8 +155,13 @@ let code = store.get(CODE_KEY);
 let idToken = null, uid = null, tokenExp = 0;
 class AuthError extends Error { }
 
-async function token() {
-  if (idToken && Date.now() < tokenExp - 60000) return idToken;
+// 동시에 여러 번 불려도(시간표·기록·학사일정을 한꺼번에 가져올 때) 로그인 요청은 한 번만
+let tokenJob = null;
+function token() {
+  if (idToken && Date.now() < tokenExp - 60000) return Promise.resolve(idToken);
+  return tokenJob ||= fetchToken().finally(() => { tokenJob = null; });
+}
+async function fetchToken() {
   const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FB_CONFIG.apiKey}`, {
     method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: code }),
@@ -234,6 +239,23 @@ async function run(job) {
     console.warn(e);
   } finally { draw(); }
 }
+// 처음 전체 불러오기: 성공할 때까지 3초 → 6초 → 12초 … (최대 30초) 간격으로 다시 시도.
+// Lively 는 켤 때마다 저장소를 새로 만들어서 '이 PC 에 저장해 둔 마지막 상태'가 없음 → 첫 불러오기가 실패하면
+// 예전에는 시간표 5분·학사일정 30분 주기를 기다려야 했음(켜고 30분 넘게 빈 화면). 부팅 직후 인터넷이 늦게 잡혀도 바로 뜨게 함
+let ready = false, booting = false, bootTimer = 0, bootWait = 3000;
+async function boot() {
+  clearTimeout(bootTimer);
+  if (!code || problem === "auth" || ready || booting) return;
+  booting = true;
+  try { await run(async () => { await loadAll(); ready = true; }); }
+  finally { booting = false; }
+  if (ready) { bootWait = 3000; return; }
+  if (problem === "auth") return;
+  bootTimer = setTimeout(boot, bootWait);
+  bootWait = Math.min(bootWait * 2, 30000);
+}
+// 새로 고칠 때: 처음 불러오기 전이면 전체를, 그다음부터는 새 기록만
+const refresh = () => ready ? run(loadNew) : (bootWait = 3000, boot());
 
 // ---------- 화면 ----------
 const screen = document.getElementById("screen");
@@ -278,7 +300,12 @@ function drawBoard() {
   if (!code) return drawSetup();
   if (problem === "auth") return drawSetup("연동 코드가 맞지 않거나 만료됐어요. 진도표 앱 설정에서 새로 복사해 붙여 넣어 주세요.");
   const m = buildModel(data), now = new Date(), today = iso(now), colorOf = tagColors(m);
-  if (!m.tt) { screen.innerHTML = `<div class="setup"><div class="box"><h1>${problem ? "연결하는 중…" : "시간표를 기다리는 중"}</h1><p>${problem === "net" ? "인터넷 연결을 확인하고 있어요." : "알림이 PC 에서 시간표가 아직 올라오지 않았어요. 알림이 연동 키트가 한 번 돌면 자동으로 나타나요."}</p></div></div>`; return; }
+  if (!m.tt) {
+    const [h, p] = problem === "net" ? ["연결하는 중…", "인터넷이 잡히는 대로 바로 불러와요."]
+      : !ready ? ["불러오는 중…", "진도표 기록을 가져오고 있어요."]
+      : ["시간표를 기다리는 중", "알림이 PC 에서 시간표가 아직 올라오지 않았어요. 알림이 연동 키트가 한 번 돌면 자동으로 나타나요."];
+    screen.innerHTML = `<div class="setup"><div class="box"><h1>${h}</h1><p>${p}</p></div></div>`; return;
+  }
 
   // 기준 날: 주말이면 다음 수업일. 날짜 띠는 학기 첫날부터 학년 끝까지 이어짐
   const schoolDay = isWeekend(today) ? nextSchoolDay(today) : today;
@@ -386,8 +413,8 @@ function drawSetup(err = "") {
   document.getElementById("go").onclick = () => {
     const v = document.getElementById("code").value.trim();
     if (!v) return;
-    code = v; store.set(CODE_KEY, v); idToken = null; problem = "";
-    run(loadAll);
+    code = v; store.set(CODE_KEY, v); idToken = null; problem = ""; ready = false;
+    boot();
   };
 }
 
@@ -603,16 +630,17 @@ addEventListener("error", e => { if (!screen.innerHTML) screen.innerHTML = `<div
 // ---------- 주기 ----------
 // 새 기록 15초, 시간표·차시 계획 5분, 전체(지운 기록 반영) 30분, 화면 시계 30초
 draw();
-if (code) run(loadAll);
-setInterval(() => code && problem !== "auth" && run(loadNew), 15000);
-setInterval(() => code && problem !== "auth" && run(loadMeta), 5 * 60000);
-setInterval(() => code && problem !== "auth" && run(loadAll), 30 * 60000);
+boot();
+setInterval(() => code && problem !== "auth" && ready && run(loadNew), 15000);
+setInterval(() => code && problem !== "auth" && ready && run(loadMeta), 5 * 60000);
+setInterval(() => code && problem !== "auth" && ready && run(loadAll), 30 * 60000);
 setInterval(() => {
   if ((tlScroll !== null || selDay) && Date.now() - navAt > 120000) { tlScroll = null; selDay = null; } // 2분 지나면 오늘로
   if (!pop && !drag) draw();
 }, 30000);
-addEventListener("online", () => code && run(loadNew));
-document.addEventListener("visibilitychange", () => !document.hidden && code && run(loadNew));
+// 인터넷이 다시 잡히거나 바탕화면이 다시 보일 때(Lively 일시정지 풀림) 바로 확인
+addEventListener("online", () => code && refresh());
+document.addEventListener("visibilitychange", () => !document.hidden && code && refresh());
 </script>
 </body>
 </html>
